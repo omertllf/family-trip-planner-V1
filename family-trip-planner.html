@@ -188,9 +188,23 @@ function GmailBridgeModal(props){
   function handleParse(){
     setParseErr("");
     try{
-      var match=pasteText.match(/```gmail_import\s*([\s\S]*?)```/);
-      if(!match)throw new Error("No gmail_import block found.");
-      var json=JSON.parse(match[1].trim());
+      var text=pasteText.trim();
+      var json;
+      // Try wrapped format first: ```gmail_import ... ```
+      var match=text.match(/```gmail_import\s*([\s\S]*?)```/);
+      if(match){
+        json=JSON.parse(match[1].trim());
+      } else {
+        // Try raw JSON directly
+        var rawMatch=text.match(/\{[\s\S]*"entries"[\s\S]*\}/);
+        if(rawMatch){json=JSON.parse(rawMatch[0]);}
+        else{
+          // Try finding just a JSON array
+          var arrMatch=text.match(/\[[\s\S]*\]/);
+          if(arrMatch){json={entries:JSON.parse(arrMatch[0])};}
+          else{throw new Error("Could not find JSON data. Make sure you copy Claude's full response.");}
+        }
+      }
       if(!json.entries||!Array.isArray(json.entries))throw new Error("Missing entries array.");
       var withIds=json.entries.map(function(e,i){return Object.assign({},e,{id:Date.now()+i+Math.random()});});
       setPreview(withIds);
