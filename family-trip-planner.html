@@ -7,6 +7,13 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
 <style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Inter,sans-serif;background:#0f172a;color:#e2e8f0;}</style>
+<link rel='manifest' href='manifest.json'>
+<meta name='mobile-web-app-capable' content='yes'>
+<meta name='apple-mobile-web-app-capable' content='yes'>
+<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent'>
+<meta name='apple-mobile-web-app-title' content='Trip Planner'>
+<link rel='apple-touch-icon' href='icon-192.svg'>
+<meta name='theme-color' content='#6366f1'>
 </head>
 <body>
 <div id="root"></div>
@@ -919,6 +926,13 @@ function App(){
 
 ReactDOM.createRoot(document.getElementById("root")).render(h(App));
 })();
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("sw.js").catch(function(e){console.log("SW error:",e);});
+  });
+}
 </script>
 </body>
 </html>
