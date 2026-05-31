@@ -179,7 +179,11 @@ function GmailBridgeModal(props){
   function handleSend(){
     var prompt='GMAIL_IMPORT_REQUEST label="'+selLabel.name+'" labelId='+selLabel.id+'\n\nScan my Gmail label and extract all travel bookings. Return ONLY:\n\n```gmail_import\n{"entries":[...]}\n```\n\nSchema (YYYY-MM-DD dates):\naccommodation:{type,name,platform,checkIn,checkOut,address,contact,url,confirmation,totalCost,costPerNight,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,bookingRef,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,confirmation,url,notes}\nactivity:{type,name,category,date,duration,location,cost,url,notes}';
     if(typeof sendPrompt==="function"){sendPrompt(prompt);setStep("sent");}
-    else{setParseErr("sendPrompt not available.");setStep("paste");}
+    else{
+      var claudeUrl='https://claude.ai/new?q='+encodeURIComponent(prompt);
+      window.open(claudeUrl,'_blank');
+      setStep("sent");
+    }
   }
   function handleParse(){
     setParseErr("");
@@ -232,7 +236,7 @@ function GmailBridgeModal(props){
     h("div",{style:{textAlign:"center",padding:"20px 0 28px"}},
       h("div",{style:{fontSize:48,marginBottom:16}},"✅"),
       h("div",{style:{fontSize:15,fontWeight:600,color:"#f1f5f9",marginBottom:8}},"Request sent to Claude"),
-      h("div",{style:{fontSize:13,color:"#64748b",lineHeight:1.8,maxWidth:380,margin:"0 auto"}},"Scanning ",h("strong",{style:{color:"#a5b4fc"}},selLabel.name),". Scroll up to see Claude's response, copy it, then click below.")
+      h("div",{style:{fontSize:13,color:"#64748b",lineHeight:1.8,maxWidth:380,margin:"0 auto"}},"Claude has opened in a new tab and is scanning ",h("strong",{style:{color:"#a5b4fc"}},selLabel.name),".",h("br"),h("br"),"Steps:",h("br"),"① Wait for Claude to finish scanning",h("br"),"② Copy Claude's full response (Ctrl+A, Ctrl+C)",h("br"),"③ Come back here and click the button below")
     ),
     h("button",{onClick:function(){setStep("paste");},style:{width:"100%",padding:11,borderRadius:8,border:"none",background:"#6366f1",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:14}},"📋 Paste Claude's Response →")
   );
