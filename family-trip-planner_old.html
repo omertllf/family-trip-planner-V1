@@ -823,14 +823,10 @@ function App(){
   function importEntries(entries){
     var byType={accommodation:[],flight:[],car:[],activity:[]};
     entries.forEach(function(e){if(byType[e.type])byType[e.type].push(e);});
-    updateTrip(function(t){
-      return Object.assign({},t,{
-        acc:byType.accommodation.length?(t.acc||[]).concat(byType.accommodation):(t.acc||[]),
-        flt:byType.flight.length?(t.flt||[]).concat(byType.flight):(t.flt||[]),
-        car:byType.car.length?(t.car||[]).concat(byType.car):(t.car||[]),
-        act:byType.activity.length?(t.act||[]).concat(byType.activity):(t.act||[])
-      });
-    });
+    if(byType.accommodation.length)setAcc(acc.concat(byType.accommodation));
+    if(byType.flight.length)setFlt(flt.concat(byType.flight));
+    if(byType.car.length)setCar(car.concat(byType.car));
+    if(byType.activity.length)setAct(act.concat(byType.activity));
   }
   function openNew(forcedType){
     if(!forcedType&&tab==="all"){setTypePicker(true);return;}
