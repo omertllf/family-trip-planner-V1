@@ -14,6 +14,21 @@
 <meta name='apple-mobile-web-app-title' content='Trip Planner'>
 <link rel='apple-touch-icon' href='icon-192.svg'>
 <meta name='theme-color' content='#6366f1'>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script>
+var firebaseConfig={
+  apiKey:"AIzaSyA7Hz1RPOJ5ANJDvGkAhzWAtMeYrlwgso0",
+  authDomain:"family-trip-planner-f1b14.firebaseapp.com",
+  projectId:"family-trip-planner-f1b14",
+  storageBucket:"family-trip-planner-f1b14.firebasestorage.app",
+  messagingSenderId:"334341909776",
+  appId:"1:334341909776:web:ba70446209c14f43370995"
+};
+firebase.initializeApp(firebaseConfig);
+var db=firebase.firestore();
+var DEVICE_ID='shared'; // all devices share same data
+</script>
 </head>
 <body>
 <div id="root"></div>
@@ -64,8 +79,25 @@ function newCar(){return{id:Date.now(),type:"car",company:"",carType:"SUV",picku
 function newAct(){return{id:Date.now(),type:"activity",name:"",category:"Nature",date:"",duration:"",location:"",cost:"",url:"",notes:""};}
 function newTrip(name){return{id:"trip_"+Date.now(),name:name||"New Trip",acc:[],flt:[],car:[],act:[]};}
 
-function storeGet(k){try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}}
-function storeSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+function storeGet(k){
+  try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}
+}
+function storeSet(k,v){
+  try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
+  try{
+    if(typeof db!=="undefined"){
+      db.collection("trips").doc(k).set({value:JSON.stringify(v),updated:Date.now()}).catch(function(e){console.warn("Firestore write failed:",e);});
+    }
+  }catch(e){console.warn("Firestore error:",e);}
+}
+async function storeGetCloud(k){
+  try{
+    if(typeof db==="undefined")return null;
+    var doc=await db.collection("trips").doc(k).get();
+    if(doc.exists){var d=doc.data();return d.value?JSON.parse(d.value):null;}
+    return null;
+  }catch(e){console.warn("Firestore read failed:",e);return null;}
+}
 
 function parseICS(text){
   var evts=[];
@@ -775,17 +807,34 @@ function App(){
   var t12=useState(false); var gmailModal=t12[0],setGmailModal=t12[1];
 
   useEffect(function(){
-    var tripList=storeGet("trips_index");
-    if(!tripList){
-      var legAcc=storeGet("acc")||[]; var legFlt=storeGet("flt")||[]; var legCar=storeGet("car")||[]; var legAct=storeGet("act")||[];
-      var firstTrip=Object.assign(newTrip("My Trip"),{acc:legAcc,flt:legFlt,car:legCar,act:legAct});
-      tripList=[firstTrip]; storeSet("trips_index",tripList);
-    }
-    setTripsRaw(tripList);
-    var savedActive=storeGet("active_trip_id");
-    var hasActive=savedActive&&tripList.filter(function(t){return t.id===savedActive;}).length>0;
-    setActiveTripIdRaw(hasActive?savedActive:(tripList[0]&&tripList[0].id)||null);
-    setLoaded(true);
+    (async function(){
+      // Try Firestore first, fall back to localStorage
+      var tripList=await storeGetCloud("trips_index");
+      if(!tripList)tripList=storeGet("trips_index");
+      if(!tripList){
+        var legAcc=storeGet("acc")||[]; var legFlt=storeGet("flt")||[]; var legCar=storeGet("car")||[]; var legAct=storeGet("act")||[];
+        var firstTrip=Object.assign(newTrip("My Trip"),{acc:legAcc,flt:legFlt,car:legCar,act:legAct});
+        tripList=[firstTrip]; storeSet("trips_index",tripList);
+      }
+      setTripsRaw(tripList);
+      var savedActive=await storeGetCloud("active_trip_id");
+      if(!savedActive)savedActive=storeGet("active_trip_id");
+      var hasActive=savedActive&&tripList.filter(function(t){return t.id===savedActive;}).length>0;
+      setActiveTripIdRaw(hasActive?savedActive:(tripList[0]&&tripList[0].id)||null);
+      setLoaded(true);
+      // Subscribe to real-time updates from Firestore
+      if(typeof db!=="undefined"){
+        db.collection("trips").doc("trips_index").onSnapshot(function(doc){
+          if(doc.exists){
+            var data=doc.data();
+            if(data&&data.value){
+              var remote=JSON.parse(data.value);
+              setTripsRaw(remote);
+            }
+          }
+        });
+      }
+    })();
   },[]);
 
   function saveTrips(updated){setTripsRaw(updated);storeSet("trips_index",updated);}
