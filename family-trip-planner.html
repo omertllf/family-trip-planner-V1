@@ -16,6 +16,7 @@
 <meta name='theme-color' content='#6366f1'>
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
 <script>
 var firebaseConfig={
   apiKey:"AIzaSyA7Hz1RPOJ5ANJDvGkAhzWAtMeYrlwgso0",
@@ -27,7 +28,8 @@ var firebaseConfig={
 };
 firebase.initializeApp(firebaseConfig);
 var db=firebase.firestore();
-var DEVICE_ID='shared'; // all devices share same data
+var auth=firebase.auth();
+var googleProvider=new firebase.auth.GoogleAuthProvider();
 </script>
 </head>
 <body>
@@ -85,15 +87,17 @@ function storeGet(k){
 function storeSet(k,v){
   try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
   try{
-    if(typeof db!=="undefined"){
-      db.collection("trips").doc(k).set({value:JSON.stringify(v),updated:Date.now()}).catch(function(e){console.warn("Firestore write failed:",e);});
+    if(typeof db!=="undefined"&&typeof auth!=="undefined"&&auth.currentUser){
+      var uid=auth.currentUser.uid;
+      db.collection("users").doc(uid).collection("data").doc(k).set({value:JSON.stringify(v),updated:Date.now()}).catch(function(e){console.warn("Firestore write failed:",e);});
     }
   }catch(e){console.warn("Firestore error:",e);}
 }
 async function storeGetCloud(k){
   try{
-    if(typeof db==="undefined")return null;
-    var doc=await db.collection("trips").doc(k).get();
+    if(typeof db==="undefined"||!auth.currentUser)return null;
+    var uid=auth.currentUser.uid;
+    var doc=await db.collection("users").doc(uid).collection("data").doc(k).get();
     if(doc.exists){var d=doc.data();return d.value?JSON.parse(d.value):null;}
     return null;
   }catch(e){console.warn("Firestore read failed:",e);return null;}
@@ -796,6 +800,8 @@ function App(){
   var t1=useState([]); var trips=t1[0],setTripsRaw=t1[1];
   var t2=useState(null); var activeTripId=t2[0],setActiveTripIdRaw=t2[1];
   var t3=useState(false); var loaded=t3[0],setLoaded=t3[1];
+  var t0=useState(null); var user=t0[0],setUser=t0[1];
+  var ta=useState(true); var authLoading=ta[0],setAuthLoading=ta[1];
   var t4=useState("all"); var tab=t4[0],setTab=t4[1];
   var t5=useState("table"); var view=t5[0],setView=t5[1];
   var t6=useState(null); var modal=t6[0],setModal=t6[1];
@@ -805,6 +811,15 @@ function App(){
   var t10=useState(false); var tripMgr=t10[0],setTripMgr=t10[1];
   var t11=useState(""); var search=t11[0],setSearch=t11[1];
   var t12=useState(false); var gmailModal=t12[0],setGmailModal=t12[1];
+
+  // Auth state listener
+  useEffect(function(){
+    var unsubAuth=auth.onAuthStateChanged(function(u){
+      setUser(u);
+      setAuthLoading(false);
+    });
+    return function(){unsubAuth();};
+  },[]);
 
   useEffect(function(){
     (async function(){
@@ -823,8 +838,9 @@ function App(){
       setActiveTripIdRaw(hasActive?savedActive:(tripList[0]&&tripList[0].id)||null);
       setLoaded(true);
       // Subscribe to real-time updates from Firestore
-      if(typeof db!=="undefined"){
-        db.collection("trips").doc("trips_index").onSnapshot(function(doc){
+      if(typeof db!=="undefined"&&auth.currentUser){
+        var uid=auth.currentUser.uid;
+        db.collection("users").doc(uid).collection("data").doc("trips_index").onSnapshot(function(doc){
           if(doc.exists){
             var data=doc.data();
             if(data&&data.value){
@@ -910,7 +926,26 @@ function App(){
 
   function TB(p){return h("button",{onClick:function(){setTab(p.k);},style:{padding:"7px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,background:tab===p.k?"#334155":"transparent",color:tab===p.k?"#f1f5f9":"#94a3b8"}},p.label);}
 
-  if(!loaded)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a",color:"#94a3b8",fontSize:16}},"Loading...");
+  // Auth loading
+  if(authLoading)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a",color:"#94a3b8",fontSize:16}},"Loading...");
+
+  // Login screen
+  if(!user)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a"}},
+    h("div",{style:{textAlign:"center",padding:"40px",background:"#1e293b",borderRadius:16,border:"1px solid #334155",maxWidth:360,width:"100%",margin:"0 20px"}},
+      h("div",{style:{fontSize:56,marginBottom:16}},"✈️"),
+      h("h1",{style:{margin:"0 0 8px",fontSize:24,fontWeight:700,color:"#f1f5f9"}},"Family Trip Planner"),
+      h("p",{style:{margin:"0 0 32px",fontSize:14,color:"#64748b"}},"Sign in to access your trips"),
+      h("button",{
+        onClick:function(){auth.signInWithPopup(googleProvider).catch(function(e){console.error("Sign in error:",e);});},
+        style:{width:"100%",padding:"12px 20px",borderRadius:10,border:"none",background:"#fff",color:"#1f2937",fontSize:15,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12}
+      },
+        h("img",{src:"https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg",style:{width:20,height:20}}),
+        "Sign in with Google"
+      )
+    )
+  );
+
+  if(!loaded)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a",color:"#94a3b8",fontSize:16}},"Loading your trips...");
 
   return h("div",{style:{fontFamily:"Inter,sans-serif",background:"#0f172a",minHeight:"100vh",color:"#e2e8f0"}},
     h("div",{style:{background:"linear-gradient(135deg,#1e293b,#0f172a)",borderBottom:"1px solid #1e293b",padding:"16px 24px"}},
@@ -920,7 +955,8 @@ function App(){
             h("div",null,h("h1",{style:{margin:0,fontSize:22,fontWeight:700,color:"#f1f5f9"}},"✈️ Family Trip Planner"),h("p",{style:{margin:"2px 0 0",fontSize:13,color:"#64748b"}},"All your travel details in one place")),
             trips.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:8,marginLeft:16}},
               h("div",{style:{display:"flex",gap:4,background:"#0f172a",borderRadius:8,padding:3,flexWrap:"wrap"}},trips.map(function(t){return h("button",{key:t.id,onClick:function(){setActiveTripId(t.id);setSearch("");},style:{padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:activeTripId===t.id?"#6366f1":"transparent",color:activeTripId===t.id?"#fff":"#94a3b8",whiteSpace:"nowrap",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},t.name);})),
-              h("button",{onClick:function(){setTripMgr(true);},title:"Manage trips",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:13}},"⚙️")
+              h("button",{onClick:function(){setTripMgr(true);},title:"Manage trips",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:13}},"⚙️"),
+              user&&h("button",{onClick:function(){auth.signOut();},title:"Sign out",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:12}},user.photoURL?h("img",{src:user.photoURL,style:{width:20,height:20,borderRadius:"50%",verticalAlign:"middle"}}):"Sign out")
             )
           ),
           h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
