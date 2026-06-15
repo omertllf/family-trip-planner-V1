@@ -18,18 +18,23 @@
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
 <script>
-var firebaseConfig={
-  apiKey:"AIzaSyA7Hz1RPOJ5ANJDvGkAhzWAtMeYrlwgso0",
-  authDomain:"family-trip-planner-f1b14.firebaseapp.com",
-  projectId:"family-trip-planner-f1b14",
-  storageBucket:"family-trip-planner-f1b14.firebasestorage.app",
-  messagingSenderId:"334341909776",
-  appId:"1:334341909776:web:ba70446209c14f43370995"
-};
-firebase.initializeApp(firebaseConfig);
-var db=firebase.firestore();
-var auth=firebase.auth();
-var googleProvider=new firebase.auth.GoogleAuthProvider();
+var db=null,auth=null,googleProvider=null;
+try{
+  var firebaseConfig={
+    apiKey:"AIzaSyA7Hz1RPOJ5ANJDvGkAhzWAtMeYrlwgso0",
+    authDomain:"family-trip-planner-f1b14.firebaseapp.com",
+    projectId:"family-trip-planner-f1b14",
+    storageBucket:"family-trip-planner-f1b14.firebasestorage.app",
+    messagingSenderId:"334341909776",
+    appId:"1:334341909776:web:ba70446209c14f43370995"
+  };
+  firebase.initializeApp(firebaseConfig);
+  db=firebase.firestore();
+  auth=firebase.auth();
+  googleProvider=new firebase.auth.GoogleAuthProvider();
+}catch(e){
+  console.warn("Firebase failed to initialize (CDN unavailable?):",e.message);
+}
 </script>
 </head>
 <body>
@@ -43,6 +48,9 @@ var h=React_.createElement;
 var COLORS={accommodation:"#6366f1",flight:"#0ea5e9",car:"#f59e0b",activity:"#10b981"};
 var PLATFORMS=["Airbnb","Booking.com","VRBO","Direct","Hotels.com","Expedia","Other"];
 var ACTIVITY_CATS=["Nature","Adventure","Cultural","Food","Theme Park","Beach","Sightseeing","Shopping","Other"];
+var FLIGHT_PLATFORMS=["Direct","Expedia","Kayak","Trip.com","Google Flights","Booking.com","Priceline","Other"];
+var CAR_PLATFORMS=["Direct","Trip.com","Expedia","Booking.com","Kayak","Rentalcars.com","Priceline","Other"];
+var ACTIVITY_PLATFORMS=["Direct","Viator","GetYourGuide","Booking.com","Airbnb Experiences","FareHarbor","Rezdy","Tripadvisor","Other"];
 var CAR_TYPES=["Economy","Compact","SUV","Minivan","Truck","Luxury","Other"];
 var KNOWN_LABELS=[
   {id:"Label_3699931737615885849",name:"2026 trip to USA"},
@@ -53,7 +61,7 @@ var KNOWN_LABELS=[
   {id:"INBOX",name:"Inbox"}
 ];
 var REQUIRED={accommodation:["name","checkIn","checkOut"],flight:["airline","from","to","depDate"],car:["company","pickupLocation","pickupDate"],activity:["name","date"]};
-var FIELD_LABELS={name:"Name",airline:"Airline",from:"Departure airport",to:"Arrival airport",depDate:"Departure date",company:"Rental company",pickupLocation:"Pickup location",pickupDate:"Pickup date",checkIn:"Check-in",checkOut:"Check-out",date:"Date"};
+var FIELD_LABELS={name:"Name",airline:"Airline",from:"Departure airport",to:"Arrival airport",depDate:"Departure date",company:"Rental company",pickupLocation:"Pickup location",pickupDate:"Pickup date",checkIn:"Check-in",checkOut:"Check-out",date:"Date",vendorPhone:"Phone",vendorEmail:"Email",paymentStatus:"Payment status",amountDue:"Amount due ($)",bookingPlatform:"Booked via",confirmation:"Confirmation #"};
 
 function safeNum(v){var n=parseFloat(v);return isNaN(n)?0:n;}
 function fmt$(v){return v?"$"+safeNum(v).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0}):"-";}
@@ -65,7 +73,7 @@ function typeLabel(t){return t==="accommodation"?"Stay":t==="flight"?"Flight":t=
 function matchesSearch(e,q){
   if(!q)return true;
   var lq=q.toLowerCase();
-  return[e.name,e.airline,e.company,e.from,e.to,e.address,e.location,e.pickupLocation,e.dropoffLocation,e.notes,e.confirmation,e.bookingRef,e.flightNo,e.category,e.platform,e.contact].some(function(f){return f&&String(f).toLowerCase().indexOf(lq)>=0;});
+  return[e.name,e.airline,e.company,e.from,e.to,e.address,e.location,e.pickupLocation,e.dropoffLocation,e.notes,e.confirmation,e.bookingRef,e.flightNo,e.category,e.platform,e.contact,e.vendorPhone,e.vendorEmail,e.bookingPlatform].some(function(f){return f&&String(f).toLowerCase().indexOf(lq)>=0;});
 }
 function validate(item){
   var errors={};
@@ -75,10 +83,10 @@ function validate(item){
   if(item.type==="car"&&item.pickupDate&&item.dropoffDate&&new Date(item.dropoffDate)<new Date(item.pickupDate))errors.dropoffDate="Drop-off before pickup";
   return errors;
 }
-function newAcc(){return{id:Date.now(),type:"accommodation",name:"",platform:"Airbnb",checkIn:"",checkOut:"",address:"",contact:"",url:"",parking:false,kitchen:false,breakfast:false,totalCost:"",costPerNight:"",confirmation:"",notes:""};}
-function newFlt(){return{id:Date.now(),type:"flight",airline:"",flightNo:"",from:"",to:"",depDate:"",depTime:"",arrDate:"",arrTime:"",cost:"",bookingRef:"",url:"",notes:""};}
-function newCar(){return{id:Date.now(),type:"car",company:"",carType:"SUV",pickupLocation:"",dropoffLocation:"",pickupDate:"",dropoffDate:"",cost:"",confirmation:"",url:"",notes:""};}
-function newAct(){return{id:Date.now(),type:"activity",name:"",category:"Nature",date:"",duration:"",location:"",cost:"",url:"",notes:""};}
+function newAcc(){return{id:Date.now(),type:"accommodation",name:"",platform:"Airbnb",checkIn:"",checkOut:"",address:"",contact:"",vendorPhone:"",vendorEmail:"",url:"",parking:false,kitchen:false,breakfast:false,totalCost:"",costPerNight:"",amountDue:"",paymentStatus:"paid",confirmation:"",notes:""};}
+function newFlt(){return{id:Date.now(),type:"flight",airline:"",flightNo:"",from:"",to:"",depDate:"",depTime:"",arrDate:"",arrTime:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",bookingRef:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
+function newCar(){return{id:Date.now(),type:"car",company:"",carType:"SUV",pickupLocation:"",dropoffLocation:"",pickupDate:"",dropoffDate:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
+function newAct(){return{id:Date.now(),type:"activity",name:"",category:"Nature",date:"",duration:"",location:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
 function newTrip(name){return{id:"trip_"+Date.now(),name:name||"New Trip",acc:[],flt:[],car:[],act:[]};}
 
 function storeGet(k){
@@ -126,7 +134,7 @@ function toB64(f){return new Promise(function(res,rej){var r=new FileReader();r.
 function toText(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=rej;r.readAsText(f);});}
 
 function claudeExtract(messages){
-  var sys="You are a travel booking data extractor. Return ONLY valid JSON, no markdown.\nDetect type: accommodation, flight, car, activity.\nShapes (YYYY-MM-DD dates):\naccommodation:{type,name,platform,checkIn,checkOut,address,contact,url,confirmation,totalCost,costPerNight,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,bookingRef,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,confirmation,url,notes}\nactivity:{type,name,category,date,duration,location,cost,url,notes}";
+  var sys="You are a travel booking data extractor. Return ONLY valid JSON, no markdown.\nDetect type: accommodation, flight, car, activity.\nShapes (YYYY-MM-DD dates, paymentStatus: paid/partially_paid/unpaid):\naccommodation:{type,name,platform,checkIn,checkOut,address,vendorPhone,vendorEmail,url,confirmation,totalCost,costPerNight,amountDue,paymentStatus,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,amountDue,paymentStatus,bookingPlatform,bookingRef,vendorPhone,vendorEmail,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\nactivity:{type,name,category,date,duration,location,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}";
   return fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:messages})})
     .then(function(r){return r.json();})
     .then(function(d){if(d.error)throw new Error(d.error.message||"API error");return d.content.map(function(c){return c.text||"";}).join("");});
@@ -220,7 +228,7 @@ function GmailBridgeModal(props){
   var selS=useState(new Set()); var selectedIds=selS[0],setSelectedIds=selS[1];
 
   function handleSend(){
-    var prompt='GMAIL_IMPORT_REQUEST label="'+selLabel.name+'" labelId='+selLabel.id+'\n\nScan my Gmail label and extract all travel bookings. Return ONLY:\n\n```gmail_import\n{"entries":[...]}\n```\n\nSchema (YYYY-MM-DD dates):\naccommodation:{type,name,platform,checkIn,checkOut,address,contact,url,confirmation,totalCost,costPerNight,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,bookingRef,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,confirmation,url,notes}\nactivity:{type,name,category,date,duration,location,cost,url,notes}';
+    var prompt='GMAIL_IMPORT_REQUEST label="'+selLabel.name+'" labelId='+selLabel.id+'\n\nScan my Gmail label and extract ALL travel bookings. Extract every available detail from each email. Return ONLY:\n\n```gmail_import\n{"entries":[...]}\n```\n\nSchema (YYYY-MM-DD dates, paymentStatus: paid/partially_paid/unpaid):\naccommodation:{type,name,platform,checkIn,checkOut,address,vendorPhone,vendorEmail,url,confirmation,totalCost,costPerNight,amountDue,paymentStatus,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,amountDue,paymentStatus,bookingPlatform,bookingRef,vendorPhone,vendorEmail,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\nactivity:{type,name,category,date,duration,location,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\n\nIMPORTANT: Extract phone/email from confirmation emails. Detect payment status from email language. One entry per booking, not per email. Do not merge different bookings.';
     if(typeof sendPrompt==="function"){sendPrompt(prompt);setStep("sent");}
     else{
       var claudeUrl='https://claude.ai/new?q='+encodeURIComponent(prompt);
@@ -341,6 +349,17 @@ function GmailBridgeModal(props){
   return null;
 }
 
+function PayBadge(p){var ps=p.status;var cfg=ps==="partially_paid"?{bg:"#713f12",c:"#fde047",l:"◑ Partial"}:ps==="unpaid"?{bg:"#450a0a",c:"#f87171",l:"✗ Unpaid"}:{bg:"#14532d",c:"#4ade80",l:"✓ Paid"};return h("span",{style:{background:cfg.bg,color:cfg.c,borderRadius:4,padding:"2px 7px",fontSize:11,fontWeight:600}},cfg.l);}
+function FPayStatus(props){
+  var item=props.item,onChange=props.onChange;
+  var opts=[{v:"paid",l:"✓ Paid",bg:"#14532d",c:"#4ade80"},{v:"partially_paid",l:"◑ Partial",bg:"#713f12",c:"#fde047"},{v:"unpaid",l:"✗ Unpaid",bg:"#450a0a",c:"#f87171"}];
+  return h("div",{style:{marginBottom:12}},
+    h("label",{style:{display:"block",fontSize:12,color:"#94a3b8",marginBottom:6}},"Payment Status"),
+    h("div",{style:{display:"flex",gap:6}},
+      opts.map(function(o){var active=(item.paymentStatus||"paid")===o.v;return h("button",{key:o.v,onClick:function(){onChange("paymentStatus",o.v);},style:{flex:1,padding:"7px 8px",borderRadius:6,border:"2px solid "+(active?o.c:"#334155"),background:active?o.bg:"transparent",color:active?o.c:"#64748b",cursor:"pointer",fontSize:12,fontWeight:600}},o.l);})
+    )
+  );
+}
 // ── Entry Modal ──────────────────────────────────────────────────
 function EntryModal(props){
   var modal=props.modal,tab=props.tab,onSave=props.onSave,onDelete=props.onDelete,onClose=props.onClose;
@@ -389,8 +408,10 @@ function EntryModal(props){
       nts>0&&h("div",{style:{fontSize:13,color:"#94a3b8",marginBottom:12}},"📅 "+nts+" night"+(nts!==1?"s":"")),
       h(R2,null,h(FInput,Object.assign({label:"Cost/Night ($)",k:"costPerNight",type:"number",ph:"auto"},fp)),h(FInput,Object.assign({label:"Total Cost ($)",k:"totalCost",type:"number",ph:"auto"},fp))),
       h(FInput,Object.assign({label:"Address",k:"address"},fp)),
-      h(R2,null,h(FInput,Object.assign({label:"Contact",k:"contact"},fp)),h(FInput,Object.assign({label:"Booking URL",k:"url",ph:"https://..."},fp))),
-      h(FInput,Object.assign({label:"Confirmation",k:"confirmation"},fp)),
+      h(R2,null,h(FInput,Object.assign({label:"Phone",k:"vendorPhone",ph:"+1 / +972..."},fp)),h(FInput,Object.assign({label:"Email",k:"vendorEmail",ph:"property@..."},fp))),
+      h(R2,null,h(FInput,Object.assign({label:"Booking URL",k:"url",ph:"https://..."},fp)),h(FInput,Object.assign({label:"Confirmation #",k:"confirmation"},fp))),
+      h(FPayStatus,fp),
+      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")&&h(FInput,Object.assign({label:"Amount Due ($)",k:"amountDue",type:"number",ph:"0"},fp)),
       h("div",{style:{display:"flex",gap:20,flexWrap:"wrap",marginBottom:8}},h(FToggle,Object.assign({label:"Parking",k:"parking"},fp)),h(FToggle,Object.assign({label:"Kitchen",k:"kitchen"},fp)),h(FToggle,Object.assign({label:"Breakfast",k:"breakfast"},fp))),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
@@ -400,7 +421,10 @@ function EntryModal(props){
       h(R2,null,h(FInput,Object.assign({label:"Dep Date",k:"depDate",type:"date"},fp)),h(FInput,Object.assign({label:"Dep Time",k:"depTime",type:"time"},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Arr Date",k:"arrDate",type:"date"},fp)),h(FInput,Object.assign({label:"Arr Time",k:"arrTime",type:"time"},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Booking Ref",k:"bookingRef"},fp))),
-      h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp)),
+      h(R2,null,h(FSelect,Object.assign({label:"Booked Via",k:"bookingPlatform",opts:FLIGHT_PLATFORMS},fp)),h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp))),
+      h(R2,null,h(FInput,Object.assign({label:"Phone",k:"vendorPhone",ph:"+1..."},fp)),h(FInput,Object.assign({label:"Email",k:"vendorEmail",ph:"airline@..."},fp))),
+      h(FPayStatus,fp),
+      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")&&h(FInput,Object.assign({label:"Amount Due ($)",k:"amountDue",type:"number",ph:"0"},fp)),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
     et==="car"&&h(React_.Fragment,null,
@@ -408,15 +432,22 @@ function EntryModal(props){
       h(FInput,Object.assign({label:"Pickup Location",k:"pickupLocation"},fp)),
       h(FInput,Object.assign({label:"Dropoff Location",k:"dropoffLocation"},fp)),
       h(R2,null,h(FInput,Object.assign({label:"Pickup Date",k:"pickupDate",type:"date"},fp)),h(FInput,Object.assign({label:"Dropoff Date",k:"dropoffDate",type:"date"},fp))),
-      h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Confirmation",k:"confirmation"},fp))),
-      h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp)),
+      h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Confirmation #",k:"confirmation"},fp))),
+      h(R2,null,h(FSelect,Object.assign({label:"Booked Via",k:"bookingPlatform",opts:CAR_PLATFORMS},fp)),h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp))),
+      h(R2,null,h(FInput,Object.assign({label:"Phone",k:"vendorPhone",ph:"+1..."},fp)),h(FInput,Object.assign({label:"Email",k:"vendorEmail",ph:"rentals@..."},fp))),
+      h(FPayStatus,fp),
+      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")&&h(FInput,Object.assign({label:"Amount Due ($)",k:"amountDue",type:"number",ph:"0"},fp)),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
     et==="activity"&&h(React_.Fragment,null,
       h(R2,null,h(FInput,Object.assign({label:"Activity Name",k:"name"},fp)),h(FSelect,Object.assign({label:"Category",k:"category",opts:ACTIVITY_CATS},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Date",k:"date",type:"date"},fp)),h(FInput,Object.assign({label:"Duration",k:"duration"},fp))),
       h(FInput,Object.assign({label:"Location",k:"location"},fp)),
-      h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp))),
+      h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Confirmation #",k:"confirmation"},fp))),
+      h(R2,null,h(FSelect,Object.assign({label:"Booked Via",k:"bookingPlatform",opts:ACTIVITY_PLATFORMS},fp)),h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp))),
+      h(R2,null,h(FInput,Object.assign({label:"Phone",k:"vendorPhone",ph:"+1..."},fp)),h(FInput,Object.assign({label:"Email",k:"vendorEmail",ph:"info@..."},fp))),
+      h(FPayStatus,fp),
+      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")&&h(FInput,Object.assign({label:"Amount Due ($)",k:"amountDue",type:"number",ph:"0"},fp)),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
     hasErr&&h("div",{style:{background:"#450a0a",border:"1px solid #7f1d1d",borderRadius:8,padding:"10px 14px",marginBottom:8,fontSize:13,color:"#fca5a5"}},"Please fix errors above."),
@@ -689,10 +720,10 @@ function TableView(props){
   );
 
   var cdefs={
-    accommodations:[{h:"Name",k:"name",f:null,sK:"name"},{h:"Platform",k:"platform"},{h:"Check-In",k:"checkIn",f:"date",sK:"date"},{h:"Check-Out",k:"checkOut",f:"date",sK:"endDate"},{h:"Nights",k:"_nts",f:"nts"},{h:"Cost/Night",k:"costPerNight",f:"$"},{h:"Cost",k:"totalCost",f:"$",sK:"cost"},{h:"Parking",k:"parking",f:"bool"},{h:"Kitchen",k:"kitchen",f:"bool"},{h:"Breakfast",k:"breakfast",f:"bool"},{h:"Address",k:"address",f:"addr"},{h:"City",k:"_city"},{h:"URL",k:"url",f:"link"}],
-    flights:[{h:"Airline",k:"airline",sK:"name"},{h:"Flight#",k:"flightNo"},{h:"From",k:"from",f:"addr"},{h:"To",k:"to"},{h:"Dep Date",k:"depDate",f:"date",sK:"date"},{h:"Dep Time",k:"depTime"},{h:"Arr Date",k:"arrDate",f:"date",sK:"endDate"},{h:"Arr Time",k:"arrTime"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Ref",k:"bookingRef"},{h:"URL",k:"url",f:"link"}],
-    cars:[{h:"Company",k:"company",sK:"name"},{h:"Type",k:"carType"},{h:"Pickup",k:"pickupLocation",f:"addr"},{h:"City",k:"_city"},{h:"Dropoff",k:"dropoffLocation",f:"addr"},{h:"Pickup Date",k:"pickupDate",f:"date",sK:"date"},{h:"Dropoff Date",k:"dropoffDate",f:"date",sK:"endDate"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"URL",k:"url",f:"link"}],
-    activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
+    accommodations:[{h:"Name",k:"name",f:null,sK:"name"},{h:"Platform",k:"platform"},{h:"Check-In",k:"checkIn",f:"date",sK:"date"},{h:"Check-Out",k:"checkOut",f:"date",sK:"endDate"},{h:"Nights",k:"_nts",f:"nts"},{h:"Cost/Night",k:"costPerNight",f:"$"},{h:"Cost",k:"totalCost",f:"$",sK:"cost"},{h:"Parking",k:"parking",f:"bool"},{h:"Kitchen",k:"kitchen",f:"bool"},{h:"Breakfast",k:"breakfast",f:"bool"},{h:"Address",k:"address",f:"addr"},{h:"City",k:"_city"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
+    flights:[{h:"Airline",k:"airline",sK:"name"},{h:"Flight#",k:"flightNo"},{h:"From",k:"from",f:"addr"},{h:"To",k:"to"},{h:"Dep Date",k:"depDate",f:"date",sK:"date"},{h:"Dep Time",k:"depTime"},{h:"Arr Date",k:"arrDate",f:"date",sK:"endDate"},{h:"Arr Time",k:"arrTime"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Ref",k:"bookingRef"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
+    cars:[{h:"Company",k:"company",sK:"name"},{h:"Type",k:"carType"},{h:"Pickup",k:"pickupLocation",f:"addr"},{h:"City",k:"_city"},{h:"Dropoff",k:"dropoffLocation",f:"addr"},{h:"Pickup Date",k:"pickupDate",f:"date",sK:"date"},{h:"Dropoff Date",k:"dropoffDate",f:"date",sK:"endDate"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
+    activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"URL",k:"url",f:"link"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
   };
   var c=cdefs[tab]||cdefs.accommodations;
   return h("div",{style:{overflowX:"auto",borderRadius:10,border:"1px solid #1e293b"}},
@@ -718,6 +749,7 @@ function TableView(props){
             else if(col.f==="link")cell=rv?h("a",{href:rv,target:"_blank",rel:"noreferrer",style:{color:"#6366f1",textDecoration:"none"}},"🔗"):h("span",{style:{color:"#475569"}},"-");
             else if(col.f==="date")cell=h("span",null,fmtD(rv));
             else if(col.f==="addr")cell=h(XC,{val:rv||""});
+            else if(col.f==="pay")cell=h(PayBadge,{status:rv||"paid"});
             else cell=h("span",{style:{display:"block",maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},rv||"-");
             return h("td",{key:col.h,style:{padding:"9px 12px",color:"#e2e8f0",maxWidth:200,position:"relative"}},
               isN?h(React_.Fragment,null,h(XC,{val:rv||""}),h(Dup,{show:iDN,t:"Duplicate name"})):cell,
@@ -814,6 +846,7 @@ function App(){
 
   // Auth state listener
   useEffect(function(){
+    if(!auth){setAuthLoading(false);return;}
     var unsubAuth=auth.onAuthStateChanged(function(u){
       setUser(u);
       setAuthLoading(false);
@@ -838,7 +871,7 @@ function App(){
       setActiveTripIdRaw(hasActive?savedActive:(tripList[0]&&tripList[0].id)||null);
       setLoaded(true);
       // Subscribe to real-time updates from Firestore
-      if(typeof db!=="undefined"&&auth.currentUser){
+      if(typeof db!=="undefined"&&db&&auth&&auth.currentUser){
         var uid=auth.currentUser.uid;
         db.collection("users").doc(uid).collection("data").doc("trips_index").onSnapshot(function(doc){
           if(doc.exists){
@@ -936,7 +969,7 @@ function App(){
       h("h1",{style:{margin:"0 0 8px",fontSize:24,fontWeight:700,color:"#f1f5f9"}},"Family Trip Planner"),
       h("p",{style:{margin:"0 0 32px",fontSize:14,color:"#64748b"}},"Sign in to access your trips"),
       h("button",{
-        onClick:function(){auth.signInWithPopup(googleProvider).catch(function(e){console.error("Sign in error:",e);});},
+        onClick:function(){if(auth)auth.signInWithPopup(googleProvider).catch(function(e){console.error("Sign in error:",e);});},
         style:{width:"100%",padding:"12px 20px",borderRadius:10,border:"none",background:"#fff",color:"#1f2937",fontSize:15,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12}
       },
         h("img",{src:"https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg",style:{width:20,height:20}}),
@@ -956,7 +989,7 @@ function App(){
             trips.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:8,marginLeft:16}},
               h("div",{style:{display:"flex",gap:4,background:"#0f172a",borderRadius:8,padding:3,flexWrap:"wrap"}},trips.map(function(t){return h("button",{key:t.id,onClick:function(){setActiveTripId(t.id);setSearch("");},style:{padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:activeTripId===t.id?"#6366f1":"transparent",color:activeTripId===t.id?"#fff":"#94a3b8",whiteSpace:"nowrap",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},t.name);})),
               h("button",{onClick:function(){setTripMgr(true);},title:"Manage trips",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:13}},"⚙️"),
-              user&&h("button",{onClick:function(){auth.signOut();},title:"Sign out",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:12}},user.photoURL?h("img",{src:user.photoURL,style:{width:20,height:20,borderRadius:"50%",verticalAlign:"middle"}}):"Sign out")
+              user&&h("button",{onClick:function(){if(auth)auth.signOut();},title:"Sign out",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:12}},user.photoURL?h("img",{src:user.photoURL,style:{width:20,height:20,borderRadius:"50%",verticalAlign:"middle"}}):"Sign out")
             )
           ),
           h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
