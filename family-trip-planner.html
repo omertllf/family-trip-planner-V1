@@ -1009,7 +1009,7 @@ function App(){
             )
           ),
           h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
-            [["🏠 Stays",aCC,aDue,COLORS.accommodation],["✈️ Flights",fCC,fDue,COLORS.flight],["🚗 Cars",cCC,cDue,COLORS.car],["🎯 Activities",acC,acDue,COLORS.activity]].map(function(item){return h("div",{key:item[0],style:{background:"#1e293b",borderRadius:8,padding:"6px 12px",borderLeft:"3px solid "+item[3]}},h("div",{style:{fontSize:11,color:"#94a3b8"}},item[0]),h("div",{style:{fontSize:15,fontWeight:700,color:item[3]}},fmt$(item[1])),item[2]>0&&h("div",{style:{fontSize:11,color:"#fbbf24",marginTop:1}},fmt$(item[2])+" due"));});
+            [["🏠 Stays",aCC,aDue,COLORS.accommodation],["✈️ Flights",fCC,fDue,COLORS.flight],["🚗 Cars",cCC,cDue,COLORS.car],["🎯 Activities",acC,acDue,COLORS.activity]].map(function(item){return h("div",{key:item[0],style:{background:"#1e293b",borderRadius:8,padding:"6px 12px",borderLeft:"3px solid "+item[3]}},h("div",{style:{fontSize:11,color:"#94a3b8"}},item[0]),h("div",{style:{fontSize:15,fontWeight:700,color:item[3]}},fmt$(item[1])),item[2]>0&&h("div",{style:{fontSize:11,color:"#fbbf24",marginTop:1}},fmt$(item[2])+" due"));}),
             h("div",{style:{background:"#1e293b",borderRadius:8,padding:"6px 12px",borderLeft:"3px solid "+(totDue>0?"#fbbf24":"#f1f5f9")}},h("div",{style:{fontSize:11,color:"#94a3b8"}},"💰 Total"),h("div",{style:{fontSize:15,fontWeight:700,color:"#f1f5f9"}},fmt$(tot)),totDue>0&&h("div",{style:{fontSize:11,color:"#fbbf24",marginTop:1}},fmt$(totDue)+" due"))
           )
         ),
