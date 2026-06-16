@@ -64,9 +64,10 @@ var KNOWN_LABELS=[
 var REQUIRED={accommodation:["name","checkIn","checkOut"],flight:["airline","from","to","depDate"],car:["company","pickupLocation","pickupDate"],activity:["name","date"]};
 var FIELD_LABELS={name:"Name",airline:"Airline",from:"Departure airport",to:"Arrival airport",depDate:"Departure date",company:"Rental company",pickupLocation:"Pickup location",pickupDate:"Pickup date",checkIn:"Check-in",checkOut:"Check-out",date:"Date",vendorPhone:"Phone",vendorEmail:"Email",paymentStatus:"Payment status",amountDue:"Amount due ($)",bookingPlatform:"Booked via",confirmation:"Confirmation #"};
 
-var _currSym="$";
+var _currSym="$"; var _currCode="USD";
+var EXCH={USD:1,EUR:0.93,ILS:3.73};
 function safeNum(v){var n=parseFloat(v);return isNaN(n)?0:n;}
-function fmt$(v){if(v===""||v===null||v===undefined)return"-";return _currSym+safeNum(v).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});}
+function fmt$(v){if(v===""||v===null||v===undefined)return"-";var n=safeNum(v)*(EXCH[_currCode]||1);return _currSym+Math.round(n).toLocaleString("en-US");}
 function entryDue(e){var ps=e.paymentStatus||"paid";if(ps==="paid")return 0;if(ps==="partially_paid")return safeNum(e.amountDue);return safeNum(e.totalCost||e.cost);}
 function nights(a,b){if(!a||!b)return 0;var d=(new Date(b)-new Date(a))/86400000;return d>0?d:0;}
 function fmtD(v){if(!v||v==="-")return"-";var p=v.split("-");return p.length===3?p[2]+"-"+p[1]+"-"+p[0]:v;}
@@ -710,13 +711,7 @@ function TableView(props){
   var rzRef=useRef({active:false,startX:0,startW:0,key:""});
   var ptDragI=useRef(null),ptDragO=useRef(null);
   var ptColsS=useState(function(){return{accommodations:TABLE_CDEFS.accommodations.slice(),flights:TABLE_CDEFS.flights.slice(),cars:TABLE_CDEFS.cars.slice(),activities:TABLE_CDEFS.activities.slice()};}); var ptCols=ptColsS[0],setPtCols=ptColsS[1];
-  useEffect(function(){
-    function onMove(e){var r=rzRef.current;if(!r.active)return;var nw=Math.max(40,r.startW+(e.clientX-r.startX));setCW(function(p){var n=Object.assign({},p);n[r.key]=nw;return n;});}
-    function onUp(){rzRef.current.active=false;}
-    document.addEventListener("mousemove",onMove);
-    document.addEventListener("mouseup",onUp);
-    return function(){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);};
-  },[]);
+  // resize handled via setPointerCapture on each handle (no document listeners needed)
   function ts(k){if(sk===k)setSd(function(d){return d==="asc"?"desc":"asc";});else{setSk(k);setSd("asc");}}
   function getSD(e){return e.checkIn||e.depDate||e.pickupDate||e.date||"";}
   function getN(e){return(e.name||e.airline||e.company||"").toLowerCase();}
@@ -767,7 +762,7 @@ function TableView(props){
       style:{padding:"10px 12px",textAlign:"left",color:p.sK&&sk===p.sK?"#f1f5f9":"#94a3b8",fontWeight:600,whiteSpace:"nowrap",cursor:p.sK?"pointer":p.drag?"grab":"default",userSelect:"none",borderRight:"1px solid #1e293b",position:"relative",width:w?w+"px":undefined,boxSizing:"border-box"}
     },p.label,p.sK?h("span",null,sk===p.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"",
     h("div",{style:{position:"absolute",right:0,top:0,bottom:0,width:5,cursor:"col-resize",zIndex:2,background:"transparent"},
-      onMouseDown:function(e){e.stopPropagation();e.preventDefault();rzRef.current={active:true,startX:e.clientX,startW:e.target.parentElement.offsetWidth,key:wk};}})
+      onPointerDown:function(e){e.stopPropagation();e.preventDefault();var div=e.currentTarget,th=div.parentElement,wasDrag=th.draggable,sx=e.clientX,sw=th.offsetWidth,key=wk;th.draggable=false;div.setPointerCapture(e.pointerId);div.onpointermove=function(ev){var nw=Math.max(40,sw+(ev.clientX-sx));setCW(function(p){var n=Object.assign({},p);n[key]=nw;return n;});};div.onpointerup=function(){th.draggable=wasDrag;div.onpointermove=null;div.onpointerup=null;};}})
     );
   }
   var srcEntries=tab==="all"?acc.concat(flt,car,act):tab==="accommodations"?acc:tab==="flights"?flt:tab==="cars"?car:act;
@@ -830,7 +825,7 @@ function TableView(props){
             style:{padding:"10px 12px",textAlign:"left",color:col.sK&&sk===col.sK?"#f1f5f9":"#94a3b8",fontWeight:600,whiteSpace:"nowrap",cursor:col.sK?"pointer":"grab",userSelect:"none",borderRight:"1px solid #1e293b",position:"relative",width:w?w+"px":undefined,boxSizing:"border-box"}
           },col.h,col.sK?h("span",null,sk===col.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"",
           h("div",{style:{position:"absolute",right:0,top:0,bottom:0,width:5,cursor:"col-resize",zIndex:2,background:"transparent"},
-            onMouseDown:function(e){e.stopPropagation();e.preventDefault();rzRef.current={active:true,startX:e.clientX,startW:e.target.parentElement.offsetWidth,key:wk};}})
+            onPointerDown:function(e){e.stopPropagation();e.preventDefault();var div=e.currentTarget,th=div.parentElement,wasDrag=th.draggable,sx=e.clientX,sw=th.offsetWidth,key=wk;th.draggable=false;div.setPointerCapture(e.pointerId);div.onpointermove=function(ev){var nw=Math.max(40,sw+(ev.clientX-sx));setCW(function(p){var n=Object.assign({},p);n[key]=nw;return n;});};div.onpointerup=function(){th.draggable=wasDrag;div.onpointermove=null;div.onpointerup=null;};}})
           );
         }),
         h("th",{style:{padding:"10px 12px",color:"#94a3b8",fontWeight:600}},"Actions")
@@ -976,7 +971,7 @@ function App(){
       var hasActive=savedActive&&tripList.filter(function(t){return t.id===savedActive;}).length>0;
       setActiveTripIdRaw(hasActive?savedActive:(tripList[0]&&tripList[0].id)||null);
       setLoaded(true);
-      var savedCur=storeGet("currency_pref");if(savedCur){var _cs=savedCur==="EUR"?"€":savedCur==="ILS"?"₪":"$";_currSym=_cs;setCurrencyRaw(savedCur);}
+      var savedCur=storeGet("currency_pref");if(savedCur){var _cs=savedCur==="EUR"?"€":savedCur==="ILS"?"₪":"$";_currSym=_cs;_currCode=savedCur;setCurrencyRaw(savedCur);}
       // Subscribe to real-time updates from Firestore
       if(typeof db!=="undefined"&&db&&auth&&auth.currentUser){
         var uid=auth.currentUser.uid;
@@ -995,7 +990,7 @@ function App(){
 
   function saveTrips(updated){setTripsRaw(updated);storeSet("trips_index",updated);}
   function setActiveTripId(id){setActiveTripIdRaw(id);storeSet("active_trip_id",id);}
-  function setCurrency(c){var sym=c==="EUR"?"€":c==="ILS"?"₪":"$";_currSym=sym;setCurrencyRaw(c);storeSet("currency_pref",c);}
+  function setCurrency(c){var sym=c==="EUR"?"€":c==="ILS"?"₪":"$";_currSym=sym;_currCode=c;setCurrencyRaw(c);storeSet("currency_pref",c);}
   var activeTrip=useMemo(function(){return trips.filter(function(t){return t.id===activeTripId;})[0]||trips[0]||null;},[trips,activeTripId]);
   var acc=activeTrip&&activeTrip.acc||[];
   var flt=activeTrip&&activeTrip.flt||[];
@@ -1122,7 +1117,8 @@ function App(){
             trips.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:8,marginLeft:16}},
               h("div",{style:{display:"flex",gap:4,background:"#0f172a",borderRadius:8,padding:3,flexWrap:"wrap"}},trips.map(function(t){return h("button",{key:t.id,onClick:function(){setActiveTripId(t.id);setSearch("");},style:{padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:activeTripId===t.id?"#6366f1":"transparent",color:activeTripId===t.id?"#fff":"#94a3b8",whiteSpace:"nowrap",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},t.name);})),
               h("button",{onClick:function(){setTripMgr(true);},title:"Manage trips",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:13}},"⚙️"),
-              h("select",{value:currency,onChange:function(e){setCurrency(e.target.value);},title:"Currency",style:{background:"#0f172a",border:"1px solid #334155",borderRadius:6,padding:"4px 6px",color:"#94a3b8",fontSize:12,cursor:"pointer"}},CURRENCIES.map(function(c){return h("option",{key:c.code,value:c.code},c.sym+" "+c.code);})),
+              h("span",{title:"Exchange rates: 1 USD = 0.93 EUR / 3.73 ILS (approx)",style:{fontSize:10,color:"#475569",cursor:"help"}},"≈"),
+              h("select",{value:currency,onChange:function(e){setCurrency(e.target.value);},title:"Currency (amounts stored in USD, converted for display)",style:{background:"#0f172a",border:"1px solid #334155",borderRadius:6,padding:"4px 6px",color:"#94a3b8",fontSize:12,cursor:"pointer"}},CURRENCIES.map(function(c){return h("option",{key:c.code,value:c.code},c.sym+" "+c.code);})),
               user&&h("button",{onClick:function(){if(auth)auth.signOut();},title:"Sign out",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:12}},user.photoURL?h("img",{src:user.photoURL,style:{width:20,height:20,borderRadius:"50%",verticalAlign:"middle"}}):"Sign out")
             )
           ),
