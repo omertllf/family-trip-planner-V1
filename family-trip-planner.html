@@ -78,6 +78,26 @@ function matchesSearch(e,q){
   var lq=q.toLowerCase();
   return[e.name,e.airline,e.company,e.from,e.to,e.address,e.location,e.pickupLocation,e.dropoffLocation,e.notes,e.confirmation,e.bookingRef,e.flightNo,e.category,e.platform,e.contact,e.vendorPhone,e.vendorEmail,e.bookingPlatform].some(function(f){return f&&String(f).toLowerCase().indexOf(lq)>=0;});
 }
+function normStr(s){return(s||"").toLowerCase().replace(/[^a-z0-9]/g," ").replace(/\s+/g," ").trim();}
+function strMatch(a,b){
+  var na=normStr(a),nb=normStr(b);
+  if(!na||!nb)return false;
+  if(na===nb)return true;
+  var ml=Math.min(na.length,nb.length);
+  return ml>=5&&(na.slice(0,ml)===nb.slice(0,ml)||na.indexOf(nb)>=0||nb.indexOf(na)>=0);
+}
+function isDuplicate(entry,pool){
+  return pool.some(function(e){
+    if(e.type!==entry.type)return false;
+    if(entry.confirmation&&e.confirmation&&String(entry.confirmation)===String(e.confirmation))return true;
+    if(entry.bookingRef&&e.bookingRef&&String(entry.bookingRef)===String(e.bookingRef))return true;
+    if(entry.type==="accommodation")return entry.checkIn&&e.checkIn&&entry.checkIn===e.checkIn&&strMatch(entry.name,e.name);
+    if(entry.type==="flight"){var sd=entry.depDate&&e.depDate&&entry.depDate===e.depDate;var sa=strMatch(entry.airline,e.airline);var sf=entry.flightNo&&e.flightNo&&entry.flightNo===e.flightNo;var sr=strMatch(entry.from,e.from)&&strMatch(entry.to,e.to);return sd&&sa&&(sf||sr);}
+    if(entry.type==="car")return entry.pickupDate&&e.pickupDate&&entry.pickupDate===e.pickupDate&&strMatch(entry.company,e.company);
+    if(entry.type==="activity")return entry.date&&e.date&&entry.date===e.date&&strMatch(entry.name,e.name);
+    return false;
+  });
+}
 function validate(item){
   var errors={};
   (REQUIRED[item.type]||[]).forEach(function(k){if(!item[k]||String(item[k]).trim()==="")errors[k]=FIELD_LABELS[k]+" is required";});
@@ -222,13 +242,14 @@ function FTextarea(props){
 
 // ── Gmail Bridge ─────────────────────────────────────────────────
 function GmailBridgeModal(props){
-  var onClose=props.onClose,onImportEntries=props.onImportEntries;
+  var onClose=props.onClose,onImportEntries=props.onImportEntries,existingEntries=props.existingEntries||[];
   var stepS=useState("pick"); var step=stepS[0],setStep=stepS[1];
   var lblS=useState(KNOWN_LABELS[0]); var selLabel=lblS[0],setSelLabel=lblS[1];
   var pasteS=useState(""); var pasteText=pasteS[0],setPasteText=pasteS[1];
   var errS=useState(""); var parseErr=errS[0],setParseErr=errS[1];
   var prevS=useState(null); var preview=prevS[0],setPreview=prevS[1];
   var selS=useState(new Set()); var selectedIds=selS[0],setSelectedIds=selS[1];
+  var dcS=useState(0); var dupCount=dcS[0],setDupCount=dcS[1];
 
   function handleSend(){
     var prompt='GMAIL_IMPORT_REQUEST label="'+selLabel.name+'" labelId='+selLabel.id+'\n\nScan my Gmail label and extract ALL travel bookings. Extract every available detail from each email. Return ONLY:\n\n```gmail_import\n{"entries":[...]}\n```\n\nSchema (YYYY-MM-DD dates, paymentStatus: paid/partially_paid/unpaid):\naccommodation:{type,name,platform,checkIn,checkOut,address,vendorPhone,vendorEmail,url,confirmation,totalCost,costPerNight,amountDue,paymentStatus,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,amountDue,paymentStatus,bookingPlatform,bookingRef,vendorPhone,vendorEmail,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\nactivity:{type,name,category,date,duration,location,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\n\nIMPORTANT: For each booking thread found, call get_thread to read the full message body before extracting data. Extract phone numbers, email addresses, property addresses, and exact costs from the full email text. Detect payment status from language like paid-in-full, balance-due, payment-required. One entry per booking, not per email. Do not merge different bookings.';
@@ -260,9 +281,20 @@ function GmailBridgeModal(props){
         }
       }
       if(!json.entries||!Array.isArray(json.entries))throw new Error("Missing entries array.");
-      var withIds=json.entries.map(function(e,i){return Object.assign({},e,{id:Date.now()+i+Math.random()});});
+      var seenPool=existingEntries.slice();
+      var withIds=json.entries.map(function(e,i){
+        var entry=Object.assign({},e,{id:Date.now()+i+Math.random()});
+        var dupExisting=isDuplicate(entry,existingEntries);
+        var dupBatch=isDuplicate(entry,seenPool);
+        entry._dup=dupExisting||dupBatch;
+        entry._dupReason=dupExisting?"Already in app":dupBatch?"Duplicate in batch":"";
+        if(!entry._dup)seenPool.push(entry);
+        return entry;
+      });
+      var dc=withIds.filter(function(e){return e._dup;}).length;
+      setDupCount(dc);
       setPreview(withIds);
-      setSelectedIds(new Set(withIds.map(function(e){return e.id;})));
+      setSelectedIds(new Set(withIds.filter(function(e){return !e._dup;}).map(function(e){return e.id;})));
       setStep("preview");
     }catch(e){setParseErr("Error: "+e.message);}
   }
@@ -320,7 +352,10 @@ function GmailBridgeModal(props){
   );
   if(step==="preview"&&preview) return h(Overlay,{onClose:onClose},
     h(MH,{title:"✈️ Review Bookings",onClose:onClose}),
-    h("div",{style:{fontSize:13,color:"#94a3b8",marginBottom:12}},h("strong",{style:{color:"#e2e8f0"}},preview.length+" bookings")," — select which to import."),
+    h("div",{style:{fontSize:13,color:"#94a3b8",marginBottom:12}},
+    h("strong",{style:{color:"#e2e8f0"}},preview.length+" bookings")," — select which to import.",
+    dupCount>0&&h("span",{style:{marginLeft:8,background:"#92400e",color:"#fde68a",borderRadius:4,padding:"2px 8px",fontSize:11,fontWeight:700}},"⚠ "+dupCount+" duplicate"+(dupCount>1?"s":"")+" auto-deselected")
+  ),
     h("div",{style:{display:"flex",gap:8,marginBottom:12}},
       h("button",{onClick:function(){setSelectedIds(new Set(preview.map(function(e){return e.id;})));},style:{fontSize:11,color:"#6366f1",background:"none",border:"none",cursor:"pointer"}},"Select all"),
       h("button",{onClick:function(){setSelectedIds(new Set());},style:{fontSize:11,color:"#64748b",background:"none",border:"none",cursor:"pointer"}},"Deselect all")
@@ -328,12 +363,13 @@ function GmailBridgeModal(props){
     h("div",{style:{maxHeight:380,overflowY:"auto",marginBottom:16}},
       preview.map(function(e){
         var checked=selectedIds.has(e.id);
-        return h("div",{key:e.id,onClick:function(){toggleEntry(e.id);},style:{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:8,border:"1px solid "+(checked?"#334155":"#1e293b"),background:checked?"#0f172a":"transparent",cursor:"pointer",marginBottom:6}},
+        return h("div",{key:e.id,onClick:function(){toggleEntry(e.id);},style:{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:8,border:"1px solid "+(e._dup?"#92400e":checked?"#334155":"#1e293b"),background:checked?"#0f172a":"transparent",cursor:"pointer",marginBottom:6,opacity:e._dup&&!checked?0.55:1}},
           h("div",{style:{marginTop:2,width:16,height:16,borderRadius:4,border:"2px solid "+(checked?"#6366f1":"#475569"),background:checked?"#6366f1":"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},checked&&h("span",{style:{color:"#fff",fontSize:10,fontWeight:700}},"✓")),
           h("div",{style:{flex:1,minWidth:0}},
             h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:3,flexWrap:"wrap"}},
               h("span",{style:{background:COLORS[e.type]||COLORS.activity,borderRadius:4,padding:"2px 7px",fontSize:11,color:"#fff",fontWeight:600}},typeIcon(e.type)+" "+typeLabel(e.type)),
-              h("span",{style:{fontSize:13,color:"#e2e8f0",fontWeight:600}},e.name||e.airline||e.company||"")
+              e._dup&&h("span",{style:{background:"#92400e",color:"#fde68a",borderRadius:4,padding:"2px 6px",fontSize:10,fontWeight:700}},"⚠ "+e._dupReason),
+              h("span",{style:{fontSize:13,color:e._dup?"#94a3b8":"#e2e8f0",fontWeight:600}},e.name||e.airline||e.company||"")
             ),
             h("div",{style:{fontSize:12,color:"#64748b"}},fmtD(e.checkIn||e.depDate||e.pickupDate||e.date||""),(e.checkOut||e.arrDate||e.dropoffDate)?" → "+fmtD(e.checkOut||e.arrDate||e.dropoffDate):"",(e.totalCost||e.cost)?" • "+fmt$(e.totalCost||e.cost):"",e.confirmation?" • #"+e.confirmation:""),
             e.notes&&h("div",{style:{fontSize:11,color:"#475569",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},e.notes)
@@ -937,7 +973,11 @@ function App(){
   }
   function importEntries(entries){
     var byType={accommodation:[],flight:[],car:[],activity:[]};
-    entries.forEach(function(e){if(byType[e.type])byType[e.type].push(e);});
+    var allExisting=acc.concat(flt,car,act);
+    var accepted=[];
+    entries.forEach(function(e){
+      if(!isDuplicate(e,allExisting)&&!isDuplicate(e,accepted)){accepted.push(e);if(byType[e.type])byType[e.type].push(e);}
+    });
     updateTrip(function(t){
       return Object.assign({},t,{
         acc:byType.accommodation.length?(t.acc||[]).concat(byType.accommodation):(t.acc||[]),
@@ -1041,7 +1081,7 @@ function App(){
     ),
     pdfPreview&&h(PDFPreviewModal,{html:buildPrintHTML(tab,acc,flt,car,act,activeTrip&&activeTrip.name),onClose:function(){setPdfPreview(false);}}),
     tripMgr&&h(TripManagerModal,{trips:trips,activeTripId:activeTripId,onClose:function(){setTripMgr(false);},onCreate:createTrip,onRename:renameTrip,onDelete:deleteTrip,onSwitch:function(id){setActiveTripId(id);setTripMgr(false);setSearch("");}}),
-    gmailModal&&h(GmailBridgeModal,{onClose:function(){setGmailModal(false);},onImportEntries:importEntries}),
+    gmailModal&&h(GmailBridgeModal,{onClose:function(){setGmailModal(false);},onImportEntries:importEntries,existingEntries:allE}),
     typePicker&&h(Overlay,{onClose:function(){setTypePicker(false);}},
       h(MH,{title:"What would you like to add?",onClose:function(){setTypePicker(false);}}),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
