@@ -944,6 +944,7 @@ function App(){
   var t12=useState(false); var gmailModal=t12[0],setGmailModal=t12[1];
   var t13=useState("USD"); var currency=t13[0],setCurrencyRaw=t13[1];
   var t14=useState(""); var dedupMsg=t14[0],setDedupMsg=t14[1];
+  var t15=useState({status:"loading",date:""}); var ratesInfo=t15[0],setRatesInfo=t15[1];
 
   // Auth state listener
   useEffect(function(){
@@ -988,6 +989,25 @@ function App(){
     })();
   },[]);
 
+  useEffect(function(){
+    try{
+      var cached=JSON.parse(localStorage.getItem("exch_cache")||"null");
+      if(cached&&cached.ts&&(Date.now()-cached.ts)<3600000){
+        EXCH.EUR=cached.EUR;EXCH.ILS=cached.ILS;
+        setRatesInfo({status:"ok",date:cached.date});
+        return;
+      }
+    }catch(ex){}
+    fetch("https://api.frankfurter.app/latest?from=USD&to=EUR,ILS")
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(!d.rates)throw new Error("bad response");
+        EXCH.EUR=d.rates.EUR;EXCH.ILS=d.rates.ILS;
+        try{localStorage.setItem("exch_cache",JSON.stringify({EUR:d.rates.EUR,ILS:d.rates.ILS,date:d.date,ts:Date.now()}));}catch(ex){}
+        setRatesInfo({status:"ok",date:d.date});
+      })
+      .catch(function(){setRatesInfo({status:"err",date:""});});
+  },[]);
   function saveTrips(updated){setTripsRaw(updated);storeSet("trips_index",updated);}
   function setActiveTripId(id){setActiveTripIdRaw(id);storeSet("active_trip_id",id);}
   function setCurrency(c){var sym=c==="EUR"?"€":c==="ILS"?"₪":"$";_currSym=sym;_currCode=c;setCurrencyRaw(c);storeSet("currency_pref",c);}
@@ -1117,7 +1137,10 @@ function App(){
             trips.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:8,marginLeft:16}},
               h("div",{style:{display:"flex",gap:4,background:"#0f172a",borderRadius:8,padding:3,flexWrap:"wrap"}},trips.map(function(t){return h("button",{key:t.id,onClick:function(){setActiveTripId(t.id);setSearch("");},style:{padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:activeTripId===t.id?"#6366f1":"transparent",color:activeTripId===t.id?"#fff":"#94a3b8",whiteSpace:"nowrap",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},t.name);})),
               h("button",{onClick:function(){setTripMgr(true);},title:"Manage trips",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:13}},"⚙️"),
-              h("span",{title:"Exchange rates: 1 USD = 0.93 EUR / 3.73 ILS (approx)",style:{fontSize:10,color:"#475569",cursor:"help"}},"≈"),
+              h("span",{
+  title:ratesInfo.status==="ok"?"Live ECB rates as of "+ratesInfo.date+" (1h cache)":ratesInfo.status==="err"?"Could not fetch live rates — using approximate fallback":"Fetching live exchange rates...",
+  style:{fontSize:11,cursor:"help",color:ratesInfo.status==="ok"?"#4ade80":ratesInfo.status==="err"?"#fbbf24":"#475569",marginRight:2}
+},ratesInfo.status==="loading"?"⟳":ratesInfo.status==="ok"?"●":"≈"),
               h("select",{value:currency,onChange:function(e){setCurrency(e.target.value);},title:"Currency (amounts stored in USD, converted for display)",style:{background:"#0f172a",border:"1px solid #334155",borderRadius:6,padding:"4px 6px",color:"#94a3b8",fontSize:12,cursor:"pointer"}},CURRENCIES.map(function(c){return h("option",{key:c.code,value:c.code},c.sym+" "+c.code);})),
               user&&h("button",{onClick:function(){if(auth)auth.signOut();},title:"Sign out",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:12}},user.photoURL?h("img",{src:user.photoURL,style:{width:20,height:20,borderRadius:"50%",verticalAlign:"middle"}}):"Sign out")
             )
