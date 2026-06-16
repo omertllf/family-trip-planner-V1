@@ -998,13 +998,14 @@ function App(){
         return;
       }
     }catch(ex){}
-    fetch("https://api.frankfurter.app/latest?from=USD&to=EUR,ILS")
+    fetch("https://open.er-api.com/v6/latest/USD")
       .then(function(r){return r.json();})
       .then(function(d){
-        if(!d.rates)throw new Error("bad response");
+        if(!d.rates||d.result==="error")throw new Error("bad response");
         EXCH.EUR=d.rates.EUR;EXCH.ILS=d.rates.ILS;
-        try{localStorage.setItem("exch_cache",JSON.stringify({EUR:d.rates.EUR,ILS:d.rates.ILS,date:d.date,ts:Date.now()}));}catch(ex){}
-        setRatesInfo({status:"ok",date:d.date});
+        var date=new Date(d.time_last_update_unix*1000).toISOString().slice(0,10);
+        try{localStorage.setItem("exch_cache",JSON.stringify({EUR:d.rates.EUR,ILS:d.rates.ILS,date:date,ts:Date.now()}));}catch(ex){}
+        setRatesInfo({status:"ok",date:date});
       })
       .catch(function(){setRatesInfo({status:"err",date:""});});
   },[]);
