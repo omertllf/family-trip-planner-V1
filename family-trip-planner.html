@@ -89,14 +89,36 @@ function strMatch(a,b){
 function isDuplicate(entry,pool){
   return pool.some(function(e){
     if(e.type!==entry.type)return false;
-    if(entry.confirmation&&e.confirmation&&String(entry.confirmation)===String(e.confirmation))return true;
-    if(entry.bookingRef&&e.bookingRef&&String(entry.bookingRef)===String(e.bookingRef))return true;
+    var ec=entry.confirmation,ec2=e.confirmation,er=entry.bookingRef,er2=e.bookingRef;
+    if(entry.type==="accommodation"||entry.type==="car"||entry.type==="activity"){
+      if(ec&&ec2&&String(ec)===String(ec2))return true;
+      if(er&&er2&&String(er)===String(er2))return true;
+    }
     if(entry.type==="accommodation")return entry.checkIn&&e.checkIn&&entry.checkIn===e.checkIn&&strMatch(entry.name,e.name);
-    if(entry.type==="flight"){var sd=entry.depDate&&e.depDate&&entry.depDate===e.depDate;var sa=strMatch(entry.airline,e.airline);var sf=entry.flightNo&&e.flightNo&&entry.flightNo===e.flightNo;var sr=strMatch(entry.from,e.from)&&strMatch(entry.to,e.to);return sd&&sa&&(sf||sr);}
+    if(entry.type==="flight"){
+      var sa=strMatch(entry.airline,e.airline);
+      var sf=entry.flightNo&&e.flightNo&&entry.flightNo===e.flightNo;
+      var sd=entry.depDate&&e.depDate&&entry.depDate===e.depDate;
+      var sr=strMatch(entry.from,e.from)&&strMatch(entry.to,e.to);
+      var sbr=er&&er2&&String(er)===String(er2);
+      if(sa&&sf)return true;                    // same flight number
+      if(sa&&sd&&sr)return true;                // same airline+date+route
+      if(sbr&&sa&&sr&&!sf)return true;          // same ref+airline+route (EL AL no flightNo)
+      return false;
+    }
     if(entry.type==="car")return entry.pickupDate&&e.pickupDate&&entry.pickupDate===e.pickupDate&&strMatch(entry.company,e.company);
     if(entry.type==="activity")return entry.date&&e.date&&entry.date===e.date&&strMatch(entry.name,e.name);
     return false;
   });
+}
+function mergeEntries(a,b){
+  var m=Object.assign({},a);
+  Object.keys(b).forEach(function(k){
+    if(k==="id"||k==="_dup"||k==="_dupReason")return;
+    var av=m[k],bv=b[k];
+    if((av===null||av===undefined||av===""||av===false)&&(bv!==null&&bv!==undefined&&bv!==""&&bv!==false))m[k]=bv;
+  });
+  return m;
 }
 function validate(item){
   var errors={};
@@ -887,6 +909,7 @@ function App(){
   var t11=useState(""); var search=t11[0],setSearch=t11[1];
   var t12=useState(false); var gmailModal=t12[0],setGmailModal=t12[1];
   var t13=useState("USD"); var currency=t13[0],setCurrencyRaw=t13[1];
+  var t14=useState(""); var dedupMsg=t14[0],setDedupMsg=t14[1];
 
   // Auth state listener
   useEffect(function(){
@@ -961,6 +984,22 @@ function App(){
     else if(type==="car")setCar(car.filter(function(x){return String(x.id)!==String(id);}));
     else if(type==="activity")setAct(act.filter(function(x){return String(x.id)!==String(id);}));
     setModal(null);
+  }
+  function dedupeExisting(){
+    function dedupeArr(arr){
+      var kept=[];
+      arr.forEach(function(e){
+        var di=-1;
+        for(var i=0;i<kept.length;i++){if(isDuplicate(e,[kept[i]])){di=i;break;}}
+        if(di===-1){kept.push(Object.assign({},e));}
+        else{kept[di]=mergeEntries(kept[di],e);}
+      });
+      return kept;
+    }
+    var na=dedupeArr(acc.slice()),nf=dedupeArr(flt.slice()),nc=dedupeArr(car.slice()),nac=dedupeArr(act.slice());
+    var removed=(acc.length-na.length)+(flt.length-nf.length)+(car.length-nc.length)+(act.length-nac.length);
+    if(removed>0){updateTrip(function(t){return Object.assign({},t,{acc:na,flt:nf,car:nc,act:nac});});}
+    return removed;
   }
   function save(item){
     var type=item.type;
@@ -1065,11 +1104,17 @@ function App(){
           ),
           h("button",{onClick:function(){setPdfPreview(true);},style:{padding:"7px 14px",borderRadius:8,border:"1px solid #334155",cursor:"pointer",background:"transparent",color:"#94a3b8",fontWeight:600,fontSize:13}},"📄 PDF"),
           h("button",{onClick:function(){setImp("backup");},style:{padding:"7px 14px",borderRadius:8,border:"1px solid #334155",cursor:"pointer",background:"transparent",color:"#94a3b8",fontWeight:600,fontSize:13}},"💾 Backup"),
+          h("button",{onClick:function(){
+            var n=dedupeExisting();
+            setDedupMsg(n>0?n+" duplicate"+(n!==1?"s":"")+" removed ✓":"No duplicates found");
+            setTimeout(function(){setDedupMsg("");},3500);
+          },style:{padding:"7px 14px",borderRadius:8,border:"1px solid #334155",cursor:"pointer",background:"transparent",color:"#34d399",fontWeight:600,fontSize:13}},"🧹 De-dup"),
           h("button",{onClick:function(){setImp(true);},style:{padding:"7px 14px",borderRadius:8,border:"1px solid #334155",cursor:"pointer",background:"transparent",color:"#94a3b8",fontWeight:600,fontSize:13}},"⬆️ Import"),
           h("button",{onClick:function(){setGmailModal(true);},style:{padding:"7px 14px",borderRadius:8,border:"1px solid #1a4a3a",cursor:"pointer",background:"#0d2b22",color:"#34d399",fontWeight:600,fontSize:13}},"📧 Gmail"),
           h("button",{onClick:function(){openNew();},style:{padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",background:"#6366f1",color:"#fff",fontWeight:600,fontSize:13}},"+ Add")
         )
       ),
+      dedupMsg&&h("div",{style:{marginBottom:10,background:"#14532d",borderRadius:6,padding:"8px 14px",fontSize:13,color:"#4ade80",fontWeight:600}},dedupMsg),
       view==="table"&&h("div",{style:{marginBottom:14,position:"relative"}},
         h("input",{type:"text",value:search,onChange:function(e){setSearch(e.target.value);},placeholder:"Search by name, location, airline, notes, confirmation...",style:{width:"100%",background:"#1e293b",border:"1px solid #334155",borderRadius:8,padding:"9px 14px 9px 38px",color:"#e2e8f0",fontSize:13,boxSizing:"border-box"}}),
         h("span",{style:{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#475569"}},"🔍"),
