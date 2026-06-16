@@ -79,6 +79,8 @@ function matchesSearch(e,q){
   return[e.name,e.airline,e.company,e.from,e.to,e.address,e.location,e.pickupLocation,e.dropoffLocation,e.notes,e.confirmation,e.bookingRef,e.flightNo,e.category,e.platform,e.contact,e.vendorPhone,e.vendorEmail,e.bookingPlatform].some(function(f){return f&&String(f).toLowerCase().indexOf(lq)>=0;});
 }
 function normStr(s){return(s||"").toLowerCase().replace(/[^a-z0-9]/g," ").replace(/\s+/g," ").trim();}
+function normConf(s){return String(s||"").replace(/[\s\/\-\.]/g,"").toLowerCase();}
+function confMatch(a,b){if(!a||!b)return false;var na=normConf(a),nb=normConf(b);if(!na||!nb)return false;return na===nb||na.indexOf(nb)>=0||nb.indexOf(na)>=0;}
 function strMatch(a,b){
   var na=normStr(a),nb=normStr(b);
   if(!na||!nb)return false;
@@ -91,8 +93,8 @@ function isDuplicate(entry,pool){
     if(e.type!==entry.type)return false;
     var ec=entry.confirmation,ec2=e.confirmation,er=entry.bookingRef,er2=e.bookingRef;
     if(entry.type==="accommodation"||entry.type==="car"||entry.type==="activity"){
-      if(ec&&ec2&&String(ec)===String(ec2))return true;
-      if(er&&er2&&String(er)===String(er2))return true;
+      if(ec&&ec2&&confMatch(ec,ec2))return true;
+      if(er&&er2&&confMatch(er,er2))return true;
     }
     if(entry.type==="accommodation")return entry.checkIn&&e.checkIn&&entry.checkIn===e.checkIn&&strMatch(entry.name,e.name);
     if(entry.type==="flight"){
@@ -437,7 +439,9 @@ function EntryModal(props){
   var nts=et==="accommodation"?nights(item.checkIn,item.checkOut):0;
 
   function onChange(k,v){
-    var ni=Object.assign({},item); ni[k]=v; setItem(ni);
+    var ni=Object.assign({},item); ni[k]=v;
+    if(k==="paymentStatus"&&v==="paid")ni.amountDue="";
+    setItem(ni);
     if(touched[k])setErrors(validate(ni));
   }
   function onBlur(k){
@@ -686,6 +690,12 @@ function PDFPreviewModal(props){
   );
 }
 
+var TABLE_CDEFS={
+  accommodations:[{h:"Name",k:"name",f:null,sK:"name"},{h:"Platform",k:"platform"},{h:"Check-In",k:"checkIn",f:"date",sK:"date"},{h:"Check-Out",k:"checkOut",f:"date",sK:"endDate"},{h:"Nights",k:"_nts",f:"nts"},{h:"Cost/Night",k:"costPerNight",f:"$"},{h:"Cost",k:"totalCost",f:"$",sK:"cost"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Parking",k:"parking",f:"bool"},{h:"Kitchen",k:"kitchen",f:"bool"},{h:"Breakfast",k:"breakfast",f:"bool"},{h:"Address",k:"address",f:"addr"},{h:"City",k:"_city"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
+  flights:[{h:"Airline",k:"airline",sK:"name"},{h:"Flight#",k:"flightNo"},{h:"From",k:"from",f:"addr"},{h:"To",k:"to"},{h:"Dep Date",k:"depDate",f:"date",sK:"date"},{h:"Dep Time",k:"depTime"},{h:"Arr Date",k:"arrDate",f:"date",sK:"endDate"},{h:"Arr Time",k:"arrTime"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Ref",k:"bookingRef"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
+  cars:[{h:"Company",k:"company",sK:"name"},{h:"Type",k:"carType"},{h:"Pickup",k:"pickupLocation",f:"addr"},{h:"City",k:"_city"},{h:"Dropoff",k:"dropoffLocation",f:"addr"},{h:"Pickup Date",k:"pickupDate",f:"date",sK:"date"},{h:"Dropoff Date",k:"dropoffDate",f:"date",sK:"endDate"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
+  activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
+};
 // ── Table View ───────────────────────────────────────────────────
 function TableView(props){
   var tab=props.tab,acc=props.acc,flt=props.flt,car=props.car,act=props.act,search=props.search,onEdit=props.onEdit,onDelete=props.onDelete;
@@ -696,6 +706,17 @@ function TableView(props){
   var cols=colS[0],setCols=colS[1];
   var selS=useState(null); var selRowId=selS[0],setSelRowId=selS[1];
   var dragI=useRef(null),dragO=useRef(null);
+  var cwS=useState({}); var cw=cwS[0],setCW=cwS[1];
+  var rzRef=useRef({active:false,startX:0,startW:0,key:""});
+  var ptDragI=useRef(null),ptDragO=useRef(null);
+  var ptColsS=useState(function(){return{accommodations:TABLE_CDEFS.accommodations.slice(),flights:TABLE_CDEFS.flights.slice(),cars:TABLE_CDEFS.cars.slice(),activities:TABLE_CDEFS.activities.slice()};}); var ptCols=ptColsS[0],setPtCols=ptColsS[1];
+  useEffect(function(){
+    function onMove(e){var r=rzRef.current;if(!r.active)return;var nw=Math.max(40,r.startW+(e.clientX-r.startX));setCW(function(p){var n=Object.assign({},p);n[r.key]=nw;return n;});}
+    function onUp(){rzRef.current.active=false;}
+    document.addEventListener("mousemove",onMove);
+    document.addEventListener("mouseup",onUp);
+    return function(){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);};
+  },[]);
   function ts(k){if(sk===k)setSd(function(d){return d==="asc"?"desc":"asc";});else{setSk(k);setSd("asc");}}
   function getSD(e){return e.checkIn||e.depDate||e.pickupDate||e.date||"";}
   function getN(e){return(e.name||e.airline||e.company||"").toLowerCase();}
@@ -737,13 +758,17 @@ function TableView(props){
     );
   }
   function TH(p){
+    var wk="all::"+p.label; var w=cw[wk];
     return h("th",{draggable:!!p.drag,
       onDragStart:p.drag?function(e){dragI.current=p.i;e.dataTransfer.effectAllowed="move";}:null,
       onDragOver:p.drag?function(e){e.preventDefault();dragO.current=p.i;}:null,
       onDrop:p.drag?function(){var f=dragI.current,t=dragO.current;if(f===null||t===null||f===t)return;var n=cols.slice();var m=n.splice(f,1)[0];n.splice(t,0,m);setCols(n);dragI.current=null;dragO.current=null;}:null,
       onClick:p.sK?function(){ts(p.sK);}:null,
-      style:{padding:"10px 12px",textAlign:"left",color:p.sK&&sk===p.sK?"#f1f5f9":"#94a3b8",fontWeight:600,whiteSpace:"nowrap",cursor:p.sK?"pointer":p.drag?"grab":"default",userSelect:"none",borderRight:"1px solid #1e293b"}
-    },p.label,p.sK?h("span",null,sk===p.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"");
+      style:{padding:"10px 12px",textAlign:"left",color:p.sK&&sk===p.sK?"#f1f5f9":"#94a3b8",fontWeight:600,whiteSpace:"nowrap",cursor:p.sK?"pointer":p.drag?"grab":"default",userSelect:"none",borderRight:"1px solid #1e293b",position:"relative",width:w?w+"px":undefined,boxSizing:"border-box"}
+    },p.label,p.sK?h("span",null,sk===p.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"",
+    h("div",{style:{position:"absolute",right:0,top:0,bottom:0,width:5,cursor:"col-resize",zIndex:2,background:"transparent"},
+      onMouseDown:function(e){e.stopPropagation();e.preventDefault();rzRef.current={active:true,startX:e.clientX,startW:e.target.parentElement.offsetWidth,key:wk};}})
+    );
   }
   var srcEntries=tab==="all"?acc.concat(flt,car,act):tab==="accommodations"?acc:tab==="flights"?flt:tab==="cars"?car:act;
   var filtered=srcEntries.filter(function(e){return matchesSearch(e,search);});
@@ -787,14 +812,27 @@ function TableView(props){
     accommodations:[{h:"Name",k:"name",f:null,sK:"name"},{h:"Platform",k:"platform"},{h:"Check-In",k:"checkIn",f:"date",sK:"date"},{h:"Check-Out",k:"checkOut",f:"date",sK:"endDate"},{h:"Nights",k:"_nts",f:"nts"},{h:"Cost/Night",k:"costPerNight",f:"$"},{h:"Cost",k:"totalCost",f:"$",sK:"cost"},{h:"Parking",k:"parking",f:"bool"},{h:"Kitchen",k:"kitchen",f:"bool"},{h:"Breakfast",k:"breakfast",f:"bool"},{h:"Address",k:"address",f:"addr"},{h:"City",k:"_city"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
     flights:[{h:"Airline",k:"airline",sK:"name"},{h:"Flight#",k:"flightNo"},{h:"From",k:"from",f:"addr"},{h:"To",k:"to"},{h:"Dep Date",k:"depDate",f:"date",sK:"date"},{h:"Dep Time",k:"depTime"},{h:"Arr Date",k:"arrDate",f:"date",sK:"endDate"},{h:"Arr Time",k:"arrTime"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Ref",k:"bookingRef"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
     cars:[{h:"Company",k:"company",sK:"name"},{h:"Type",k:"carType"},{h:"Pickup",k:"pickupLocation",f:"addr"},{h:"City",k:"_city"},{h:"Dropoff",k:"dropoffLocation",f:"addr"},{h:"Pickup Date",k:"pickupDate",f:"date",sK:"date"},{h:"Dropoff Date",k:"dropoffDate",f:"date",sK:"endDate"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
-    activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"URL",k:"url",f:"link"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
+    activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
   };
-  var c=cdefs[tab]||cdefs.accommodations;
+  var c=(ptCols&&ptCols[tab])||TABLE_CDEFS[tab]||TABLE_CDEFS.accommodations;
   return h("div",{style:{overflowX:"auto",borderRadius:10,border:"1px solid #1e293b"}},
-    h("div",{style:{padding:"6px 12px",background:"#1e293b",borderBottom:"1px solid #334155",fontSize:11,color:"#475569"}},"Double-click to expand • Click row to highlight"+(search?" • "+rows.length+" of "+srcEntries.length+" entries":"")),
+    h("div",{style:{padding:"6px 12px",background:"#1e293b",borderBottom:"1px solid #334155",fontSize:11,color:"#475569"}},"↔ Drag headers to reorder • Drag edge to resize • Double-click cell to expand • Click row to highlight"+(search?" • "+rows.length+" of "+srcEntries.length+" entries":"")),
     h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
       h("thead",null,h("tr",{style:{background:"#1e293b"}},
-        c.map(function(col){return h("th",{key:col.h,onClick:col.sK?function(){ts(col.sK);}:null,style:{padding:"10px 12px",textAlign:"left",color:col.sK&&sk===col.sK?"#f1f5f9":"#94a3b8",fontWeight:600,whiteSpace:"nowrap",cursor:col.sK?"pointer":"default",userSelect:"none",borderRight:"1px solid #1e293b"}},col.h,col.sK?h("span",null,sk===col.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"");}),
+        c.map(function(col,ci){
+          var wk=tab+"::"+col.h; var w=cw[wk];
+          return h("th",{
+            key:col.h,draggable:true,
+            onDragStart:function(e){ptDragI.current=ci;e.dataTransfer.effectAllowed="move";},
+            onDragOver:function(e){e.preventDefault();ptDragO.current=ci;},
+            onDrop:function(){var f=ptDragI.current,t=ptDragO.current;if(f===null||t===null||f===t)return;setPtCols(function(prev){var nx=Object.assign({},prev);var arr=prev[tab].slice();var mv=arr.splice(f,1)[0];arr.splice(t,0,mv);nx[tab]=arr;return nx;});ptDragI.current=null;ptDragO.current=null;},
+            onClick:col.sK?function(){ts(col.sK);}:null,
+            style:{padding:"10px 12px",textAlign:"left",color:col.sK&&sk===col.sK?"#f1f5f9":"#94a3b8",fontWeight:600,whiteSpace:"nowrap",cursor:col.sK?"pointer":"grab",userSelect:"none",borderRight:"1px solid #1e293b",position:"relative",width:w?w+"px":undefined,boxSizing:"border-box"}
+          },col.h,col.sK?h("span",null,sk===col.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"",
+          h("div",{style:{position:"absolute",right:0,top:0,bottom:0,width:5,cursor:"col-resize",zIndex:2,background:"transparent"},
+            onMouseDown:function(e){e.stopPropagation();e.preventDefault();rzRef.current={active:true,startX:e.clientX,startW:e.target.parentElement.offsetWidth,key:wk};}})
+          );
+        }),
         h("th",{style:{padding:"10px 12px",color:"#94a3b8",fontWeight:600}},"Actions")
       )),
       h("tbody",null,rows.map(function(row,i){
@@ -804,6 +842,7 @@ function TableView(props){
         var bg=isSel?"#1e3a8a":iDD||iDN?(i%2===0?"#1c1408":"#1f1709"):(i%2===0?"#0f172a":"#111827");
         return h("tr",{key:row.id,onClick:function(){setSelRowId(isSel?null:row.id);},style:{background:bg,borderTop:"1px solid #1e293b",cursor:"pointer",outline:isSel?"2px solid #3b82f6":"none",outlineOffset:"-1px",transition:"background .1s"}},
           c.map(function(col){
+            var wk=tab+"::"+col.h; var w=cw[wk];
             var rv=col.k==="_nts"?nights(e.checkIn,e.checkOut):col.k==="_city"?cityOf(e.address||e.pickupLocation||e.location||""):e[col.k];
             var isN=col.k==="name"||col.k==="airline"||col.k==="company";
             var isD=col.k==="checkIn"||col.k==="depDate"||col.k==="pickupDate"||col.k==="date";
@@ -816,7 +855,7 @@ function TableView(props){
             else if(col.f==="addr")cell=h(XC,{val:rv||""});
             else if(col.f==="pay")cell=h(PayBadge,{status:rv||"paid"});
             else cell=h("span",{style:{display:"block",maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},rv||"-");
-            return h("td",{key:col.h,style:{padding:"9px 12px",color:"#e2e8f0",maxWidth:200,position:"relative"}},
+            return h("td",{key:col.h,style:{padding:"9px 12px",color:"#e2e8f0",maxWidth:w?undefined:200,width:w?w+"px":undefined,overflow:"hidden",position:"relative"}},
               isN?h(React_.Fragment,null,h(XC,{val:rv||""}),h(Dup,{show:iDN,t:"Duplicate name"})):cell,
               isD&&h(Dup,{show:iDD,t:"Duplicate date"})
             );
