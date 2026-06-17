@@ -1165,11 +1165,15 @@ function App(){
       h("p",{style:{margin:"0 0 32px",fontSize:14,color:"#64748b"}},"Sign in to access your trips"),
       h("button",{
         onClick:function(){if(auth){
-          if(/Mobi|Android|iPhone|iPad|Opera Mini/i.test(navigator.userAgent)){
-            auth.signInWithRedirect(googleProvider).catch(function(e){console.error("Redirect error:",e);setAuthError((e.code||"")+": "+(e.message||"Sign-in failed."));});
-          }else{
-            auth.signInWithPopup(googleProvider).catch(function(e){console.error("Sign in error:",e);setAuthError((e.code||"")+": "+(e.message||"Sign-in failed."));});
-          }
+          setAuthError("");
+          auth.signInWithPopup(googleProvider).catch(function(e){
+            console.error("Sign in error:",e);
+            if(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment"){
+              auth.signInWithRedirect(googleProvider).catch(function(e2){console.error("Redirect error:",e2);setAuthError((e2.code||"")+": "+(e2.message||"Sign-in failed."));});
+            }else{
+              setAuthError((e.code||"")+": "+(e.message||"Sign-in failed."));
+            }
+          });
         }},
         style:{width:"100%",padding:"12px 20px",borderRadius:10,border:"none",background:"#fff",color:"#1f2937",fontSize:15,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12}
       },
