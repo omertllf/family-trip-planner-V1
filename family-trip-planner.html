@@ -32,6 +32,7 @@ try{
   db=firebase.firestore();
   auth=firebase.auth();
   googleProvider=new firebase.auth.GoogleAuthProvider();
+  googleProvider.setCustomParameters({prompt:"select_account"});
 }catch(e){
   console.warn("Firebase failed to initialize (CDN unavailable?):",e.message);
 }
