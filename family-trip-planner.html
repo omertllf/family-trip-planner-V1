@@ -942,6 +942,7 @@ function App(){
   var t3=useState(false); var loaded=t3[0],setLoaded=t3[1];
   var t0=useState(null); var user=t0[0],setUser=t0[1];
   var ta=useState(true); var authLoading=ta[0],setAuthLoading=ta[1];
+  var taE=useState(""); var authError=taE[0],setAuthError=taE[1];
   var t4=useState("all"); var tab=t4[0],setTab=t4[1];
   var t5=useState("table"); var view=t5[0],setView=t5[1];
   var t6=useState(null); var modal=t6[0],setModal=t6[1];
@@ -963,7 +964,7 @@ function App(){
   // Auth state listener
   useEffect(function(){
     if(!auth){setAuthLoading(false);return;}
-    auth.getRedirectResult().catch(function(){});
+    auth.getRedirectResult().catch(function(e){console.error("Redirect result error:",e);setAuthError((e.code||"")+": "+(e.message||"Sign-in failed."));});
     var unsubAuth=auth.onAuthStateChanged(function(u){
       setUser(u);
       setAuthLoading(false);
@@ -1164,16 +1165,17 @@ function App(){
       h("button",{
         onClick:function(){if(auth){
           if(/Mobi|Android|iPhone|iPad|Opera Mini/i.test(navigator.userAgent)){
-            auth.signInWithRedirect(googleProvider).catch(function(e){console.error("Redirect error:",e);});
+            auth.signInWithRedirect(googleProvider).catch(function(e){console.error("Redirect error:",e);setAuthError((e.code||"")+": "+(e.message||"Sign-in failed."));});
           }else{
-            auth.signInWithPopup(googleProvider).catch(function(e){console.error("Sign in error:",e);});
+            auth.signInWithPopup(googleProvider).catch(function(e){console.error("Sign in error:",e);setAuthError((e.code||"")+": "+(e.message||"Sign-in failed."));});
           }
         }},
         style:{width:"100%",padding:"12px 20px",borderRadius:10,border:"none",background:"#fff",color:"#1f2937",fontSize:15,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12}
       },
         h("img",{src:"https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg",style:{width:20,height:20}}),
         "Sign in with Google"
-      )
+      ),
+      authError&&h("div",{style:{marginTop:16,background:"#7c2d12",borderRadius:8,padding:"10px 14px",fontSize:12,color:"#fca5a5",textAlign:"left",wordBreak:"break-word"}},"⚠️ "+authError)
     )
   );
 
