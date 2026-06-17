@@ -1001,16 +1001,7 @@ function App(){
   useEffect(function(){
     if(!user||!db)return;
     var uid=user.uid;
-    // On auth resolve (catches mobile timing gap): pull latest from Firestore
-    (async function(){
-      try{
-        var remote=await storeGetCloud("trips_index");
-        if(remote){setTripsRaw(remote);setLoaded(true);}
-        var aid=await storeGetCloud("active_trip_id");
-        if(aid)setActiveTripIdRaw(aid);
-      }catch(e){console.warn("Firestore user sync:",e);}
-    })();
-    // Real-time cross-device subscription
+    // onSnapshot's first callback IS the initial load — no separate fetch needed (avoids race vs local saves)
     var unsub=db.collection("users").doc(uid).collection("data").doc("trips_index").onSnapshot(function(doc){
       if(doc.exists){var d=doc.data();if(d&&d.value)setTripsRaw(JSON.parse(d.value));}
     },function(e){console.warn("Snapshot error:",e);});
