@@ -52,6 +52,7 @@ var FLIGHT_PLATFORMS=["Direct","Expedia","Kayak","Trip.com","Google Flights","Bo
 var CAR_PLATFORMS=["Direct","Trip.com","Expedia","Booking.com","Kayak","Rentalcars.com","Priceline","Other"];
 var ACTIVITY_PLATFORMS=["Direct","Viator","GetYourGuide","Booking.com","Airbnb Experiences","FareHarbor","Rezdy","Tripadvisor","Other"];
 var CURRENCIES=[{code:"USD",sym:"$"},{code:"EUR",sym:"€"},{code:"ILS",sym:"₪"}];
+var HOUSEHOLD_ID="family-trip-planner-household";
 var CAR_TYPES=["Economy","Compact","SUV","Minivan","Truck","Luxury","Other"];
 var KNOWN_LABELS=[
   {id:"Label_3699931737615885849",name:"2026 trip to USA"},
@@ -140,23 +141,31 @@ function newTrip(name){return{id:"trip_"+Date.now(),name:name||"New Trip",acc:[]
 function storeGet(k){
   try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}
 }
+function houseDataRef(k){return db.collection("households").doc(HOUSEHOLD_ID).collection("data").doc(k);}
+function houseDocRef(){return db.collection("households").doc(HOUSEHOLD_ID);}
 function storeSet(k,v){
   try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
   try{
-    if(typeof db!=="undefined"&&typeof auth!=="undefined"&&auth.currentUser){
-      var uid=auth.currentUser.uid;
-      db.collection("users").doc(uid).collection("data").doc(k).set({value:JSON.stringify(v),updated:Date.now()}).catch(function(e){console.warn("Firestore write failed:",e);});
+    if(typeof db!=="undefined"&&db){
+      houseDataRef(k).set({value:JSON.stringify(v),updated:Date.now()}).catch(function(e){console.warn("Firestore write failed:",e);});
     }
   }catch(e){console.warn("Firestore error:",e);}
 }
 async function storeGetCloud(k){
   try{
-    if(typeof db==="undefined"||!auth.currentUser)return null;
-    var uid=auth.currentUser.uid;
-    var doc=await db.collection("users").doc(uid).collection("data").doc(k).get();
+    if(typeof db==="undefined"||!db)return null;
+    var doc=await houseDataRef(k).get();
     if(doc.exists){var d=doc.data();return d.value?JSON.parse(d.value):null;}
     return null;
   }catch(e){console.warn("Firestore read failed:",e);return null;}
+}
+async function storeGetCloudLegacyUID(uid,k){
+  try{
+    if(typeof db==="undefined"||!db)return null;
+    var doc=await db.collection("users").doc(uid).collection("data").doc(k).get();
+    if(doc.exists){var d=doc.data();return d.value?JSON.parse(d.value):null;}
+    return null;
+  }catch(e){return null;}
 }
 
 function parseICS(text){
@@ -945,6 +954,11 @@ function App(){
   var t13=useState("USD"); var currency=t13[0],setCurrencyRaw=t13[1];
   var t14=useState(""); var dedupMsg=t14[0],setDedupMsg=t14[1];
   var t15=useState({status:"loading",date:""}); var ratesInfo=t15[0],setRatesInfo=t15[1];
+  var t16=useState("checking"); var houseAccess=t16[0],setHouseAccess=t16[1];
+  var t17=useState([]); var members=t17[0],setMembers=t17[1];
+  var t18=useState(false); var accessModal=t18[0],setAccessModal=t18[1];
+  var t19=useState(""); var newMemberEmail=t19[0],setNewMemberEmail=t19[1];
+  var t20=useState(""); var accessErr=t20[0],setAccessErr=t20[1];
 
   // Auth state listener
   useEffect(function(){
@@ -999,14 +1013,46 @@ function App(){
       .catch(function(){setRatesInfo({status:"err",date:""});});
   },[]);
   useEffect(function(){
-    if(!user||!db)return;
-    var uid=user.uid;
-    // onSnapshot's first callback IS the initial load — no separate fetch needed (avoids race vs local saves)
-    var unsub=db.collection("users").doc(uid).collection("data").doc("trips_index").onSnapshot(function(doc){
-      if(doc.exists){var d=doc.data();if(d&&d.value)setTripsRaw(JSON.parse(d.value));}
-    },function(e){console.warn("Snapshot error:",e);});
-    return function(){unsub();};
+    if(!user||!db){setHouseAccess("checking");return;}
+    var email=(user.email||"").toLowerCase().trim();
+    var unsub=null;
+    (async function(){
+      try{
+        var snap=await houseDocRef().get();
+        if(!snap.exists){
+          var legacy=await storeGetCloudLegacyUID(user.uid,"trips_index");
+          await houseDocRef().set({allowedEmails:[email],ownerEmail:email,createdAt:Date.now()});
+          if(legacy)await houseDataRef("trips_index").set({value:JSON.stringify(legacy),updated:Date.now()});
+          setMembers([email]);
+          setHouseAccess("member");
+        }else{
+          var data=snap.data();
+          var allowed=(data.allowedEmails||[]).map(function(e){return String(e).toLowerCase().trim();});
+          setMembers(data.allowedEmails||[]);
+          setHouseAccess(allowed.indexOf(email)>=0?"member":"pending");
+        }
+        unsub=db.collection("households").doc(HOUSEHOLD_ID).collection("data").doc("trips_index").onSnapshot(function(doc){
+          if(doc.exists){var d=doc.data();if(d&&d.value)setTripsRaw(JSON.parse(d.value));}
+        },function(e){console.warn("Snapshot error:",e);});
+      }catch(e){console.warn("Household check failed:",e);setHouseAccess("pending");}
+    })();
+    return function(){if(unsub)unsub();};
   },[user]);
+  function addMember(){
+    var email=newMemberEmail.trim().toLowerCase();
+    setAccessErr("");
+    if(!email||email.indexOf("@")<0){setAccessErr("Enter a valid email address.");return;}
+    if(members.map(function(m){return m.toLowerCase();}).indexOf(email)>=0){setAccessErr("Already a member.");return;}
+    houseDocRef().update({allowedEmails:firebase.firestore.FieldValue.arrayUnion(email)})
+      .then(function(){setMembers(members.concat([email]));setNewMemberEmail("");})
+      .catch(function(e){setAccessErr("Failed: "+e.message);});
+  }
+  function removeMember(email){
+    if(members.length<=1)return;
+    houseDocRef().update({allowedEmails:firebase.firestore.FieldValue.arrayRemove(email)})
+      .then(function(){setMembers(members.filter(function(m){return m!==email;}));})
+      .catch(function(e){setAccessErr("Failed: "+e.message);});
+  }
   function saveTrips(updated){setTripsRaw(updated);storeSet("trips_index",updated);}
   function setActiveTripId(id){setActiveTripIdRaw(id);storeSet("active_trip_id",id);}
   function setCurrency(c){var sym=c==="EUR"?"€":c==="ILS"?"₪":"$";_currSym=sym;_currCode=c;setCurrencyRaw(c);storeSet("currency_pref",c);}
@@ -1131,6 +1177,18 @@ function App(){
     )
   );
 
+  if(houseAccess==="checking")return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a",color:"#94a3b8",fontSize:16}},"Checking access...");
+
+  if(houseAccess==="pending")return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a"}},
+    h("div",{style:{textAlign:"center",padding:"40px",background:"#1e293b",borderRadius:16,border:"1px solid #334155",maxWidth:380,width:"100%",margin:"0 20px"}},
+      h("div",{style:{fontSize:48,marginBottom:16}},"🔒"),
+      h("h1",{style:{margin:"0 0 8px",fontSize:20,fontWeight:700,color:"#f1f5f9"}},"Access Pending"),
+      h("p",{style:{margin:"0 0 16px",fontSize:13,color:"#94a3b8",lineHeight:1.6}},"Signed in as ",h("strong",{style:{color:"#e2e8f0"}},user.email),". This email hasn't been added to the household yet."),
+      h("p",{style:{margin:"0 0 24px",fontSize:13,color:"#64748b",lineHeight:1.6}},"Ask the household owner to open ⚙️ → 👥 Access and add your email."),
+      h("button",{onClick:function(){if(auth)auth.signOut();},style:{padding:"9px 20px",borderRadius:8,border:"1px solid #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:13}},"Sign out")
+    )
+  );
+
   if(!loaded)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a",color:"#94a3b8",fontSize:16}},"Loading your trips...");
 
   return h("div",{style:{fontFamily:"Inter,sans-serif",background:"#0f172a",minHeight:"100vh",color:"#e2e8f0"}},
@@ -1142,6 +1200,7 @@ function App(){
             trips.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:8,marginLeft:16}},
               h("div",{style:{display:"flex",gap:4,background:"#0f172a",borderRadius:8,padding:3,flexWrap:"wrap"}},trips.map(function(t){return h("button",{key:t.id,onClick:function(){setActiveTripId(t.id);setSearch("");},style:{padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:activeTripId===t.id?"#6366f1":"transparent",color:activeTripId===t.id?"#fff":"#94a3b8",whiteSpace:"nowrap",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},t.name);})),
               h("button",{onClick:function(){setTripMgr(true);},title:"Manage trips",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:13}},"⚙️"),
+              h("button",{onClick:function(){setAccessModal(true);},title:"Manage who has access",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:13}},"👥"),
               h("span",{
   title:ratesInfo.status==="ok"?"Live ECB rates as of "+ratesInfo.date+" (1h cache)":ratesInfo.status==="err"?"Could not fetch live rates — using approximate fallback":"Fetching live exchange rates...",
   style:{fontSize:11,cursor:"help",color:ratesInfo.status==="ok"?"#4ade80":ratesInfo.status==="err"?"#fbbf24":"#475569",marginRight:2}
@@ -1190,6 +1249,28 @@ function App(){
     pdfPreview&&h(PDFPreviewModal,{html:buildPrintHTML(tab,acc,flt,car,act,activeTrip&&activeTrip.name),onClose:function(){setPdfPreview(false);}}),
     tripMgr&&h(TripManagerModal,{trips:trips,activeTripId:activeTripId,onClose:function(){setTripMgr(false);},onCreate:createTrip,onRename:renameTrip,onDelete:deleteTrip,onSwitch:function(id){setActiveTripId(id);setTripMgr(false);setSearch("");}}),
     gmailModal&&h(GmailBridgeModal,{onClose:function(){setGmailModal(false);},onImportEntries:importEntries,existingEntries:allE}),
+    accessModal&&h(Overlay,{onClose:function(){setAccessModal(false);setAccessErr("");setNewMemberEmail("");}},
+      h(MH,{title:"👥 Household Access",onClose:function(){setAccessModal(false);}}),
+      h("p",{style:{fontSize:13,color:"#94a3b8",marginBottom:16,lineHeight:1.6}},"Anyone added here can see and edit ALL trips and data. Share this URL with them after adding their email:"),
+      h("div",{style:{background:"#0f172a",border:"1px solid #334155",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#a5b4fc",marginBottom:20,wordBreak:"break-all"}},window.location.href),
+      h("div",{style:{display:"flex",flexDirection:"column",gap:8,marginBottom:16}},
+        members.map(function(m){
+          var isMe=user&&m.toLowerCase()===(user.email||"").toLowerCase();
+          return h("div",{key:m,style:{display:"flex",alignItems:"center",gap:10,background:"#0f172a",borderRadius:8,padding:"9px 12px",border:"1px solid #334155"}},
+            h("span",{style:{flex:1,fontSize:13,color:"#e2e8f0"}},m,isMe&&h("span",{style:{color:"#64748b",marginLeft:6}},"(you)")),
+            members.length>1&&h("button",{onClick:function(){removeMember(m);},style:{padding:"4px 10px",borderRadius:5,border:"1px solid #7f1d1d",background:"transparent",color:"#f87171",cursor:"pointer",fontSize:12}},"Remove")
+          );
+        })
+      ),
+      h("div",{style:{borderTop:"1px solid #334155",paddingTop:16}},
+        h("div",{style:{fontSize:13,fontWeight:600,color:"#94a3b8",marginBottom:10}},"Add a member"),
+        h("div",{style:{display:"flex",gap:8}},
+          h("input",{type:"email",value:newMemberEmail,onChange:function(e){setNewMemberEmail(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")addMember();},placeholder:"family.member@gmail.com",style:{flex:1,background:"#0f172a",border:"1px solid #334155",borderRadius:6,padding:"8px 10px",color:"#e2e8f0",fontSize:13}}),
+          h("button",{onClick:addMember,style:{padding:"8px 16px",borderRadius:7,border:"none",background:"#6366f1",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}},"+ Add")
+        ),
+        accessErr&&h("div",{style:{marginTop:10,background:"#7c2d12",borderRadius:6,padding:"8px 12px",fontSize:12,color:"#fca5a5"}},accessErr)
+      )
+    ),
     typePicker&&h(Overlay,{onClose:function(){setTypePicker(false);}},
       h(MH,{title:"What would you like to add?",onClose:function(){setTypePicker(false);}}),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
