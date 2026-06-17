@@ -949,6 +949,7 @@ function App(){
   // Auth state listener
   useEffect(function(){
     if(!auth){setAuthLoading(false);return;}
+    auth.getRedirectResult().catch(function(){});
     var unsubAuth=auth.onAuthStateChanged(function(u){
       setUser(u);
       setAuthLoading(false);
@@ -973,19 +974,7 @@ function App(){
       setActiveTripIdRaw(hasActive?savedActive:(tripList[0]&&tripList[0].id)||null);
       setLoaded(true);
       var savedCur=storeGet("currency_pref");if(savedCur){var _cs=savedCur==="EUR"?"€":savedCur==="ILS"?"₪":"$";_currSym=_cs;_currCode=savedCur;setCurrencyRaw(savedCur);}
-      // Subscribe to real-time updates from Firestore
-      if(typeof db!=="undefined"&&db&&auth&&auth.currentUser){
-        var uid=auth.currentUser.uid;
-        db.collection("users").doc(uid).collection("data").doc("trips_index").onSnapshot(function(doc){
-          if(doc.exists){
-            var data=doc.data();
-            if(data&&data.value){
-              var remote=JSON.parse(data.value);
-              setTripsRaw(remote);
-            }
-          }
-        });
-      }
+      // Real-time sync handled by the user-dependent useEffect below
     })();
   },[]);
 
@@ -1009,6 +998,24 @@ function App(){
       })
       .catch(function(){setRatesInfo({status:"err",date:""});});
   },[]);
+  useEffect(function(){
+    if(!user||!db)return;
+    var uid=user.uid;
+    // On auth resolve (catches mobile timing gap): pull latest from Firestore
+    (async function(){
+      try{
+        var remote=await storeGetCloud("trips_index");
+        if(remote){setTripsRaw(remote);setLoaded(true);}
+        var aid=await storeGetCloud("active_trip_id");
+        if(aid)setActiveTripIdRaw(aid);
+      }catch(e){console.warn("Firestore user sync:",e);}
+    })();
+    // Real-time cross-device subscription
+    var unsub=db.collection("users").doc(uid).collection("data").doc("trips_index").onSnapshot(function(doc){
+      if(doc.exists){var d=doc.data();if(d&&d.value)setTripsRaw(JSON.parse(d.value));}
+    },function(e){console.warn("Snapshot error:",e);});
+    return function(){unsub();};
+  },[user]);
   function saveTrips(updated){setTripsRaw(updated);storeSet("trips_index",updated);}
   function setActiveTripId(id){setActiveTripIdRaw(id);storeSet("active_trip_id",id);}
   function setCurrency(c){var sym=c==="EUR"?"€":c==="ILS"?"₪":"$";_currSym=sym;_currCode=c;setCurrencyRaw(c);storeSet("currency_pref",c);}
@@ -1118,7 +1125,13 @@ function App(){
       h("h1",{style:{margin:"0 0 8px",fontSize:24,fontWeight:700,color:"#f1f5f9"}},"Family Trip Planner"),
       h("p",{style:{margin:"0 0 32px",fontSize:14,color:"#64748b"}},"Sign in to access your trips"),
       h("button",{
-        onClick:function(){if(auth)auth.signInWithPopup(googleProvider).catch(function(e){console.error("Sign in error:",e);});},
+        onClick:function(){if(auth){
+          if(/Mobi|Android|iPhone|iPad|Opera Mini/i.test(navigator.userAgent)){
+            auth.signInWithRedirect(googleProvider).catch(function(e){console.error("Redirect error:",e);});
+          }else{
+            auth.signInWithPopup(googleProvider).catch(function(e){console.error("Sign in error:",e);});
+          }
+        }},
         style:{width:"100%",padding:"12px 20px",borderRadius:10,border:"none",background:"#fff",color:"#1f2937",fontSize:15,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12}
       },
         h("img",{src:"https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg",style:{width:20,height:20}}),
