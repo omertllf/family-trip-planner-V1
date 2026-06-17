@@ -944,6 +944,8 @@ function App(){
   var t0=useState(null); var user=t0[0],setUser=t0[1];
   var ta=useState(true); var authLoading=ta[0],setAuthLoading=ta[1];
   var taE=useState(""); var authError=taE[0],setAuthError=taE[1];
+  var dbgS=useState([]); var debugLog=dbgS[0],setDebugLog=dbgS[1];
+  function dbg(msg){var t=new Date().toLocaleTimeString();setDebugLog(function(p){return p.concat([t+" — "+msg]).slice(-20);});}
   var t4=useState("all"); var tab=t4[0],setTab=t4[1];
   var t5=useState("table"); var view=t5[0],setView=t5[1];
   var t6=useState(null); var modal=t6[0],setModal=t6[1];
@@ -964,9 +966,14 @@ function App(){
 
   // Auth state listener
   useEffect(function(){
-    if(!auth){setAuthLoading(false);return;}
-    auth.getRedirectResult().catch(function(e){console.error("Redirect result error:",e);setAuthError((e.code||"")+": "+(e.message||"Sign-in failed."));});
+    dbg("Mount: firebase="+(typeof firebase!=="undefined")+" auth="+(!!auth)+" db="+(!!db)+" UA="+navigator.userAgent.slice(0,60));
+    dbg("Standalone(PWA)="+(window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches));
+    if(!auth){dbg("auth is null — Firebase failed to init");setAuthLoading(false);return;}
+    dbg("Calling getRedirectResult()...");
+    auth.getRedirectResult().then(function(r){dbg("getRedirectResult resolved, user="+(r&&r.user?r.user.email:"none"));}).catch(function(e){dbg("getRedirectResult ERROR: "+e.code+" "+e.message);console.error("Redirect result error:",e);setAuthError((e.code||"")+": "+(e.message||"Sign-in failed."));});
+    dbg("Registering onAuthStateChanged listener...");
     var unsubAuth=auth.onAuthStateChanged(function(u){
+      dbg("onAuthStateChanged fired: "+(u?u.email:"null"));
       setUser(u);
       setAuthLoading(false);
     });
@@ -1164,12 +1171,17 @@ function App(){
       h("h1",{style:{margin:"0 0 8px",fontSize:24,fontWeight:700,color:"#f1f5f9"}},"Family Trip Planner"),
       h("p",{style:{margin:"0 0 32px",fontSize:14,color:"#64748b"}},"Sign in to access your trips"),
       h("button",{
-        onClick:function(){if(auth){
+        onClick:function(){
+          dbg("Button tapped. auth="+(!!auth));
+          if(auth){
           setAuthError("");
-          auth.signInWithPopup(googleProvider).catch(function(e){
+          dbg("Calling signInWithPopup()...");
+          auth.signInWithPopup(googleProvider).then(function(r){dbg("signInWithPopup SUCCESS: "+(r&&r.user?r.user.email:"?"));}).catch(function(e){
+            dbg("signInWithPopup ERROR: "+e.code+" "+e.message);
             console.error("Sign in error:",e);
             if(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment"){
-              auth.signInWithRedirect(googleProvider).catch(function(e2){console.error("Redirect error:",e2);setAuthError((e2.code||"")+": "+(e2.message||"Sign-in failed."));});
+              dbg("Falling back to signInWithRedirect()...");
+              auth.signInWithRedirect(googleProvider).catch(function(e2){dbg("signInWithRedirect ERROR: "+e2.code+" "+e2.message);console.error("Redirect error:",e2);setAuthError((e2.code||"")+": "+(e2.message||"Sign-in failed."));});
             }else{
               setAuthError((e.code||"")+": "+(e.message||"Sign-in failed."));
             }
@@ -1180,7 +1192,11 @@ function App(){
         h("img",{src:"https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg",style:{width:20,height:20}}),
         "Sign in with Google"
       ),
-      authError&&h("div",{style:{marginTop:16,background:"#7c2d12",borderRadius:8,padding:"10px 14px",fontSize:12,color:"#fca5a5",textAlign:"left",wordBreak:"break-word"}},"⚠️ "+authError)
+      authError&&h("div",{style:{marginTop:16,background:"#7c2d12",borderRadius:8,padding:"10px 14px",fontSize:12,color:"#fca5a5",textAlign:"left",wordBreak:"break-word"}},"⚠️ "+authError),
+      h("div",{style:{marginTop:20,background:"#0f172a",border:"1px solid #334155",borderRadius:8,padding:"10px",fontSize:10,color:"#64748b",textAlign:"left",fontFamily:"monospace",maxHeight:220,overflowY:"auto"}},
+        h("div",{style:{color:"#94a3b8",fontWeight:700,marginBottom:6}},"🔍 Debug log (screenshot this):"),
+        debugLog.length===0?h("div",null,"(waiting for events...)"):debugLog.map(function(l,i){return h("div",{key:i,style:{marginBottom:2,wordBreak:"break-all"}},l);})
+      )
     )
   );
 
