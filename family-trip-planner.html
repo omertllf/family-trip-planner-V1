@@ -1208,7 +1208,7 @@ function App(){
   style:{fontSize:11,cursor:"help",color:ratesInfo.status==="ok"?"#4ade80":ratesInfo.status==="err"?"#fbbf24":"#475569",marginRight:2}
 },ratesInfo.status==="loading"?"⟳":ratesInfo.status==="ok"?"●":"≈"),
               h("select",{value:currency,onChange:function(e){setCurrency(e.target.value);},title:"Currency (amounts stored in USD, converted for display)",style:{background:"#0f172a",border:"1px solid #334155",borderRadius:6,padding:"4px 6px",color:"#94a3b8",fontSize:12,cursor:"pointer"}},CURRENCIES.map(function(c){return h("option",{key:c.code,value:c.code},c.sym+" "+c.code);})),
-              user&&h("button",{onClick:function(){if(auth)auth.signOut();},title:"Sign out",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:12}},user.photoURL?h("img",{src:user.photoURL,style:{width:20,height:20,borderRadius:"50%",verticalAlign:"middle"}}):"Sign out")
+              user&&h("button",{onClick:function(){if(auth)auth.signOut();},title:"Sign out",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",gap:6}},user.photoURL&&h("img",{src:user.photoURL,style:{width:18,height:18,borderRadius:"50%"}}),h("span",null,"Sign out"))
             )
           ),
           h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
