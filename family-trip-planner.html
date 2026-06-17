@@ -6,14 +6,37 @@
 <title>Family Trip Planner</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:Inter,sans-serif;background:#0f172a;color:#e2e8f0;}</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#FBF9F6; --surface:#FFFFFF; --ink:#1C1B19; --muted:#6B6A66; --muted2:#8C8A85;
+  --line:#ECE7DF; --line2:#E2DCD2;
+  --horizon:#1E3A5F; --horizon-d:#162C49; --sky:#2E86AB; --amber:#E8A33D; --sage:#4F7965;
+  --coral:#E8543F; --coral-bg:#FDEAE7;
+  --sage-bg:#E8F3EE; --sage-ink:#2F5645;
+  --amber-bg:#FCF1DE; --amber-ink:#92660B;
+  --radius-sm:8px; --radius-md:12px; --radius-lg:18px; --radius-xl:22px;
+  --shadow-sm:0 1px 2px rgba(28,27,25,.05);
+  --shadow-card:0 1px 2px rgba(28,27,25,.04),0 8px 24px -8px rgba(28,27,25,.10);
+  --shadow-modal:0 4px 8px rgba(28,27,25,.06),0 24px 48px -12px rgba(28,27,25,.22);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:"Plus Jakarta Sans",-apple-system,sans-serif;background:var(--canvas);color:var(--ink);}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px;}
+::-webkit-scrollbar-track{background:transparent;}
+*:focus-visible{outline:2px solid var(--horizon);outline-offset:2px;}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
 <link rel='manifest' href='manifest.json'>
 <meta name='mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-capable' content='yes'>
 <meta name='apple-mobile-web-app-status-bar-style' content='black-translucent'>
 <meta name='apple-mobile-web-app-title' content='Trip Planner'>
 <link rel='apple-touch-icon' href='icon-192.svg'>
-<meta name='theme-color' content='#6366f1'>
+<meta name='theme-color' content='#1E3A5F'>
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
@@ -46,7 +69,7 @@ var React_=React;
 var useState=React_.useState,useEffect=React_.useEffect,useCallback=React_.useCallback,useRef=React_.useRef,useMemo=React_.useMemo;
 var h=React_.createElement;
 
-var COLORS={accommodation:"#6366f1",flight:"#0ea5e9",car:"#f59e0b",activity:"#10b981"};
+var COLORS={accommodation:"#1E3A5F",flight:"#2E86AB",car:"#E8A33D",activity:"#4F7965"};
 var PLATFORMS=["Airbnb","Booking.com","VRBO","Direct","Hotels.com","Expedia","Other"];
 var ACTIVITY_CATS=["Nature","Adventure","Cultural","Food","Theme Park","Beach","Sightseeing","Shopping","Other"];
 var FLIGHT_PLATFORMS=["Direct","Expedia","Kayak","Trip.com","Google Flights","Booking.com","Priceline","Other"];
@@ -225,20 +248,20 @@ function buildPrintHTML(tab,acc,flt,car,act,tripName){
 
 // ── UI Helpers ───────────────────────────────────────────────────
 function Overlay(props){
-  return h("div",{onClick:function(e){if(e.target===e.currentTarget&&props.onClose)props.onClose();},style:{position:"fixed",inset:0,background:"rgba(0,0,0,.75)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16}},
-    h("div",{style:{background:"#1e293b",borderRadius:12,width:"100%",maxWidth:600,maxHeight:"90vh",overflowY:"auto",padding:24,border:"1px solid #334155"}},props.children)
+  return h("div",{onClick:function(e){if(e.target===e.currentTarget&&props.onClose)props.onClose();},style:{position:"fixed",inset:0,background:"rgba(28,27,25,.45)",backdropFilter:"blur(2px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16}},
+    h("div",{style:{background:"var(--surface)",borderRadius:"var(--radius-xl)",width:"100%",maxWidth:600,maxHeight:"90vh",overflowY:"auto",padding:28,boxShadow:"var(--shadow-modal)"}},props.children)
   );
 }
 function MH(props){
-  return h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}},
-    h("h2",{style:{margin:0,fontSize:18,color:"#f1f5f9"}},props.title),
-    h("button",{onClick:props.onClose,style:{background:"none",border:"none",color:"#64748b",fontSize:22,cursor:"pointer"}},"×")
+  return h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}},
+    h("h2",{style:{margin:0,fontSize:18,fontWeight:700,color:"var(--ink)"}},props.title),
+    h("button",{onClick:props.onClose,style:{background:"var(--canvas)",border:"none",borderRadius:"50%",width:30,height:30,color:"var(--muted)",fontSize:18,cursor:"pointer",lineHeight:1}},"×")
   );
 }
 function R2(props){return h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},props.children);}
 
-function fldStyle(errors,k){return{width:"100%",background:"#0f172a",border:"1px solid "+(errors&&errors[k]?"#ef4444":"#334155"),borderRadius:6,padding:"8px 10px",color:"#e2e8f0",fontSize:13,boxSizing:"border-box"};}
-function lblStyle(errors,k){return{display:"block",fontSize:12,color:errors&&errors[k]?"#ef4444":"#94a3b8",marginBottom:4};}
+function fldStyle(errors,k){return{width:"100%",background:"var(--canvas)",border:"1.5px solid "+(errors&&errors[k]?"#E8543F":"var(--line)"),borderRadius:"var(--radius-sm)",padding:"9px 11px",color:"var(--ink)",fontSize:13,boxSizing:"border-box",fontFamily:"inherit"};}
+function lblStyle(errors,k){return{display:"block",fontSize:12,fontWeight:600,color:errors&&errors[k]?"#E8543F":"var(--muted)",marginBottom:5};}
 
 function FInput(props){
   var label=props.label,k=props.k,type=props.type||"text",ph=props.ph||"",item=props.item,errors=props.errors,onChange=props.onChange,onBlur=props.onBlur;
@@ -261,10 +284,10 @@ function FSelect(props){
 function FToggle(props){
   var label=props.label,k=props.k,item=props.item,onChange=props.onChange;
   return h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:12}},
-    h("button",{onClick:function(){onChange(k,!item[k]);},style:{width:40,height:22,borderRadius:11,border:"none",cursor:"pointer",background:item[k]?"#6366f1":"#334155",position:"relative"}},
-      h("div",{style:{position:"absolute",top:3,left:item[k]?20:3,width:16,height:16,borderRadius:"50%",background:"#fff",transition:"left .2s"}})
+    h("button",{onClick:function(){onChange(k,!item[k]);},style:{width:40,height:22,borderRadius:11,border:"none",cursor:"pointer",background:item[k]?"var(--horizon)":"var(--line2)",position:"relative"}},
+      h("div",{style:{position:"absolute",top:3,left:item[k]?20:3,width:16,height:16,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 2px rgba(0,0,0,.2)"}})
     ),
-    h("span",{style:{fontSize:13,color:"#cbd5e1"}},label)
+    h("span",{style:{fontSize:13,color:"var(--ink)"}},label)
   );
 }
 function FTextarea(props){
@@ -423,7 +446,7 @@ function GmailBridgeModal(props){
   return null;
 }
 
-function PayBadge(p){var ps=p.status;var cfg=ps==="partially_paid"?{bg:"#713f12",c:"#fde047",l:"◑ Partial"}:ps==="unpaid"?{bg:"#450a0a",c:"#f87171",l:"✗ Unpaid"}:{bg:"#14532d",c:"#4ade80",l:"✓ Paid"};return h("span",{style:{background:cfg.bg,color:cfg.c,borderRadius:4,padding:"2px 7px",fontSize:11,fontWeight:600}},cfg.l);}
+function PayBadge(p){var ps=p.status;var cfg=ps==="partially_paid"?{bg:"var(--amber-bg)",c:"var(--amber-ink)",l:"◑ Partial"}:ps==="unpaid"?{bg:"var(--coral-bg)",c:"var(--coral)",l:"✗ Unpaid"}:{bg:"var(--sage-bg)",c:"var(--sage-ink)",l:"✓ Paid"};return h("span",{style:{background:cfg.bg,color:cfg.c,borderRadius:20,padding:"3px 9px",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}},cfg.l);}
 function FPayStatus(props){
   var item=props.item,onChange=props.onChange;
   var opts=[{v:"paid",l:"✓ Paid",bg:"#14532d",c:"#4ade80"},{v:"partially_paid",l:"◑ Partial",bg:"#713f12",c:"#fde047"},{v:"unpaid",l:"✗ Unpaid",bg:"#450a0a",c:"#f87171"}];
@@ -477,7 +500,7 @@ function EntryModal(props){
   var hasErr=Object.keys(errors).length>0&&Object.keys(touched).length>0;
   return h(Overlay,{onClose:onClose},
     h(MH,{title:(modal.isNew?"Add ":"Edit ")+tl,onClose:onClose}),
-    det.length>0&&h("div",{style:{background:"#134e4a",borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:13,color:"#6ee7b7"}},"✨ AI-extracted — review before saving."),
+    det.length>0&&h("div",{style:{background:"var(--sage-bg)",borderRadius:"var(--radius-sm)",padding:"10px 14px",marginBottom:16,fontSize:13,color:"var(--sage-ink)",fontWeight:600}},"✨ AI-extracted — review before saving."),
     et==="accommodation"&&h(React_.Fragment,null,
       h(R2,null,h(FInput,Object.assign({label:"Name / Property",k:"name"},fp)),h(FSelect,Object.assign({label:"Platform",k:"platform",opts:PLATFORMS},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Check-In",k:"checkIn",type:"date"},fp)),h(FInput,Object.assign({label:"Check-Out",k:"checkOut",type:"date"},fp))),
@@ -526,12 +549,12 @@ function EntryModal(props){
       (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")&&h(FInput,Object.assign({label:"Amount Due ("+_currSym+")",k:"amountDue",type:"number",ph:"0"},fp)),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
-    hasErr&&h("div",{style:{background:"#450a0a",border:"1px solid #7f1d1d",borderRadius:8,padding:"10px 14px",marginBottom:8,fontSize:13,color:"#fca5a5"}},"Please fix errors above."),
-    h("div",{style:{display:"flex",justifyContent:"space-between",gap:10,marginTop:8}},
-      !modal.isNew?h("button",{onClick:function(){onDelete(item.id);},style:{padding:"9px 18px",borderRadius:7,border:"1px solid #7f1d1d",background:"transparent",color:"#f87171",cursor:"pointer",fontSize:13,fontWeight:600}},"Delete"):h("div"),
+    hasErr&&h("div",{style:{background:"var(--coral-bg)",borderRadius:"var(--radius-sm)",padding:"10px 14px",marginBottom:8,fontSize:13,color:"var(--coral)",fontWeight:600}},"Please fix errors above."),
+    h("div",{style:{display:"flex",justifyContent:"space-between",gap:10,marginTop:12,borderTop:"1px solid var(--line)",paddingTop:16}},
+      !modal.isNew?h("button",{onClick:function(){onDelete(item.id);},style:{padding:"9px 18px",borderRadius:"var(--radius-sm)",border:"1.5px solid var(--coral)",background:"transparent",color:"var(--coral)",cursor:"pointer",fontSize:13,fontWeight:700}},"Delete"):h("div"),
       h("div",{style:{display:"flex",gap:10}},
-        h("button",{onClick:onClose,style:{padding:"9px 18px",borderRadius:7,border:"1px solid #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:13}},"Cancel"),
-        h("button",{onClick:handleSave,style:{padding:"9px 22px",borderRadius:7,border:"none",background:"#6366f1",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}},"Save")
+        h("button",{onClick:onClose,style:{padding:"9px 18px",borderRadius:"var(--radius-sm)",border:"1.5px solid var(--line)",background:"transparent",color:"var(--muted)",cursor:"pointer",fontSize:13,fontWeight:600}},"Cancel"),
+        h("button",{onClick:handleSave,style:{padding:"9px 22px",borderRadius:"var(--radius-sm)",border:"none",background:"var(--horizon)",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,boxShadow:"var(--shadow-sm)"}},"Save")
       )
     )
   );
@@ -708,6 +731,57 @@ var TABLE_CDEFS={
   activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
 };
 // ── Table View ───────────────────────────────────────────────────
+function CardView(props){
+  var tab=props.tab,acc=props.acc,flt=props.flt,car=props.car,act=props.act,search=props.search,onEdit=props.onEdit;
+  var srcEntries=tab==="all"?acc.concat(flt,car,act):tab==="accommodations"?acc:tab==="flights"?flt:tab==="cars"?car:act;
+  var filtered=srcEntries.filter(function(e){return matchesSearch(e,search);});
+  var sorted=filtered.slice().sort(function(a,b){
+    var sa=a.checkIn||a.depDate||a.pickupDate||a.date||"";
+    var sb=b.checkIn||b.depDate||b.pickupDate||b.date||"";
+    if(!sa&&!sb)return 0; if(!sa)return 1; if(!sb)return -1;
+    return sa.localeCompare(sb);
+  });
+  if(!srcEntries.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted2)"}},h("div",{style:{fontSize:48,marginBottom:8}},"📭"),h("p",null,"No entries yet. Click + Add, ⬆️ Import, or 📧 Gmail."));
+  if(search&&!sorted.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted2)"}},h("div",{style:{fontSize:36,marginBottom:8}},"🔍"),h("p",null,"No results for \""+search+"\""));
+  return h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:16}},
+    sorted.map(function(e){
+      var col=COLORS[e.type]||COLORS.activity;
+      var name=e.name||e.airline||e.company||"Untitled";
+      var sub=tab==="all"?typeLabel(e.type):(e.type==="accommodation"?e.platform:e.type==="flight"?[e.airline,e.flightNo].filter(Boolean).join(" "):e.type==="car"?e.carType:e.category);
+      var d1=e.checkIn||e.depDate||e.pickupDate||e.date;
+      var d2=e.checkOut||e.arrDate||e.dropoffDate;
+      var loc=e.address||(e.from?(e.from+(e.to?" → "+e.to:"")):"")||e.pickupLocation||e.location||"";
+      var costVal=e.type==="accommodation"?e.totalCost:e.cost;
+      var due=entryDue(e);
+      return h("div",{key:e.id,onClick:function(){onEdit(e);},className:"ftp-card",
+        style:{background:"var(--surface)",borderRadius:"var(--radius-lg)",boxShadow:"var(--shadow-card)",border:"1px solid var(--line)",overflow:"hidden",cursor:"pointer",display:"flex"}
+      },
+        h("div",{style:{width:5,background:col,flexShrink:0}}),
+        h("div",{style:{padding:"16px 18px",flex:1,minWidth:0,display:"flex",flexDirection:"column"}},
+          h("div",{style:{display:"flex",alignItems:"flex-start",gap:12,marginBottom:12}},
+            h("div",{style:{width:38,height:38,borderRadius:"50%",background:col+"1A",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}},typeIcon(e.type)),
+            h("div",{style:{flex:1,minWidth:0,paddingTop:1}},
+              h("div",{style:{fontWeight:700,fontSize:15,color:"var(--ink)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},name),
+              sub&&h("div",{style:{fontSize:12,color:"var(--muted)",marginTop:2}},sub)
+            )
+          ),
+          (d1||loc)&&h("div",{style:{fontSize:12,color:"var(--muted2)",marginBottom:14,lineHeight:1.6}},
+            d1&&h("div",null,fmtD(d1),(d2&&d2!==d1)?(" → "+fmtD(d2)):""),
+            loc&&h("div",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},"📍 "+loc)
+          ),
+          h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"auto",paddingTop:10,borderTop:"1px solid var(--line)"}},
+            h("div",null,
+              h("div",{style:{fontSize:16,fontWeight:800,color:"var(--ink)"}},fmt$(costVal)),
+              due>0&&h("div",{style:{fontSize:11,color:"var(--coral)",fontWeight:700,marginTop:1}},fmt$(due)+" due")
+            ),
+            h(PayBadge,{status:e.paymentStatus||"paid"})
+          )
+        )
+      );
+    })
+  );
+}
+
 function TableView(props){
   var tab=props.tab,acc=props.acc,flt=props.flt,car=props.car,act=props.act,search=props.search,onEdit=props.onEdit,onDelete=props.onDelete;
   var cS=useState(null); var confirmId=cS[0],setConfirmId=cS[1];
@@ -747,19 +821,19 @@ function TableView(props){
     entries.forEach(function(e){var d=getSD(e);if(d)dc[d]=(dc[d]||0)+1;var n=getN(e);if(n)nc[n]=(nc[n]||0)+1;});
     return{dd:new Set(Object.keys(dc).filter(function(k){return dc[k]>1;})),dn:new Set(Object.keys(nc).filter(function(k){return nc[k]>1;}))};
   }
-  function Dup(p){return p.show?h("span",{title:p.t,style:{marginLeft:5,fontSize:10,background:"#92400e",color:"#fde68a",borderRadius:3,padding:"1px 5px",fontWeight:700}},"⚠ DUP"):null;}
+  function Dup(p){return p.show?h("span",{title:p.t,style:{marginLeft:5,fontSize:10,background:"var(--amber-bg)",color:"var(--amber-ink)",borderRadius:3,padding:"1px 5px",fontWeight:700}},"⚠ DUP"):null;}
   function XC(p){
     var xS=useState(false); var open=xS[0],setOpen=xS[1];
-    if(!p.val||p.val==="-")return h("span",{style:{color:"#475569"}},"-");
-    return h("span",{style:{position:"relative"}},h("span",{onDoubleClick:function(){setOpen(!open);},style:{cursor:"zoom-in",display:"block",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.val),open&&h("span",{onClick:function(){setOpen(false);},style:{position:"absolute",left:0,top:"100%",zIndex:50,background:"#1e293b",border:"1px solid #6366f1",borderRadius:6,padding:"8px 12px",fontSize:12,color:"#f1f5f9",whiteSpace:"normal",maxWidth:320,wordBreak:"break-word",boxShadow:"0 4px 20px rgba(0,0,0,.5)"}},p.val,h("span",{style:{display:"block",marginTop:6,fontSize:10,color:"#64748b"}},"click to close")));
+    if(!p.val||p.val==="-")return h("span",{style:{color:"var(--muted2)"}},"-");
+    return h("span",{style:{position:"relative"}},h("span",{onDoubleClick:function(){setOpen(!open);},style:{cursor:"zoom-in",display:"block",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.val),open&&h("span",{onClick:function(){setOpen(false);},style:{position:"absolute",left:0,top:"100%",zIndex:50,background:"var(--surface)",border:"1.5px solid var(--horizon)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontSize:12,color:"var(--ink)",whiteSpace:"normal",maxWidth:320,wordBreak:"break-word",boxShadow:"var(--shadow-modal)"}},p.val,h("span",{style:{display:"block",marginTop:6,fontSize:10,color:"var(--muted)"}},"click to close")));
   }
   function AB(p){
     return h("td",{style:{padding:"9px 12px",display:"flex",gap:6,alignItems:"center"}},
-      h("button",{onClick:function(){onEdit(p.raw);},style:{background:"#1e293b",border:"1px solid #334155",borderRadius:5,color:"#94a3b8",padding:"4px 10px",cursor:"pointer",fontSize:12}},"Edit"),
+      h("button",{onClick:function(){onEdit(p.raw);},style:{background:"var(--canvas)",border:"1px solid var(--line)",borderRadius:5,color:"var(--muted)",padding:"4px 10px",cursor:"pointer",fontSize:12,fontWeight:600}},"Edit"),
       confirmId===p.id?h(React_.Fragment,null,
-        h("button",{onClick:function(){onDelete(p.id);setConfirmId(null);},style:{background:"#7f1d1d",border:"none",borderRadius:5,color:"#fca5a5",padding:"4px 10px",cursor:"pointer",fontSize:12,fontWeight:700}},"Sure?"),
-        h("button",{onClick:function(){setConfirmId(null);},style:{background:"#1e293b",border:"1px solid #334155",borderRadius:5,color:"#94a3b8",padding:"4px 8px",cursor:"pointer",fontSize:12}},"✕")
-      ):h("button",{onClick:function(){setConfirmId(p.id);},style:{background:"transparent",border:"1px solid #7f1d1d",borderRadius:5,color:"#f87171",padding:"4px 10px",cursor:"pointer",fontSize:12}},"Delete")
+        h("button",{onClick:function(){onDelete(p.id);setConfirmId(null);},style:{background:"var(--coral)",border:"none",borderRadius:5,color:"#fff",padding:"4px 10px",cursor:"pointer",fontSize:12,fontWeight:700}},"Sure?"),
+        h("button",{onClick:function(){setConfirmId(null);},style:{background:"var(--canvas)",border:"1px solid var(--line)",borderRadius:5,color:"var(--muted)",padding:"4px 8px",cursor:"pointer",fontSize:12}},"✕")
+      ):h("button",{onClick:function(){setConfirmId(p.id);},style:{background:"transparent",border:"1px solid var(--coral)",borderRadius:5,color:"var(--coral)",padding:"4px 10px",cursor:"pointer",fontSize:12,fontWeight:600}},"Delete")
     );
   }
   function TH(p){
@@ -769,7 +843,7 @@ function TableView(props){
       onDragOver:p.drag?function(e){e.preventDefault();dragO.current=p.i;}:null,
       onDrop:p.drag?function(){var f=dragI.current,t=dragO.current;if(f===null||t===null||f===t)return;var n=cols.slice();var m=n.splice(f,1)[0];n.splice(t,0,m);setCols(n);dragI.current=null;dragO.current=null;}:null,
       onClick:p.sK?function(){ts(p.sK);}:null,
-      style:{padding:"10px 12px",textAlign:"left",color:p.sK&&sk===p.sK?"#f1f5f9":"#94a3b8",fontWeight:600,whiteSpace:"nowrap",cursor:p.sK?"pointer":p.drag?"grab":"default",userSelect:"none",borderRight:"1px solid #1e293b",position:"relative",width:w?w+"px":undefined,boxSizing:"border-box"}
+      style:{padding:"10px 12px",textAlign:"left",color:p.sK&&sk===p.sK?"var(--ink)":"var(--muted)",fontWeight:700,whiteSpace:"nowrap",cursor:p.sK?"pointer":p.drag?"grab":"default",userSelect:"none",borderRight:"1px solid var(--line)",position:"relative",width:w?w+"px":undefined,boxSizing:"border-box"}
     },p.label,p.sK?h("span",null,sk===p.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"",
     h("div",{style:{position:"absolute",right:0,top:0,bottom:0,width:5,cursor:"col-resize",zIndex:2,background:"transparent"},
       onPointerDown:function(e){e.stopPropagation();e.preventDefault();var div=e.currentTarget,th=div.parentElement,wasDrag=th.draggable,sx=e.clientX,sw=th.offsetWidth,key=wk;th.draggable=false;div.setPointerCapture(e.pointerId);div.onpointermove=function(ev){var nw=Math.max(40,sw+(ev.clientX-sx));setCW(function(p){var n=Object.assign({},p);n[key]=nw;return n;});};div.onpointerup=function(){th.draggable=wasDrag;div.onpointermove=null;div.onpointerup=null;};}})
@@ -779,36 +853,36 @@ function TableView(props){
   var filtered=srcEntries.filter(function(e){return matchesSearch(e,search);});
   var dupInfo=dups(srcEntries); var dd=dupInfo.dd,dn=dupInfo.dn;
   var rows=sortR(filtered.map(toRow));
-  if(!srcEntries.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"#475569"}},h("div",{style:{fontSize:48}},"📭"),h("p",null,"No entries yet. Click + Add, ⬆️ Import, or 📧 Gmail."));
-  if(search&&!rows.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"#475569"}},h("div",{style:{fontSize:36}},"🔍"),h("p",null,"No results for \""+search+"\""));
+  if(!srcEntries.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted2)"}},h("div",{style:{fontSize:48}},"📭"),h("p",null,"No entries yet. Click + Add, ⬆️ Import, or 📧 Gmail."));
+  if(search&&!rows.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted2)"}},h("div",{style:{fontSize:36}},"🔍"),h("p",null,"No results for \""+search+"\""));
 
   function allCell(col,row){
     var iDD=dd.has(row.date),iDN=dn.has((row.name||"").toLowerCase());
     switch(col.key){
-      case"name":return h("td",{key:col.key,style:{padding:"9px 12px",color:"#e2e8f0",maxWidth:160}},h(XC,{val:row.name}),h(Dup,{show:iDN,t:"Duplicate name"}));
-      case"type":return h("td",{key:col.key,style:{padding:"9px 12px"}},h("span",{style:{background:COLORS[row.raw.type]||COLORS.activity,borderRadius:4,padding:"2px 8px",fontSize:11,color:"#fff",fontWeight:600}},row.typeLbl));
-      case"date":return h("td",{key:col.key,style:{padding:"9px 12px",color:"#e2e8f0",whiteSpace:"nowrap"}},fmtD(row.date),h(Dup,{show:iDD,t:"Duplicate date"}));
-      case"endDate":return h("td",{key:col.key,style:{padding:"9px 12px",color:"#e2e8f0",whiteSpace:"nowrap"}},fmtD(row.endDate));
-      case"nights":return h("td",{key:col.key,style:{padding:"9px 12px",color:row.nts?"#a5b4fc":"#475569"}},row.nts?row.nts+"n":"-");
-      case"cost":return h("td",{key:col.key,style:{padding:"9px 12px",color:"#e2e8f0"}},h("div",null,row.cost),entryDue(row.raw)>0&&h("div",{style:{fontSize:10,color:"#fbbf24",marginTop:1}},fmt$(entryDue(row.raw))+" due"));
+      case"name":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--ink)",maxWidth:160}},h(XC,{val:row.name}),h(Dup,{show:iDN,t:"Duplicate name"}));
+      case"type":return h("td",{key:col.key,style:{padding:"9px 12px"}},h("span",{style:{background:(COLORS[row.raw.type]||COLORS.activity)+"1A",borderRadius:4,padding:"2px 8px",fontSize:11,color:COLORS[row.raw.type]||COLORS.activity,fontWeight:700}},row.typeLbl));
+      case"date":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--ink)",whiteSpace:"nowrap"}},fmtD(row.date),h(Dup,{show:iDD,t:"Duplicate date"}));
+      case"endDate":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--ink)",whiteSpace:"nowrap"}},fmtD(row.endDate));
+      case"nights":return h("td",{key:col.key,style:{padding:"9px 12px",color:row.nts?"var(--horizon)":"var(--muted2)"}},row.nts?row.nts+"n":"-");
+      case"cost":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--ink)"}},h("div",null,row.cost),entryDue(row.raw)>0&&h("div",{style:{fontSize:10,color:"var(--coral)",fontWeight:700,marginTop:1}},fmt$(entryDue(row.raw))+" due"));
       case"pay":return h("td",{key:col.key,style:{padding:"9px 12px"}},h(PayBadge,{status:row.raw.paymentStatus||"paid"}));
       case"address":return h("td",{key:col.key,style:{padding:"9px 12px",maxWidth:160}},h(XC,{val:row.address}));
-      case"city":return h("td",{key:col.key,style:{padding:"9px 12px",color:"#e2e8f0",whiteSpace:"nowrap"}},row.city||"-");
-      case"url":return h("td",{key:col.key,style:{padding:"9px 12px"}},row.url?h("a",{href:row.url,target:"_blank",rel:"noreferrer",style:{color:"#6366f1",textDecoration:"none"}},"🔗"):"-");
+      case"city":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--ink)",whiteSpace:"nowrap"}},row.city||"-");
+      case"url":return h("td",{key:col.key,style:{padding:"9px 12px"}},row.url?h("a",{href:row.url,target:"_blank",rel:"noreferrer",style:{color:"var(--horizon)",textDecoration:"none"}},"🔗"):"-");
       case"actions":return h(AB,{key:col.key,id:row.id,raw:row.raw});
-      default:return h("td",{key:col.key,style:{padding:"9px 12px",color:"#475569"}},"-");
+      default:return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--muted2)"}},"-");
     }
   }
 
-  if(tab==="all") return h("div",{style:{overflowX:"auto",borderRadius:10,border:"1px solid #1e293b"}},
-    h("div",{style:{padding:"6px 12px",background:"#1e293b",borderBottom:"1px solid #334155",fontSize:11,color:"#475569"}},"↔ Drag to reorder • Double-click to expand • Click row to highlight"+(search?" • "+rows.length+" of "+srcEntries.length+" entries":"")),
-    h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
-      h("thead",null,h("tr",{style:{background:"#1e293b"}},cols.map(function(c,i){return h(TH,{key:c.key,label:c.label,sK:c.sK,drag:true,i:i});}))),
+  if(tab==="all") return h("div",{style:{overflowX:"auto",borderRadius:"var(--radius-md)",border:"1px solid var(--line)",boxShadow:"var(--shadow-sm)"}},
+    h("div",{style:{padding:"6px 12px",background:"var(--canvas)",borderBottom:"1px solid var(--line)",fontSize:11,color:"var(--muted2)"}},"↔ Drag to reorder • Double-click to expand • Click row to highlight"+(search?" • "+rows.length+" of "+srcEntries.length+" entries":"")),
+    h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13,background:"var(--surface)"}},
+      h("thead",null,h("tr",{style:{background:"var(--canvas)"}},cols.map(function(c,i){return h(TH,{key:c.key,label:c.label,sK:c.sK,drag:true,i:i});}))),
       h("tbody",null,rows.map(function(row,i){
         var iDD=dd.has(row.date),iDN=dn.has((row.name||"").toLowerCase());
         var isSel=selRowId===row.id;
-        var bg=isSel?"#1e3a8a":iDD||iDN?(i%2===0?"#1c1408":"#1f1709"):(i%2===0?"#0f172a":"#111827");
-        return h("tr",{key:row.id,onClick:function(){setSelRowId(isSel?null:row.id);},style:{background:bg,borderTop:"1px solid #1e293b",cursor:"pointer",outline:isSel?"2px solid #3b82f6":"none",outlineOffset:"-1px",transition:"background .1s"}},cols.map(function(c){return allCell(c,row);}));
+        var bg=isSel?"#DCE8F2":iDD||iDN?"var(--amber-bg)":(i%2===0?"var(--surface)":"var(--canvas)");
+        return h("tr",{key:row.id,onClick:function(){setSelRowId(isSel?null:row.id);},style:{background:bg,borderTop:"1px solid var(--line)",cursor:"pointer",outline:isSel?"2px solid var(--horizon)":"none",outlineOffset:"-1px",transition:"background .1s"}},cols.map(function(c){return allCell(c,row);}));
       }))
     )
   );
@@ -820,10 +894,10 @@ function TableView(props){
     activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
   };
   var c=(ptCols&&ptCols[tab])||TABLE_CDEFS[tab]||TABLE_CDEFS.accommodations;
-  return h("div",{style:{overflowX:"auto",borderRadius:10,border:"1px solid #1e293b"}},
-    h("div",{style:{padding:"6px 12px",background:"#1e293b",borderBottom:"1px solid #334155",fontSize:11,color:"#475569"}},"↔ Drag headers to reorder • Drag edge to resize • Double-click cell to expand • Click row to highlight"+(search?" • "+rows.length+" of "+srcEntries.length+" entries":"")),
-    h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
-      h("thead",null,h("tr",{style:{background:"#1e293b"}},
+  return h("div",{style:{overflowX:"auto",borderRadius:"var(--radius-md)",border:"1px solid var(--line)",boxShadow:"var(--shadow-sm)"}},
+    h("div",{style:{padding:"6px 12px",background:"var(--canvas)",borderBottom:"1px solid var(--line)",fontSize:11,color:"var(--muted2)"}},"↔ Drag headers to reorder • Drag edge to resize • Double-click cell to expand • Click row to highlight"+(search?" • "+rows.length+" of "+srcEntries.length+" entries":"")),
+    h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13,background:"var(--surface)"}},
+      h("thead",null,h("tr",{style:{background:"var(--canvas)"}},
         c.map(function(col,ci){
           var wk=tab+"::"+col.h; var w=cw[wk];
           return h("th",{
@@ -832,20 +906,20 @@ function TableView(props){
             onDragOver:function(e){e.preventDefault();ptDragO.current=ci;},
             onDrop:function(){var f=ptDragI.current,t=ptDragO.current;if(f===null||t===null||f===t)return;setPtCols(function(prev){var nx=Object.assign({},prev);var arr=prev[tab].slice();var mv=arr.splice(f,1)[0];arr.splice(t,0,mv);nx[tab]=arr;return nx;});ptDragI.current=null;ptDragO.current=null;},
             onClick:col.sK?function(){ts(col.sK);}:null,
-            style:{padding:"10px 12px",textAlign:"left",color:col.sK&&sk===col.sK?"#f1f5f9":"#94a3b8",fontWeight:600,whiteSpace:"nowrap",cursor:col.sK?"pointer":"grab",userSelect:"none",borderRight:"1px solid #1e293b",position:"relative",width:w?w+"px":undefined,boxSizing:"border-box"}
+            style:{padding:"10px 12px",textAlign:"left",color:col.sK&&sk===col.sK?"var(--ink)":"var(--muted)",fontWeight:700,whiteSpace:"nowrap",cursor:col.sK?"pointer":"grab",userSelect:"none",borderRight:"1px solid var(--line)",position:"relative",width:w?w+"px":undefined,boxSizing:"border-box"}
           },col.h,col.sK?h("span",null,sk===col.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"",
           h("div",{style:{position:"absolute",right:0,top:0,bottom:0,width:5,cursor:"col-resize",zIndex:2,background:"transparent"},
             onPointerDown:function(e){e.stopPropagation();e.preventDefault();var div=e.currentTarget,th=div.parentElement,wasDrag=th.draggable,sx=e.clientX,sw=th.offsetWidth,key=wk;th.draggable=false;div.setPointerCapture(e.pointerId);div.onpointermove=function(ev){var nw=Math.max(40,sw+(ev.clientX-sx));setCW(function(p){var n=Object.assign({},p);n[key]=nw;return n;});};div.onpointerup=function(){th.draggable=wasDrag;div.onpointermove=null;div.onpointerup=null;};}})
           );
         }),
-        h("th",{style:{padding:"10px 12px",color:"#94a3b8",fontWeight:600}},"Actions")
+        h("th",{style:{padding:"10px 12px",color:"var(--muted)",fontWeight:700}},"Actions")
       )),
       h("tbody",null,rows.map(function(row,i){
         var e=row.raw;
         var iDD=dd.has(getSD(e)),iDN=dn.has(getN(e));
         var isSel=selRowId===row.id;
-        var bg=isSel?"#1e3a8a":iDD||iDN?(i%2===0?"#1c1408":"#1f1709"):(i%2===0?"#0f172a":"#111827");
-        return h("tr",{key:row.id,onClick:function(){setSelRowId(isSel?null:row.id);},style:{background:bg,borderTop:"1px solid #1e293b",cursor:"pointer",outline:isSel?"2px solid #3b82f6":"none",outlineOffset:"-1px",transition:"background .1s"}},
+        var bg=isSel?"#DCE8F2":iDD||iDN?"var(--amber-bg)":(i%2===0?"var(--surface)":"var(--canvas)");
+        return h("tr",{key:row.id,onClick:function(){setSelRowId(isSel?null:row.id);},style:{background:bg,borderTop:"1px solid var(--line)",cursor:"pointer",outline:isSel?"2px solid var(--horizon)":"none",outlineOffset:"-1px",transition:"background .1s"}},
           c.map(function(col){
             var wk=tab+"::"+col.h; var w=cw[wk];
             var rv=col.k==="_nts"?nights(e.checkIn,e.checkOut):col.k==="_city"?cityOf(e.address||e.pickupLocation||e.location||""):e[col.k];
@@ -853,14 +927,14 @@ function TableView(props){
             var isD=col.k==="checkIn"||col.k==="depDate"||col.k==="pickupDate"||col.k==="date";
             var cell;
             if(col.f==="$")cell=h("span",null,fmt$(rv));
-            else if(col.f==="nts")cell=rv>0?h("span",{style:{color:"#a5b4fc"}},rv+"n"):h("span",{style:{color:"#475569"}},"-");
-            else if(col.f==="bool")cell=rv?h("span",{style:{color:"#10b981"}},"✓"):h("span",{style:{color:"#475569"}},"✗");
-            else if(col.f==="link")cell=rv?h("a",{href:rv,target:"_blank",rel:"noreferrer",style:{color:"#6366f1",textDecoration:"none"}},"🔗"):h("span",{style:{color:"#475569"}},"-");
+            else if(col.f==="nts")cell=rv>0?h("span",{style:{color:"var(--horizon)",fontWeight:600}},rv+"n"):h("span",{style:{color:"var(--muted2)"}},"-");
+            else if(col.f==="bool")cell=rv?h("span",{style:{color:"var(--sage)"}},"✓"):h("span",{style:{color:"var(--muted2)"}},"✗");
+            else if(col.f==="link")cell=rv?h("a",{href:rv,target:"_blank",rel:"noreferrer",style:{color:"var(--horizon)",textDecoration:"none"}},"🔗"):h("span",{style:{color:"var(--muted2)"}},"-");
             else if(col.f==="date")cell=h("span",null,fmtD(rv));
             else if(col.f==="addr")cell=h(XC,{val:rv||""});
             else if(col.f==="pay")cell=h(PayBadge,{status:rv||"paid"});
             else cell=h("span",{style:{display:"block",maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},rv||"-");
-            return h("td",{key:col.h,style:{padding:"9px 12px",color:"#e2e8f0",maxWidth:w?undefined:200,width:w?w+"px":undefined,overflow:"hidden",position:"relative"}},
+            return h("td",{key:col.h,style:{padding:"9px 12px",color:"var(--ink)",maxWidth:w?undefined:200,width:w?w+"px":undefined,overflow:"hidden",position:"relative"}},
               isN?h(React_.Fragment,null,h(XC,{val:rv||""}),h(Dup,{show:iDN,t:"Duplicate name"})):cell,
               isD&&h(Dup,{show:iDD,t:"Duplicate date"})
             );
@@ -877,7 +951,7 @@ function CalendarView(props){
   var entries=props.entries,onEdit=props.onEdit;
   var dates=[];
   entries.forEach(function(e){var s=e.checkIn||e.depDate||e.pickupDate||e.date,en=e.checkOut||e.arrDate||e.dropoffDate;if(s)dates.push(new Date(s));if(en)dates.push(new Date(en));});
-  if(!dates.length)return h("div",{style:{textAlign:"center",padding:"40px 0",color:"#475569"}},"Add entries with dates to see the calendar.");
+  if(!dates.length)return h("div",{style:{textAlign:"center",padding:"40px 0",color:"var(--muted2)"}},"Add entries with dates to see the calendar.");
   var rs=new Date(Math.min.apply(null,dates));rs.setDate(rs.getDate()-2);
   var re=new Date(Math.max.apply(null,dates));re.setDate(re.getDate()+2);
   var months=[];var cur=new Date(rs.getFullYear(),rs.getMonth(),1),mend=new Date(re.getFullYear(),re.getMonth(),1);
@@ -886,7 +960,7 @@ function CalendarView(props){
   function label(e){return e.name||e.airline||e.company||e.category||"Entry";}
   return h("div",null,
     h("div",{style:{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}},
-      [["🏠 Stay",COLORS.accommodation],["✈️ Flight",COLORS.flight],["🚗 Car",COLORS.car],["🎯 Activity",COLORS.activity]].map(function(item){return h("span",{key:item[0],style:{fontSize:12,color:"#94a3b8"}},h("span",{style:{display:"inline-block",width:10,height:10,borderRadius:2,background:item[1],marginRight:4}}),item[0]);})
+      [["🏠 Stay",COLORS.accommodation],["✈️ Flight",COLORS.flight],["🚗 Car",COLORS.car],["🎯 Activity",COLORS.activity]].map(function(item){return h("span",{key:item[0],style:{fontSize:12,color:"var(--muted)",fontWeight:600}},h("span",{style:{display:"inline-block",width:10,height:10,borderRadius:2,background:item[1],marginRight:4}}),item[0]);})
     ),
     months.map(function(m){
       var firstDay=new Date(m.yr,m.mn,1).getDay(),dim=new Date(m.yr,m.mn+1,0).getDate();
@@ -894,15 +968,15 @@ function CalendarView(props){
       for(var i=0;i<firstDay;i++)cells.push(h("div",{key:"b"+i}));
       for(var i=0;i<dim;i++){
         var d=i+1,date=new Date(m.yr,m.mn,d),active=date>=rs&&date<=re,isToday=new Date().toDateString()===date.toDateString(),de=active?forDate(date):[];
-        cells.push(h("div",{key:"d"+d,style:{background:active?"#1e293b":"#0d1424",borderRadius:6,minHeight:52,padding:6,border:isToday?"1px solid #6366f1":"1px solid transparent",opacity:active?1:0.25}},
-          h("div",{style:{fontSize:12,fontWeight:600,color:isToday?"#6366f1":active?"#94a3b8":"#334155",marginBottom:4}},d),
-          de.slice(0,3).map(function(e){return h("div",{key:e.id,onClick:function(){onEdit(e);},style:{background:COLORS[e.type]||COLORS.activity,borderRadius:3,padding:"2px 5px",fontSize:10,color:"#fff",marginBottom:2,cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},label(e));}),
-          de.length>3&&h("div",{style:{fontSize:10,color:"#64748b"}},"+"+( de.length-3))
+        cells.push(h("div",{key:"d"+d,style:{background:active?"var(--surface)":"var(--canvas)",borderRadius:8,minHeight:52,padding:6,border:isToday?"1.5px solid var(--horizon)":"1px solid var(--line)",opacity:active?1:0.35}},
+          h("div",{style:{fontSize:12,fontWeight:700,color:isToday?"var(--horizon)":active?"var(--muted)":"var(--muted2)",marginBottom:4}},d),
+          de.slice(0,3).map(function(e){return h("div",{key:e.id,onClick:function(){onEdit(e);},style:{background:(COLORS[e.type]||COLORS.activity)+"1A",borderRadius:3,padding:"2px 5px",fontSize:10,color:COLORS[e.type]||COLORS.activity,fontWeight:600,marginBottom:2,cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},label(e));}),
+          de.length>3&&h("div",{style:{fontSize:10,color:"var(--muted2)"}},"+"+( de.length-3))
         ));
       }
       return h("div",{key:m.yr+"-"+m.mn,style:{marginBottom:32}},
-        h("div",{style:{fontSize:16,fontWeight:700,color:"#f1f5f9",marginBottom:10,paddingBottom:6,borderBottom:"1px solid #1e293b"}},new Date(m.yr,m.mn,1).toLocaleString("default",{month:"long",year:"numeric"})),
-        h("div",{style:{overflowX:"auto",WebkitOverflowScrolling:"touch"}},h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,minmax(52px,1fr))",gap:2,minWidth:380}},["S","M","T","W","T","F","S"].map(function(w){return h("div",{key:w,style:{textAlign:"center",padding:"4px 0",fontSize:11,fontWeight:600,color:"#475569"}},w);}),cells))
+        h("div",{style:{fontSize:16,fontWeight:800,color:"var(--ink)",marginBottom:10,paddingBottom:6,borderBottom:"1px solid var(--line)"}},new Date(m.yr,m.mn,1).toLocaleString("default",{month:"long",year:"numeric"})),
+        h("div",{style:{overflowX:"auto",WebkitOverflowScrolling:"touch"}},h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,minmax(52px,1fr))",gap:2,minWidth:380}},["S","M","T","W","T","F","S"].map(function(w){return h("div",{key:w,style:{textAlign:"center",padding:"4px 0",fontSize:11,fontWeight:700,color:"var(--muted2)"}},w);}),cells))
       );
     })
   );
@@ -910,7 +984,7 @@ function CalendarView(props){
 function GanttView(props){
   var entries=props.entries,onEdit=props.onEdit;
   var dated=entries.filter(function(e){return e.checkIn||e.depDate||e.pickupDate||e.date;});
-  if(!dated.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"#475569"}},h("div",{style:{fontSize:48}},"📊"),h("p",null,"Add entries with dates to see the timeline."));
+  if(!dated.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted2)"}},h("div",{style:{fontSize:48}},"📊"),h("p",null,"Add entries with dates to see the timeline."));
   var all=[];dated.forEach(function(e){var s=e.checkIn||e.depDate||e.pickupDate||e.date,en=e.checkOut||e.arrDate||e.dropoffDate||s;if(s)all.push(new Date(s));if(en)all.push(new Date(en));});
   var mn=new Date(Math.min.apply(null,all));mn.setDate(mn.getDate()-1);
   var mx=new Date(Math.max.apply(null,all));mx.setDate(mx.getDate()+1);
@@ -921,14 +995,14 @@ function GanttView(props){
   var ticks=[];var tc=new Date(mn);while(tc<=mx){ticks.push(new Date(tc));tc.setDate(tc.getDate()+Math.max(1,Math.floor(td/12)));}
   return h("div",{style:{overflowX:"auto"}},
     h("div",{style:{minWidth:700}},
-      h("div",{style:{position:"relative",height:28,marginLeft:160,marginBottom:4}},ticks.map(function(t,i){return h("div",{key:i,style:{position:"absolute",left:pos(t.toISOString().split("T")[0])+"%",fontSize:11,color:"#64748b",whiteSpace:"nowrap",transform:"translateX(-50%)"}},t.toLocaleDateString("en-US",{month:"short",day:"numeric"}));})),
+      h("div",{style:{position:"relative",height:28,marginLeft:160,marginBottom:4}},ticks.map(function(t,i){return h("div",{key:i,style:{position:"absolute",left:pos(t.toISOString().split("T")[0])+"%",fontSize:11,color:"var(--muted2)",whiteSpace:"nowrap",transform:"translateX(-50%)"}},t.toLocaleDateString("en-US",{month:"short",day:"numeric"}));})),
       sorted.map(function(e){
         var s=e.checkIn||e.depDate||e.pickupDate||e.date,en=e.checkOut||e.arrDate||e.dropoffDate||s;
         var l=pos(s),r=pos(en),w=Math.max(0.5,r-l);
         return h("div",{key:e.id,style:{display:"flex",alignItems:"center",marginBottom:8}},
-          h("div",{style:{width:156,minWidth:156,paddingRight:8,fontSize:12,color:"#cbd5e1",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textAlign:"right"}},typeIcon(e.type)+" "+lbl(e)),
-          h("div",{style:{flex:1,position:"relative",height:28,background:"#1e293b",borderRadius:4}},
-            h("div",{onClick:function(){onEdit(e);},style:{position:"absolute",left:l+"%",width:w+"%",height:"100%",background:COLORS[e.type]||COLORS.activity,borderRadius:4,cursor:"pointer",display:"flex",alignItems:"center",paddingLeft:6,fontSize:11,color:"#fff",fontWeight:600,overflow:"hidden",whiteSpace:"nowrap",minWidth:4,boxSizing:"border-box",opacity:.9}},w>5?lbl(e):"")
+          h("div",{style:{width:156,minWidth:156,paddingRight:8,fontSize:12,color:"var(--muted)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textAlign:"right"}},typeIcon(e.type)+" "+lbl(e)),
+          h("div",{style:{flex:1,position:"relative",height:28,background:"var(--canvas)",borderRadius:4,border:"1px solid var(--line)"}},
+            h("div",{onClick:function(){onEdit(e);},style:{position:"absolute",left:l+"%",width:w+"%",height:"100%",background:COLORS[e.type]||COLORS.activity,borderRadius:4,cursor:"pointer",display:"flex",alignItems:"center",paddingLeft:6,fontSize:11,color:"#fff",fontWeight:700,overflow:"hidden",whiteSpace:"nowrap",minWidth:4,boxSizing:"border-box"}},w>5?lbl(e):"")
           )
         );
       })
@@ -947,7 +1021,7 @@ function App(){
   var dbgS=useState([]); var debugLog=dbgS[0],setDebugLog=dbgS[1];
   function dbg(msg){var t=new Date().toLocaleTimeString();setDebugLog(function(p){return p.concat([t+" — "+msg]).slice(-20);});}
   var t4=useState("all"); var tab=t4[0],setTab=t4[1];
-  var t5=useState("table"); var view=t5[0],setView=t5[1];
+  var t5=useState("cards"); var view=t5[0],setView=t5[1];
   var t6=useState(null); var modal=t6[0],setModal=t6[1];
   var t7=useState(false); var imp=t7[0],setImp=t7[1];
   var t8=useState(false); var typePicker=t8[0],setTypePicker=t8[1];
@@ -1159,17 +1233,17 @@ function App(){
     for(var i=0;i<sacc.length-1;i++){var gd=(new Date(sacc[i+1].checkIn)-new Date(sacc[i].checkOut))/86400000;if(gd>0)gaps.push(gd+" night gap after \""+(sacc[i].name||"Stay "+(i+1))+"\" (out: "+fmtD(sacc[i].checkOut)+")");}
   }
 
-  function TB(p){return h("button",{onClick:function(){setTab(p.k);},style:{padding:"7px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,background:tab===p.k?"#334155":"transparent",color:tab===p.k?"#f1f5f9":"#94a3b8"}},p.label);}
+  function TB(p){return h("button",{onClick:function(){setTab(p.k);},style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"none",cursor:"pointer",fontSize:13,fontWeight:700,background:tab===p.k?"var(--horizon)":"transparent",color:tab===p.k?"#fff":"var(--muted)"}},p.label);}
 
   // Auth loading
-  if(authLoading)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a",color:"#94a3b8",fontSize:16}},"Loading...");
+  if(authLoading)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--canvas)",color:"var(--muted)",fontSize:15}},"Loading...");
 
   // Login screen
-  if(!user)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a"}},
-    h("div",{style:{textAlign:"center",padding:"40px",background:"#1e293b",borderRadius:16,border:"1px solid #334155",maxWidth:360,width:"100%",margin:"0 20px"}},
-      h("div",{style:{fontSize:56,marginBottom:16}},"✈️"),
-      h("h1",{style:{margin:"0 0 8px",fontSize:24,fontWeight:700,color:"#f1f5f9"}},"Family Trip Planner"),
-      h("p",{style:{margin:"0 0 32px",fontSize:14,color:"#64748b"}},"Sign in to access your trips"),
+  if(!user)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--canvas)"}},
+    h("div",{style:{textAlign:"center",padding:"44px 40px",background:"var(--surface)",borderRadius:"var(--radius-xl)",boxShadow:"var(--shadow-modal)",maxWidth:380,width:"100%",margin:"0 20px"}},
+      h("div",{style:{width:64,height:64,borderRadius:"50%",background:"var(--horizon)1A",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,margin:"0 auto 18px"}},"✈️"),
+      h("h1",{style:{margin:"0 0 8px",fontSize:24,fontWeight:800,color:"var(--ink)"}},"Family Trip Planner"),
+      h("p",{style:{margin:"0 0 32px",fontSize:14,color:"var(--muted)"}},"Sign in to access your trips"),
       h("button",{
         onClick:function(){
           dbg("Button tapped. auth="+(!!auth));
@@ -1187,84 +1261,85 @@ function App(){
             }
           });
         }},
-        style:{width:"100%",padding:"12px 20px",borderRadius:10,border:"none",background:"#fff",color:"#1f2937",fontSize:15,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12}
+        style:{width:"100%",padding:"13px 20px",borderRadius:"var(--radius-md)",border:"1.5px solid var(--line)",background:"var(--surface)",color:"var(--ink)",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12,boxShadow:"var(--shadow-sm)"}
       },
         h("img",{src:"https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg",style:{width:20,height:20}}),
         "Sign in with Google"
       ),
-      authError&&h("div",{style:{marginTop:16,background:"#7c2d12",borderRadius:8,padding:"10px 14px",fontSize:12,color:"#fca5a5",textAlign:"left",wordBreak:"break-word"}},"⚠️ "+authError),
-      h("div",{style:{marginTop:20,background:"#0f172a",border:"1px solid #334155",borderRadius:8,padding:"10px",fontSize:10,color:"#64748b",textAlign:"left",fontFamily:"monospace",maxHeight:220,overflowY:"auto"}},
-        h("div",{style:{color:"#94a3b8",fontWeight:700,marginBottom:6}},"🔍 Debug log (screenshot this):"),
+      authError&&h("div",{style:{marginTop:16,background:"var(--coral-bg)",borderRadius:"var(--radius-sm)",padding:"10px 14px",fontSize:12,color:"var(--coral)",textAlign:"left",wordBreak:"break-word",fontWeight:600}},"⚠️ "+authError),
+      h("div",{style:{marginTop:20,background:"var(--canvas)",border:"1px solid var(--line)",borderRadius:"var(--radius-sm)",padding:"10px",fontSize:10,color:"var(--muted)",textAlign:"left",fontFamily:"monospace",maxHeight:220,overflowY:"auto"}},
+        h("div",{style:{color:"var(--ink)",fontWeight:700,marginBottom:6}},"🔍 Debug log (screenshot this):"),
         debugLog.length===0?h("div",null,"(waiting for events...)"):debugLog.map(function(l,i){return h("div",{key:i,style:{marginBottom:2,wordBreak:"break-all"}},l);})
       )
     )
   );
 
-  if(houseAccess==="checking")return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a",color:"#94a3b8",fontSize:16}},"Checking access...");
+  if(houseAccess==="checking")return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--canvas)",color:"var(--muted)",fontSize:15}},"Checking access...");
 
-  if(houseAccess==="pending")return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a"}},
-    h("div",{style:{textAlign:"center",padding:"40px",background:"#1e293b",borderRadius:16,border:"1px solid #334155",maxWidth:380,width:"100%",margin:"0 20px"}},
-      h("div",{style:{fontSize:48,marginBottom:16}},"🔒"),
-      h("h1",{style:{margin:"0 0 8px",fontSize:20,fontWeight:700,color:"#f1f5f9"}},"Access Pending"),
-      h("p",{style:{margin:"0 0 16px",fontSize:13,color:"#94a3b8",lineHeight:1.6}},"Signed in as ",h("strong",{style:{color:"#e2e8f0"}},user.email),". This email hasn't been added to the household yet."),
-      h("p",{style:{margin:"0 0 24px",fontSize:13,color:"#64748b",lineHeight:1.6}},"Ask the household owner to open ⚙️ → 👥 Access and add your email."),
-      h("button",{onClick:function(){if(auth)auth.signOut();},style:{padding:"9px 20px",borderRadius:8,border:"1px solid #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:13}},"Sign out")
+  if(houseAccess==="pending")return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--canvas)"}},
+    h("div",{style:{textAlign:"center",padding:"40px",background:"var(--surface)",borderRadius:"var(--radius-xl)",boxShadow:"var(--shadow-modal)",maxWidth:380,width:"100%",margin:"0 20px"}},
+      h("div",{style:{fontSize:44,marginBottom:16}},"🔒"),
+      h("h1",{style:{margin:"0 0 8px",fontSize:20,fontWeight:800,color:"var(--ink)"}},"Access Pending"),
+      h("p",{style:{margin:"0 0 16px",fontSize:13,color:"var(--muted)",lineHeight:1.6}},"Signed in as ",h("strong",{style:{color:"var(--ink)"}},user.email),". This email hasn't been added to the household yet."),
+      h("p",{style:{margin:"0 0 24px",fontSize:13,color:"var(--muted2)",lineHeight:1.6}},"Ask the household owner to open ⚙️ → 👥 Access and add your email."),
+      h("button",{onClick:function(){if(auth)auth.signOut();},style:{padding:"9px 20px",borderRadius:"var(--radius-sm)",border:"1.5px solid var(--line)",background:"transparent",color:"var(--muted)",cursor:"pointer",fontSize:13,fontWeight:600}},"Sign out")
     )
   );
 
-  if(!loaded)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#0f172a",color:"#94a3b8",fontSize:16}},"Loading your trips...");
+  if(!loaded)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--canvas)",color:"var(--muted)",fontSize:15}},"Loading your trips...");
 
-  return h("div",{style:{fontFamily:"Inter,sans-serif",background:"#0f172a",minHeight:"100vh",color:"#e2e8f0"}},
-    h("div",{style:{background:"linear-gradient(135deg,#1e293b,#0f172a)",borderBottom:"1px solid #1e293b",padding:"16px 24px"}},
+  return h("div",{style:{fontFamily:"'Plus Jakarta Sans',sans-serif",background:"var(--canvas)",minHeight:"100vh",color:"var(--ink)"}},
+    h("div",{style:{background:"var(--surface)",borderBottom:"1px solid var(--line)",padding:"16px 24px"}},
       h("div",{style:{maxWidth:1200,margin:"0 auto"}},
         h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}},
           h("div",{style:{display:"flex",alignItems:"center",gap:12}},
-            h("div",null,h("h1",{style:{margin:0,fontSize:22,fontWeight:700,color:"#f1f5f9"}},"✈️ Family Trip Planner"),h("p",{style:{margin:"2px 0 0",fontSize:13,color:"#64748b"}},"All your travel details in one place")),
-            trips.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:8,marginLeft:16}},
-              h("div",{style:{display:"flex",gap:4,background:"#0f172a",borderRadius:8,padding:3,flexWrap:"wrap"}},trips.map(function(t){return h("button",{key:t.id,onClick:function(){setActiveTripId(t.id);setSearch("");},style:{padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:activeTripId===t.id?"#6366f1":"transparent",color:activeTripId===t.id?"#fff":"#94a3b8",whiteSpace:"nowrap",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},t.name);})),
-              h("button",{onClick:function(){setTripMgr(true);},title:"Manage trips",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:13}},"⚙️"),
-              h("button",{onClick:function(){setAccessModal(true);},title:"Manage who has access",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:13}},"👥"),
+            h("div",null,h("h1",{style:{margin:0,fontSize:21,fontWeight:800,color:"var(--ink)",letterSpacing:"-0.01em"}},"✈️ Family Trip Planner"),h("p",{style:{margin:"2px 0 0",fontSize:13,color:"var(--muted)"}},"All your travel details in one place")),
+            trips.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:8,marginLeft:16,flexWrap:"wrap"}},
+              h("div",{style:{display:"flex",gap:4,background:"var(--canvas)",borderRadius:"var(--radius-md)",padding:3,flexWrap:"wrap"}},trips.map(function(t){return h("button",{key:t.id,onClick:function(){setActiveTripId(t.id);setSearch("");},style:{padding:"6px 13px",borderRadius:"var(--radius-sm)",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,background:activeTripId===t.id?"var(--horizon)":"transparent",color:activeTripId===t.id?"#fff":"var(--muted)",whiteSpace:"nowrap",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},t.name);})),
+              h("button",{onClick:function(){setTripMgr(true);},title:"Manage trips",style:{padding:"6px 10px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",background:"transparent",color:"var(--muted)",cursor:"pointer",fontSize:13}},"⚙️"),
+              h("button",{onClick:function(){setAccessModal(true);},title:"Manage who has access",style:{padding:"6px 10px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",background:"transparent",color:"var(--muted)",cursor:"pointer",fontSize:13}},"👥"),
               h("span",{
   title:ratesInfo.status==="ok"?"Live ECB rates as of "+ratesInfo.date+" (1h cache)":ratesInfo.status==="err"?"Could not fetch live rates — using approximate fallback":"Fetching live exchange rates...",
-  style:{fontSize:11,cursor:"help",color:ratesInfo.status==="ok"?"#4ade80":ratesInfo.status==="err"?"#fbbf24":"#475569",marginRight:2}
+  style:{fontSize:11,cursor:"help",color:ratesInfo.status==="ok"?"var(--sage)":ratesInfo.status==="err"?"var(--amber)":"var(--muted2)",marginRight:2}
 },ratesInfo.status==="loading"?"⟳":ratesInfo.status==="ok"?"●":"≈"),
-              h("select",{value:currency,onChange:function(e){setCurrency(e.target.value);},title:"Currency (amounts stored in USD, converted for display)",style:{background:"#0f172a",border:"1px solid #334155",borderRadius:6,padding:"4px 6px",color:"#94a3b8",fontSize:12,cursor:"pointer"}},CURRENCIES.map(function(c){return h("option",{key:c.code,value:c.code},c.sym+" "+c.code);})),
-              user&&h("button",{onClick:function(){if(auth)auth.signOut();},title:"Sign out",style:{padding:"5px 10px",borderRadius:6,border:"1px solid #334155",background:"transparent",color:"#64748b",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",gap:6}},user.photoURL&&h("img",{src:user.photoURL,style:{width:18,height:18,borderRadius:"50%"}}),h("span",null,"Sign out"))
+              h("select",{value:currency,onChange:function(e){setCurrency(e.target.value);},title:"Currency (amounts stored in USD, converted for display)",style:{background:"var(--canvas)",border:"1px solid var(--line)",borderRadius:"var(--radius-sm)",padding:"5px 7px",color:"var(--muted)",fontSize:12,cursor:"pointer",fontWeight:600}},CURRENCIES.map(function(c){return h("option",{key:c.code,value:c.code},c.sym+" "+c.code);})),
+              user&&h("button",{onClick:function(){if(auth)auth.signOut();},title:"Sign out",style:{padding:"6px 10px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",background:"transparent",color:"var(--muted)",cursor:"pointer",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:6}},user.photoURL&&h("img",{src:user.photoURL,style:{width:18,height:18,borderRadius:"50%"}}),h("span",null,"Sign out"))
             )
           ),
           h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
-            [["🏠 Stays",aCC,aDue,COLORS.accommodation],["✈️ Flights",fCC,fDue,COLORS.flight],["🚗 Cars",cCC,cDue,COLORS.car],["🎯 Activities",acC,acDue,COLORS.activity]].map(function(item){return h("div",{key:item[0],style:{background:"#1e293b",borderRadius:8,padding:"6px 12px",borderLeft:"3px solid "+item[3]}},h("div",{style:{fontSize:11,color:"#94a3b8"}},item[0]),h("div",{style:{fontSize:15,fontWeight:700,color:item[3]}},fmt$(item[1])),item[2]>0&&h("div",{style:{fontSize:11,color:"#fbbf24",marginTop:1}},fmt$(item[2])+" due"));}),
-            h("div",{style:{background:"#1e293b",borderRadius:8,padding:"6px 12px",borderLeft:"3px solid "+(totDue>0?"#fbbf24":"#f1f5f9")}},h("div",{style:{fontSize:11,color:"#94a3b8"}},"💰 Total"),h("div",{style:{fontSize:15,fontWeight:700,color:"#f1f5f9"}},fmt$(tot)),totDue>0&&h("div",{style:{fontSize:11,color:"#fbbf24",marginTop:1}},fmt$(totDue)+" due"))
+            [["🏠 Stays",aCC,aDue,COLORS.accommodation],["✈️ Flights",fCC,fDue,COLORS.flight],["🚗 Cars",cCC,cDue,COLORS.car],["🎯 Activities",acC,acDue,COLORS.activity]].map(function(item){return h("div",{key:item[0],style:{background:"var(--surface)",borderRadius:"var(--radius-md)",padding:"9px 14px",border:"1px solid var(--line)",boxShadow:"var(--shadow-sm)",borderLeft:"3px solid "+item[3],minWidth:92}},h("div",{style:{fontSize:11,color:"var(--muted)",fontWeight:600}},item[0]),h("div",{style:{fontSize:15,fontWeight:800,color:"var(--ink)"}},fmt$(item[1])),item[2]>0&&h("div",{style:{fontSize:11,color:"var(--coral)",fontWeight:700,marginTop:1}},fmt$(item[2])+" due"));}),
+            h("div",{style:{background:"var(--surface)",borderRadius:"var(--radius-md)",padding:"9px 14px",border:"1px solid var(--line)",boxShadow:"var(--shadow-sm)",borderLeft:"3px solid "+(totDue>0?"var(--coral)":"var(--horizon)"),minWidth:92}},h("div",{style:{fontSize:11,color:"var(--muted)",fontWeight:600}},"💰 Total"),h("div",{style:{fontSize:15,fontWeight:800,color:"var(--ink)"}},fmt$(tot)),totDue>0&&h("div",{style:{fontSize:11,color:"var(--coral)",fontWeight:700,marginTop:1}},fmt$(totDue)+" due"))
           )
         ),
-        gaps.length>0&&h("div",{style:{marginTop:10,background:"#7c2d12",borderRadius:6,padding:"8px 12px",fontSize:13,color:"#fed7aa"}},"⚠️ "+gaps.join(" • "))
+        gaps.length>0&&h("div",{style:{marginTop:10,background:"var(--amber-bg)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontSize:13,color:"var(--amber-ink)",fontWeight:600}},"⚠️ "+gaps.join(" • "))
       )
     ),
     h("div",{style:{maxWidth:1200,margin:"0 auto",padding:"16px 24px"}},
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,marginBottom:16}},
-        h("div",{style:{display:"flex",gap:6,background:"#1e293b",borderRadius:10,padding:4}},h(TB,{k:"all",label:"🗂️ All"}),h(TB,{k:"accommodations",label:"🏠 Stays"}),h(TB,{k:"flights",label:"✈️ Flights"}),h(TB,{k:"cars",label:"🚗 Cars"}),h(TB,{k:"activities",label:"🎯 Activities"})),
+        h("div",{style:{display:"flex",gap:6,background:"var(--surface)",borderRadius:"var(--radius-md)",padding:4,border:"1px solid var(--line)"}},h(TB,{k:"all",label:"🗂️ All"}),h(TB,{k:"accommodations",label:"🏠 Stays"}),h(TB,{k:"flights",label:"✈️ Flights"}),h(TB,{k:"cars",label:"🚗 Cars"}),h(TB,{k:"activities",label:"🎯 Activities"})),
         h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
-          h("div",{style:{display:"flex",gap:4,background:"#1e293b",borderRadius:8,padding:3}},
-            [["table","☰ Table"],["calendar","📅 Calendar"],["gantt","📊 Timeline"]].map(function(item){return h("button",{key:item[0],onClick:function(){setView(item[0]);},style:{padding:"6px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:view===item[0]?"#334155":"transparent",color:view===item[0]?"#f1f5f9":"#64748b"}},item[1]);})
+          h("div",{style:{display:"flex",gap:4,background:"var(--surface)",borderRadius:"var(--radius-sm)",padding:3,border:"1px solid var(--line)"}},
+            [["cards","▦ Cards"],["table","☰ Table"],["calendar","📅 Calendar"],["gantt","📊 Timeline"]].map(function(item){return h("button",{key:item[0],onClick:function(){setView(item[0]);},style:{padding:"6px 12px",borderRadius:"var(--radius-sm)",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,background:view===item[0]?"var(--horizon)":"transparent",color:view===item[0]?"#fff":"var(--muted)"}},item[1]);})
           ),
-          h("button",{onClick:function(){setPdfPreview(true);},style:{padding:"7px 14px",borderRadius:8,border:"1px solid #334155",cursor:"pointer",background:"transparent",color:"#94a3b8",fontWeight:600,fontSize:13}},"📄 PDF"),
-          h("button",{onClick:function(){setImp("backup");},style:{padding:"7px 14px",borderRadius:8,border:"1px solid #334155",cursor:"pointer",background:"transparent",color:"#94a3b8",fontWeight:600,fontSize:13}},"💾 Backup"),
+          h("button",{onClick:function(){setPdfPreview(true);},style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",cursor:"pointer",background:"var(--surface)",color:"var(--muted)",fontWeight:700,fontSize:13}},"📄 PDF"),
+          h("button",{onClick:function(){setImp("backup");},style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",cursor:"pointer",background:"var(--surface)",color:"var(--muted)",fontWeight:700,fontSize:13}},"💾 Backup"),
           h("button",{onClick:function(){
             var n=dedupeExisting();
             setDedupMsg(n>0?n+" duplicate"+(n!==1?"s":"")+" removed ✓":"No duplicates found");
             setTimeout(function(){setDedupMsg("");},3500);
-          },style:{padding:"7px 14px",borderRadius:8,border:"1px solid #334155",cursor:"pointer",background:"transparent",color:"#34d399",fontWeight:600,fontSize:13}},"🧹 De-dup"),
-          h("button",{onClick:function(){setImp(true);},style:{padding:"7px 14px",borderRadius:8,border:"1px solid #334155",cursor:"pointer",background:"transparent",color:"#94a3b8",fontWeight:600,fontSize:13}},"⬆️ Import"),
-          h("button",{onClick:function(){setGmailModal(true);},style:{padding:"7px 14px",borderRadius:8,border:"1px solid #1a4a3a",cursor:"pointer",background:"#0d2b22",color:"#34d399",fontWeight:600,fontSize:13}},"📧 Gmail"),
-          h("button",{onClick:function(){openNew();},style:{padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",background:"#6366f1",color:"#fff",fontWeight:600,fontSize:13}},"+ Add")
+          },style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",cursor:"pointer",background:"var(--surface)",color:"var(--sage)",fontWeight:700,fontSize:13}},"🧹 De-dup"),
+          h("button",{onClick:function(){setImp(true);},style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",cursor:"pointer",background:"var(--surface)",color:"var(--muted)",fontWeight:700,fontSize:13}},"⬆️ Import"),
+          h("button",{onClick:function(){setGmailModal(true);},style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"1px solid var(--sage)",cursor:"pointer",background:"var(--sage-bg)",color:"var(--sage-ink)",fontWeight:700,fontSize:13}},"📧 Gmail"),
+          h("button",{onClick:function(){openNew();},style:{padding:"7px 16px",borderRadius:"var(--radius-sm)",border:"none",cursor:"pointer",background:"var(--horizon)",color:"#fff",fontWeight:700,fontSize:13,boxShadow:"var(--shadow-sm)"}},"+ Add")
         )
       ),
-      dedupMsg&&h("div",{style:{marginBottom:10,background:"#14532d",borderRadius:6,padding:"8px 14px",fontSize:13,color:"#4ade80",fontWeight:600}},dedupMsg),
-      view==="table"&&h("div",{style:{marginBottom:14,position:"relative"}},
-        h("input",{type:"text",value:search,onChange:function(e){setSearch(e.target.value);},placeholder:"Search by name, location, airline, notes, confirmation...",style:{width:"100%",background:"#1e293b",border:"1px solid #334155",borderRadius:8,padding:"9px 14px 9px 38px",color:"#e2e8f0",fontSize:13,boxSizing:"border-box"}}),
-        h("span",{style:{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"#475569"}},"🔍"),
-        search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#64748b",cursor:"pointer",fontSize:18}},"×")
+      dedupMsg&&h("div",{style:{marginBottom:10,background:"var(--sage-bg)",borderRadius:"var(--radius-sm)",padding:"8px 14px",fontSize:13,color:"var(--sage-ink)",fontWeight:700}},dedupMsg),
+      (view==="table"||view==="cards")&&h("div",{style:{marginBottom:14,position:"relative"}},
+        h("input",{type:"text",value:search,onChange:function(e){setSearch(e.target.value);},placeholder:"Search by name, location, airline, notes, confirmation...",style:{width:"100%",background:"var(--surface)",border:"1px solid var(--line)",borderRadius:"var(--radius-md)",padding:"10px 14px 10px 38px",color:"var(--ink)",fontSize:13,boxSizing:"border-box",boxShadow:"var(--shadow-sm)"}}),
+        h("span",{style:{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",fontSize:15,color:"var(--muted2)"}},"🔍"),
+        search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"var(--muted)",cursor:"pointer",fontSize:18}},"×")
       ),
+      view==="cards"&&h(CardView,{tab:tab,acc:acc,flt:flt,car:car,act:act,search:search,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}}),
       view==="table"&&h(TableView,{tab:tab,acc:acc,flt:flt,car:car,act:act,search:search,onEdit:function(item){setModal({isNew:false,item:item,det:[]});},onDelete:del}),
       view==="calendar"&&h(CalendarView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}}),
       view==="gantt"&&h(GanttView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}})
