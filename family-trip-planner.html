@@ -6,29 +6,29 @@
 <title>Family Trip Planner</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{
-  --canvas:#FBF9F6; --surface:#FFFFFF; --ink:#1C1B19; --muted:#6B6A66; --muted2:#8C8A85;
-  --line:#ECE7DF; --line2:#E2DCD2;
-  --horizon:#1E3A5F; --horizon-d:#162C49; --sky:#2E86AB; --amber:#E8A33D; --sage:#4F7965;
-  --coral:#E8543F; --coral-bg:#FDEAE7;
-  --sage-bg:#E8F3EE; --sage-ink:#2F5645;
-  --amber-bg:#FCF1DE; --amber-ink:#92660B;
-  --radius-sm:8px; --radius-md:12px; --radius-lg:18px; --radius-xl:22px;
-  --shadow-sm:0 1px 2px rgba(28,27,25,.05);
-  --shadow-card:0 1px 2px rgba(28,27,25,.04),0 8px 24px -8px rgba(28,27,25,.10);
-  --shadow-modal:0 4px 8px rgba(28,27,25,.06),0 24px 48px -12px rgba(28,27,25,.22);
-}
 *{box-sizing:border-box;margin:0;padding:0;}
-body{font-family:"Plus Jakarta Sans",-apple-system,sans-serif;background:var(--canvas);color:var(--ink);}
-::-webkit-scrollbar{width:10px;height:10px;}
-::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px;}
-::-webkit-scrollbar-track{background:transparent;}
-*:focus-visible{outline:2px solid var(--horizon);outline-offset:2px;}
-@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#1e293b;
+  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;--text4:#475569;
+  --primary:#6366f1;--primary-dim:#334155;
+  --danger:#f87171;--danger-bg:#7c2d12;--danger-dim:#7f1d1d;
+  --success:#10b981;--success-bg:#134e4a;--success-text:#6ee7b7;
+  --warning-bg:#7c2d12;--warning-text:#fed7aa;
+  --row-odd:#0f172a;--row-even:#111827;--row-dup-odd:#1c1408;--row-dup-even:#1f1709;
+  --input-bg:#0f172a;--overlay-bg:rgba(0,0,0,.75);
+}
+body.light-mode{
+  --bg:#f1f5f9;--surface:#ffffff;--surface2:#e2e8f0;--border:#e2e8f0;
+  --text:#0f172a;--text2:#334155;--text3:#64748b;--text4:#94a3b8;
+  --primary:#4f46e5;--primary-dim:#e0e7ff;
+  --danger:#dc2626;--danger-bg:#fee2e2;--danger-dim:#fca5a5;
+  --success:#059669;--success-bg:#d1fae5;--success-text:#065f46;
+  --warning-bg:#fef3c7;--warning-text:#92400e;
+  --row-odd:#ffffff;--row-even:#f8fafc;--row-dup-odd:#fef9c3;--row-dup-even:#fefce8;
+  --input-bg:#f8fafc;--overlay-bg:rgba(0,0,0,.4);
+}
+body{font-family:Inter,sans-serif;background:var(--bg);color:var(--text);transition:background .2s,color .2s;}
 </style>
 <link rel='manifest' href='manifest.json'>
 <meta name='mobile-web-app-capable' content='yes'>
@@ -36,29 +36,24 @@ body{font-family:"Plus Jakarta Sans",-apple-system,sans-serif;background:var(--c
 <meta name='apple-mobile-web-app-status-bar-style' content='black-translucent'>
 <meta name='apple-mobile-web-app-title' content='Trip Planner'>
 <link rel='apple-touch-icon' href='icon-192.svg'>
-<meta name='theme-color' content='#1E3A5F'>
+<meta name='theme-color' content='#6366f1'>
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+
 <script>
-var db=null,auth=null,googleProvider=null;
-try{
-  var firebaseConfig={
-    apiKey:"AIzaSyA7Hz1RPOJ5ANJDvGkAhzWAtMeYrlwgso0",
-    authDomain:"family-trip-planner-f1b14.firebaseapp.com",
-    projectId:"family-trip-planner-f1b14",
-    storageBucket:"family-trip-planner-f1b14.firebasestorage.app",
-    messagingSenderId:"334341909776",
-    appId:"1:334341909776:web:ba70446209c14f43370995"
-  };
-  firebase.initializeApp(firebaseConfig);
-  db=firebase.firestore();
-  auth=firebase.auth();
-  googleProvider=new firebase.auth.GoogleAuthProvider();
-  googleProvider.setCustomParameters({prompt:"select_account"});
-}catch(e){
-  console.warn("Firebase failed to initialize (CDN unavailable?):",e.message);
-}
+var firebaseConfig={
+  apiKey:"AIzaSyA7Hz1RPOJ5ANJDvGkAhzWAtMeYrlwgso0",
+  authDomain:"family-trip-planner-f1b14.firebaseapp.com",
+  projectId:"family-trip-planner-f1b14",
+  storageBucket:"family-trip-planner-f1b14.firebasestorage.app",
+  messagingSenderId:"334341909776",
+  appId:"1:334341909776:web:ba70446209c14f43370995"
+};
+firebase.initializeApp(firebaseConfig);
+var db=firebase.firestore();
+var auth=firebase.auth();
+var googleProvider=new firebase.auth.GoogleAuthProvider();
 </script>
 </head>
 <body>
@@ -69,14 +64,9 @@ var React_=React;
 var useState=React_.useState,useEffect=React_.useEffect,useCallback=React_.useCallback,useRef=React_.useRef,useMemo=React_.useMemo;
 var h=React_.createElement;
 
-var COLORS={accommodation:"#1E3A5F",flight:"#2E86AB",car:"#E8A33D",activity:"#4F7965"};
+var COLORS={accommodation:"#6366f1",flight:"#0ea5e9",car:"#f59e0b",activity:"#10b981"};
 var PLATFORMS=["Airbnb","Booking.com","VRBO","Direct","Hotels.com","Expedia","Other"];
 var ACTIVITY_CATS=["Nature","Adventure","Cultural","Food","Theme Park","Beach","Sightseeing","Shopping","Other"];
-var FLIGHT_PLATFORMS=["Direct","Expedia","Kayak","Trip.com","Google Flights","Booking.com","Priceline","Other"];
-var CAR_PLATFORMS=["Direct","Trip.com","Expedia","Booking.com","Kayak","Rentalcars.com","Priceline","Other"];
-var ACTIVITY_PLATFORMS=["Direct","Viator","GetYourGuide","Booking.com","Airbnb Experiences","FareHarbor","Rezdy","Tripadvisor","Other"];
-var CURRENCIES=[{code:"USD",sym:"$"},{code:"EUR",sym:"€"},{code:"ILS",sym:"₪"}];
-var HOUSEHOLD_ID="family-trip-planner-household";
 var CAR_TYPES=["Economy","Compact","SUV","Minivan","Truck","Luxury","Other"];
 var KNOWN_LABELS=[
   {id:"Label_3699931737615885849",name:"2026 trip to USA"},
@@ -87,13 +77,10 @@ var KNOWN_LABELS=[
   {id:"INBOX",name:"Inbox"}
 ];
 var REQUIRED={accommodation:["name","checkIn","checkOut"],flight:["airline","from","to","depDate"],car:["company","pickupLocation","pickupDate"],activity:["name","date"]};
-var FIELD_LABELS={name:"Name",airline:"Airline",from:"Departure airport",to:"Arrival airport",depDate:"Departure date",company:"Rental company",pickupLocation:"Pickup location",pickupDate:"Pickup date",checkIn:"Check-in",checkOut:"Check-out",date:"Date",vendorPhone:"Phone",vendorEmail:"Email",paymentStatus:"Payment status",amountDue:"Amount due ($)",bookingPlatform:"Booked via",confirmation:"Confirmation #"};
+var FIELD_LABELS={name:"Name",airline:"Airline",from:"Departure airport",to:"Arrival airport",depDate:"Departure date",company:"Rental company",pickupLocation:"Pickup location",pickupDate:"Pickup date",checkIn:"Check-in",checkOut:"Check-out",date:"Date"};
 
-var _currSym="$"; var _currCode="USD";
-var EXCH={USD:1,EUR:0.93,ILS:3.73};
 function safeNum(v){var n=parseFloat(v);return isNaN(n)?0:n;}
-function fmt$(v){if(v===""||v===null||v===undefined)return"-";var n=safeNum(v)*(EXCH[_currCode]||1);return _currSym+Math.round(n).toLocaleString("en-US");}
-function entryDue(e){var ps=e.paymentStatus||"paid";if(ps==="paid")return 0;if(ps==="partially_paid")return safeNum(e.amountDue);return safeNum(e.totalCost||e.cost);}
+function fmt$(v){return v?"$"+safeNum(v).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0}):"-";}
 function nights(a,b){if(!a||!b)return 0;var d=(new Date(b)-new Date(a))/86400000;return d>0?d:0;}
 function fmtD(v){if(!v||v==="-")return"-";var p=v.split("-");return p.length===3?p[2]+"-"+p[1]+"-"+p[0]:v;}
 function cityOf(addr){if(!addr)return"";var p=addr.split(",").map(function(s){return s.trim();}).filter(Boolean);return p.length>=2?p[p.length-2]:p[0]||"";}
@@ -102,51 +89,7 @@ function typeLabel(t){return t==="accommodation"?"Stay":t==="flight"?"Flight":t=
 function matchesSearch(e,q){
   if(!q)return true;
   var lq=q.toLowerCase();
-  return[e.name,e.airline,e.company,e.from,e.to,e.address,e.location,e.pickupLocation,e.dropoffLocation,e.notes,e.confirmation,e.bookingRef,e.flightNo,e.category,e.platform,e.contact,e.vendorPhone,e.vendorEmail,e.bookingPlatform].some(function(f){return f&&String(f).toLowerCase().indexOf(lq)>=0;});
-}
-function normStr(s){return(s||"").toLowerCase().replace(/[^a-z0-9]/g," ").replace(/\s+/g," ").trim();}
-function normConf(s){return String(s||"").replace(/[\s\/\-\.]/g,"").toLowerCase();}
-function confMatch(a,b){if(!a||!b)return false;var na=normConf(a),nb=normConf(b);if(!na||!nb)return false;return na===nb||na.indexOf(nb)>=0||nb.indexOf(na)>=0;}
-function strMatch(a,b){
-  var na=normStr(a),nb=normStr(b);
-  if(!na||!nb)return false;
-  if(na===nb)return true;
-  var ml=Math.min(na.length,nb.length);
-  return ml>=5&&(na.slice(0,ml)===nb.slice(0,ml)||na.indexOf(nb)>=0||nb.indexOf(na)>=0);
-}
-function isDuplicate(entry,pool){
-  return pool.some(function(e){
-    if(e.type!==entry.type)return false;
-    var ec=entry.confirmation,ec2=e.confirmation,er=entry.bookingRef,er2=e.bookingRef;
-    if(entry.type==="accommodation"||entry.type==="car"||entry.type==="activity"){
-      if(ec&&ec2&&confMatch(ec,ec2))return true;
-      if(er&&er2&&confMatch(er,er2))return true;
-    }
-    if(entry.type==="accommodation")return entry.checkIn&&e.checkIn&&entry.checkIn===e.checkIn&&strMatch(entry.name,e.name);
-    if(entry.type==="flight"){
-      var sa=strMatch(entry.airline,e.airline);
-      var sf=entry.flightNo&&e.flightNo&&entry.flightNo===e.flightNo;
-      var sd=entry.depDate&&e.depDate&&entry.depDate===e.depDate;
-      var sr=strMatch(entry.from,e.from)&&strMatch(entry.to,e.to);
-      var sbr=er&&er2&&String(er)===String(er2);
-      if(sa&&sf)return true;                    // same flight number
-      if(sa&&sd&&sr)return true;                // same airline+date+route
-      if(sbr&&sa&&sr&&!sf)return true;          // same ref+airline+route (EL AL no flightNo)
-      return false;
-    }
-    if(entry.type==="car")return entry.pickupDate&&e.pickupDate&&entry.pickupDate===e.pickupDate&&strMatch(entry.company,e.company);
-    if(entry.type==="activity")return entry.date&&e.date&&entry.date===e.date&&strMatch(entry.name,e.name);
-    return false;
-  });
-}
-function mergeEntries(a,b){
-  var m=Object.assign({},a);
-  Object.keys(b).forEach(function(k){
-    if(k==="id"||k==="_dup"||k==="_dupReason")return;
-    var av=m[k],bv=b[k];
-    if((av===null||av===undefined||av===""||av===false)&&(bv!==null&&bv!==undefined&&bv!==""&&bv!==false))m[k]=bv;
-  });
-  return m;
+  return[e.name,e.airline,e.company,e.from,e.to,e.address,e.location,e.pickupLocation,e.dropoffLocation,e.notes,e.confirmation,e.bookingRef,e.flightNo,e.category,e.platform,e.contact].some(function(f){return f&&String(f).toLowerCase().indexOf(lq)>=0;});
 }
 function validate(item){
   var errors={};
@@ -156,40 +99,32 @@ function validate(item){
   if(item.type==="car"&&item.pickupDate&&item.dropoffDate&&new Date(item.dropoffDate)<new Date(item.pickupDate))errors.dropoffDate="Drop-off before pickup";
   return errors;
 }
-function newAcc(){return{id:Date.now(),type:"accommodation",name:"",platform:"Airbnb",checkIn:"",checkOut:"",address:"",contact:"",vendorPhone:"",vendorEmail:"",url:"",parking:false,kitchen:false,breakfast:false,totalCost:"",costPerNight:"",amountDue:"",paymentStatus:"paid",confirmation:"",notes:""};}
-function newFlt(){return{id:Date.now(),type:"flight",airline:"",flightNo:"",from:"",to:"",depDate:"",depTime:"",arrDate:"",arrTime:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",bookingRef:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
-function newCar(){return{id:Date.now(),type:"car",company:"",carType:"SUV",pickupLocation:"",dropoffLocation:"",pickupDate:"",dropoffDate:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
-function newAct(){return{id:Date.now(),type:"activity",name:"",category:"Nature",date:"",duration:"",location:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
+function newAcc(){return{id:Date.now(),type:"accommodation",name:"",platform:"Airbnb",checkIn:"",checkOut:"",address:"",contact:"",url:"",parking:false,kitchen:false,breakfast:false,totalCost:"",costPerNight:"",confirmation:"",notes:""};}
+function newFlt(){return{id:Date.now(),type:"flight",airline:"",flightNo:"",from:"",to:"",depDate:"",depTime:"",arrDate:"",arrTime:"",cost:"",bookingRef:"",url:"",notes:""};}
+function newCar(){return{id:Date.now(),type:"car",company:"",carType:"SUV",pickupLocation:"",dropoffLocation:"",pickupDate:"",dropoffDate:"",cost:"",confirmation:"",url:"",notes:""};}
+function newAct(){return{id:Date.now(),type:"activity",name:"",category:"Nature",date:"",duration:"",location:"",cost:"",url:"",notes:""};}
 function newTrip(name){return{id:"trip_"+Date.now(),name:name||"New Trip",acc:[],flt:[],car:[],act:[]};}
 
 function storeGet(k){
   try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}
 }
-function houseDataRef(k){return db.collection("households").doc(HOUSEHOLD_ID).collection("data").doc(k);}
-function houseDocRef(){return db.collection("households").doc(HOUSEHOLD_ID);}
 function storeSet(k,v){
   try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
   try{
-    if(typeof db!=="undefined"&&db){
-      houseDataRef(k).set({value:JSON.stringify(v),updated:Date.now()}).catch(function(e){console.warn("Firestore write failed:",e);});
+    if(typeof db!=="undefined"&&typeof auth!=="undefined"&&auth.currentUser){
+      var uid=auth.currentUser.uid;
+      db.collection("users").doc(uid).collection("data").doc(k).set({value:JSON.stringify(v),updated:Date.now()}).catch(function(e){console.warn("Firestore write failed:",e);});
     }
   }catch(e){console.warn("Firestore error:",e);}
 }
 async function storeGetCloud(k){
   try{
-    if(typeof db==="undefined"||!db)return null;
-    var doc=await houseDataRef(k).get();
-    if(doc.exists){var d=doc.data();return d.value?JSON.parse(d.value):null;}
-    return null;
-  }catch(e){console.warn("Firestore read failed:",e);return null;}
-}
-async function storeGetCloudLegacyUID(uid,k){
-  try{
-    if(typeof db==="undefined"||!db)return null;
+    if(typeof db==="undefined"||!auth.currentUser)return null;
+    var uid=auth.currentUser.uid;
     var doc=await db.collection("users").doc(uid).collection("data").doc(k).get();
     if(doc.exists){var d=doc.data();return d.value?JSON.parse(d.value):null;}
     return null;
-  }catch(e){return null;}
+  }catch(e){console.warn("Firestore read failed:",e);return null;}
 }
 
 function parseICS(text){
@@ -215,7 +150,7 @@ function toB64(f){return new Promise(function(res,rej){var r=new FileReader();r.
 function toText(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=rej;r.readAsText(f);});}
 
 function claudeExtract(messages){
-  var sys="You are a travel booking data extractor. Return ONLY valid JSON, no markdown.\nDetect type: accommodation, flight, car, activity.\nShapes (YYYY-MM-DD dates, paymentStatus: paid/partially_paid/unpaid):\naccommodation:{type,name,platform,checkIn,checkOut,address,vendorPhone,vendorEmail,url,confirmation,totalCost,costPerNight,amountDue,paymentStatus,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,amountDue,paymentStatus,bookingPlatform,bookingRef,vendorPhone,vendorEmail,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\nactivity:{type,name,category,date,duration,location,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}";
+  var sys="You are a travel booking data extractor. Return ONLY valid JSON, no markdown.\nDetect type: accommodation, flight, car, activity.\nShapes (YYYY-MM-DD dates):\naccommodation:{type,name,platform,checkIn,checkOut,address,contact,url,confirmation,totalCost,costPerNight,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,bookingRef,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,confirmation,url,notes}\nactivity:{type,name,category,date,duration,location,cost,url,notes}";
   return fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:messages})})
     .then(function(r){return r.json();})
     .then(function(d){if(d.error)throw new Error(d.error.message||"API error");return d.content.map(function(c){return c.text||"";}).join("");});
@@ -246,22 +181,24 @@ function buildPrintHTML(tab,acc,flt,car,act,tripName){
   return "<!DOCTYPE html><html><head><meta charset='utf-8'><title>"+(tripName||"Trip")+"</title><style>"+css+"</style></head><body><h1>"+(tripName||"Family Trip Planner")+"</h1><div class='sub'>Exported "+new Date().toLocaleDateString("en-GB")+"</div>"+tots+tbl+"</body></html>";
 }
 
+
+
 // ── UI Helpers ───────────────────────────────────────────────────
 function Overlay(props){
-  return h("div",{onClick:function(e){if(e.target===e.currentTarget&&props.onClose)props.onClose();},style:{position:"fixed",inset:0,background:"rgba(28,27,25,.45)",backdropFilter:"blur(2px)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16}},
-    h("div",{style:{background:"var(--surface)",borderRadius:"var(--radius-xl)",width:"100%",maxWidth:600,maxHeight:"90vh",overflowY:"auto",padding:28,boxShadow:"var(--shadow-modal)"}},props.children)
+  return h("div",{onClick:function(e){if(e.target===e.currentTarget&&props.onClose)props.onClose();},style:{position:"fixed",inset:0,background:"var(--overlay-bg)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:16}},
+    h("div",{style:{background:"var(--surface)",borderRadius:12,width:"100%",maxWidth:600,maxHeight:"90vh",overflowY:"auto",padding:24,border:"1px solid var(--border)"}},props.children)
   );
 }
 function MH(props){
-  return h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:22}},
-    h("h2",{style:{margin:0,fontSize:18,fontWeight:700,color:"var(--ink)"}},props.title),
-    h("button",{onClick:props.onClose,style:{background:"var(--canvas)",border:"none",borderRadius:"50%",width:30,height:30,color:"var(--muted)",fontSize:18,cursor:"pointer",lineHeight:1}},"×")
+  return h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}},
+    h("h2",{style:{margin:0,fontSize:18,color:"var(--text)"}},props.title),
+    h("button",{onClick:props.onClose,style:{background:"none",border:"none",color:"#64748b",fontSize:22,cursor:"pointer"}},"×")
   );
 }
 function R2(props){return h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},props.children);}
 
-function fldStyle(errors,k){return{width:"100%",background:"var(--canvas)",border:"1.5px solid "+(errors&&errors[k]?"#E8543F":"var(--line)"),borderRadius:"var(--radius-sm)",padding:"9px 11px",color:"var(--ink)",fontSize:13,boxSizing:"border-box",fontFamily:"inherit"};}
-function lblStyle(errors,k){return{display:"block",fontSize:12,fontWeight:600,color:errors&&errors[k]?"#E8543F":"var(--muted)",marginBottom:5};}
+function fldStyle(errors,k){return{width:"100%",background:"var(--input-bg)",border:"1px solid "+(errors&&errors[k]?"#ef4444":"var(--border)"),borderRadius:6,padding:"8px 10px",color:"var(--text)",fontSize:13,boxSizing:"border-box"};}
+function lblStyle(errors,k){return{display:"block",fontSize:12,color:errors&&errors[k]?"#ef4444":"var(--text2)",marginBottom:4};}
 
 function FInput(props){
   var label=props.label,k=props.k,type=props.type||"text",ph=props.ph||"",item=props.item,errors=props.errors,onChange=props.onChange,onBlur=props.onBlur;
@@ -284,10 +221,10 @@ function FSelect(props){
 function FToggle(props){
   var label=props.label,k=props.k,item=props.item,onChange=props.onChange;
   return h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:12}},
-    h("button",{onClick:function(){onChange(k,!item[k]);},style:{width:40,height:22,borderRadius:11,border:"none",cursor:"pointer",background:item[k]?"var(--horizon)":"var(--line2)",position:"relative"}},
-      h("div",{style:{position:"absolute",top:3,left:item[k]?20:3,width:16,height:16,borderRadius:"50%",background:"#fff",transition:"left .2s",boxShadow:"0 1px 2px rgba(0,0,0,.2)"}})
+    h("button",{onClick:function(){onChange(k,!item[k]);},style:{width:40,height:22,borderRadius:11,border:"none",cursor:"pointer",background:item[k]?"var(--primary)":"var(--surface2)",position:"relative"}},
+      h("div",{style:{position:"absolute",top:3,left:item[k]?20:3,width:16,height:16,borderRadius:"50%",background:"#fff",transition:"left .2s"}})
     ),
-    h("span",{style:{fontSize:13,color:"var(--ink)"}},label)
+    h("span",{style:{fontSize:13,color:"var(--text2)"}},label)
   );
 }
 function FTextarea(props){
@@ -300,92 +237,56 @@ function FTextarea(props){
 
 // ── Gmail Bridge ─────────────────────────────────────────────────
 function GmailBridgeModal(props){
-  var onClose=props.onClose,onImportEntries=props.onImportEntries,existingEntries=props.existingEntries||[];
+  var onClose=props.onClose,onImportEntries=props.onImportEntries;
   var stepS=useState("pick"); var step=stepS[0],setStep=stepS[1];
   var lblS=useState(KNOWN_LABELS[0]); var selLabel=lblS[0],setSelLabel=lblS[1];
   var pasteS=useState(""); var pasteText=pasteS[0],setPasteText=pasteS[1];
   var errS=useState(""); var parseErr=errS[0],setParseErr=errS[1];
   var prevS=useState(null); var preview=prevS[0],setPreview=prevS[1];
   var selS=useState(new Set()); var selectedIds=selS[0],setSelectedIds=selS[1];
-  var dcS=useState(0); var dupCount=dcS[0],setDupCount=dcS[1];
+
 
   function handleSend(){
-    var prompt='GMAIL_IMPORT_REQUEST label="'+selLabel.name+'" labelId='+selLabel.id+'\n\nScan my Gmail label and extract ALL travel bookings. Extract every available detail from each email. Return ONLY:\n\n```gmail_import\n{"entries":[...]}\n```\n\nSchema (YYYY-MM-DD dates, paymentStatus: paid/partially_paid/unpaid):\naccommodation:{type,name,platform,checkIn,checkOut,address,vendorPhone,vendorEmail,url,confirmation,totalCost,costPerNight,amountDue,paymentStatus,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,amountDue,paymentStatus,bookingPlatform,bookingRef,vendorPhone,vendorEmail,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\nactivity:{type,name,category,date,duration,location,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\n\nIMPORTANT: For each booking thread found, call get_thread to read the full message body before extracting data. Extract phone numbers, email addresses, property addresses, and exact costs from the full email text. Detect payment status from language like paid-in-full, balance-due, payment-required. One entry per booking, not per email. Do not merge different bookings.';
+    var prompt='GMAIL_IMPORT_REQUEST label="'+selLabel.name+'" labelId='+selLabel.id+'\n\nScan my Gmail label and extract all travel bookings. Return ONLY:\n\n```gmail_import\n{"entries":[...]}\n```\n\nSchema (YYYY-MM-DD dates):\naccommodation:{type,name,platform,checkIn,checkOut,address,contact,url,confirmation,totalCost,costPerNight,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,bookingRef,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,confirmation,url,notes}\nactivity:{type,name,category,date,duration,location,cost,url,notes}';
     if(typeof sendPrompt==="function"){sendPrompt(prompt);setStep("sent");}
-    else{
-      var claudeUrl='https://claude.ai/new?q='+encodeURIComponent(prompt);
-      window.open(claudeUrl,'_blank');
-      setStep("sent");
-    }
+    else{window.open('https://claude.ai/new?q='+encodeURIComponent(prompt),'_blank');setStep("sent");}
   }
   function handleParse(){
     setParseErr("");
     try{
-      var text=pasteText.trim();
-      var json;
-      // Try wrapped format first: ```gmail_import ... ```
+      var text=pasteText.trim(),json;
       var match=text.match(/```gmail_import\s*([\s\S]*?)```/);
-      if(match){
-        json=JSON.parse(match[1].trim());
-      } else {
-        // Try raw JSON directly
-        var rawMatch=text.match(/\{[\s\S]*"entries"[\s\S]*\}/);
+      if(match){json=JSON.parse(match[1].trim());}
+      else{var rawMatch=text.match(/\{[\s\S]*"entries"[\s\S]*\}/);
         if(rawMatch){json=JSON.parse(rawMatch[0]);}
-        else{
-          // Try finding just a JSON array
-          var arrMatch=text.match(/\[[\s\S]*\]/);
+        else{var arrMatch=text.match(/\[[\s\S]*\]/);
           if(arrMatch){json={entries:JSON.parse(arrMatch[0])};}
-          else{throw new Error("Could not find JSON data. Make sure you copy Claude's full response.");}
-        }
-      }
+          else{throw new Error("Could not find JSON data.");}}}
       if(!json.entries||!Array.isArray(json.entries))throw new Error("Missing entries array.");
-      var seenPool=existingEntries.slice();
-      var withIds=json.entries.map(function(e,i){
-        var entry=Object.assign({},e,{id:Date.now()+i+Math.random()});
-        var dupExisting=isDuplicate(entry,existingEntries);
-        var dupBatch=isDuplicate(entry,seenPool);
-        entry._dup=dupExisting||dupBatch;
-        entry._dupReason=dupExisting?"Already in app":dupBatch?"Duplicate in batch":"";
-        if(!entry._dup)seenPool.push(entry);
-        return entry;
-      });
-      var dc=withIds.filter(function(e){return e._dup;}).length;
-      setDupCount(dc);
-      setPreview(withIds);
-      setSelectedIds(new Set(withIds.filter(function(e){return !e._dup;}).map(function(e){return e.id;})));
-      setStep("preview");
+      var withIds=json.entries.map(function(e,i){return Object.assign({},e,{id:Date.now()+i+Math.random()});});
+      setPreview(withIds);setSelectedIds(new Set(withIds.map(function(e){return e.id;})));setStep("preview");
     }catch(e){setParseErr("Error: "+e.message);}
   }
-  function handleImport(){
-    onImportEntries(preview.filter(function(e){return selectedIds.has(e.id);}));
-    onClose();
-  }
-  function toggleEntry(id){
-    setSelectedIds(function(prev){var n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n;});
-  }
+  function handleImport(){onImportEntries(preview.filter(function(e){return selectedIds.has(e.id);}));onClose();}
+  function toggleEntry(id){setSelectedIds(function(prev){var n=new Set(prev);n.has(id)?n.delete(id):n.add(id);return n;});}
+
+  var labelSelect=h("div",{style:{marginBottom:16}},
+    h("label",{style:{display:"block",fontSize:12,color:"var(--text2)",marginBottom:6}},"Gmail Label"),
+    h("select",{value:selLabel.id,onChange:function(e){var l=KNOWN_LABELS.filter(function(x){return x.id===e.target.value;})[0];if(l)setSelLabel(l);},style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:6,padding:"9px 10px",color:"var(--text)",fontSize:13,appearance:"auto"}},
+      KNOWN_LABELS.map(function(l){return h("option",{key:l.id,value:l.id},l.name);}))
+  );
 
   if(step==="pick") return h(Overlay,{onClose:onClose},
     h(MH,{title:"📧 Import from Gmail",onClose:onClose}),
-    h("div",{style:{fontSize:13,color:"#94a3b8",marginBottom:20,lineHeight:1.7}},"Select a label. Claude scans it in this chat, you paste the result back here."),
-    h("div",{style:{marginBottom:16}},
-      h("label",{style:{display:"block",fontSize:12,color:"#94a3b8",marginBottom:6}},"Gmail Label"),
-      h("select",{value:selLabel.id,onChange:function(e){var l=KNOWN_LABELS.filter(function(x){return x.id===e.target.value;})[0];if(l)setSelLabel(l);},style:{width:"100%",background:"#0f172a",border:"1px solid #334155",borderRadius:6,padding:"9px 10px",color:"#e2e8f0",fontSize:13,appearance:"auto"}},
-        KNOWN_LABELS.map(function(l){return h("option",{key:l.id,value:l.id},l.name);})
-      )
-    ),
-    h("div",{style:{background:"#0f172a",border:"1px solid #334155",borderRadius:8,padding:14,marginBottom:20,fontSize:13,color:"#64748b",lineHeight:1.8}},
-      h("span",{style:{color:"#94a3b8",fontWeight:600}},"How it works:"),h("br"),
-      "① Click Send Request — Claude scans Gmail in this chat",h("br"),
-      "② Scroll up, copy Claude's full response",h("br"),
-      "③ Come back, click Paste Response, paste it in",h("br"),
-      "④ Review and import selected bookings"
-    ),
-    parseErr&&h("div",{style:{background:"#7c2d12",borderRadius:6,padding:"8px 12px",fontSize:12,color:"#fca5a5",marginBottom:12}},"⚠️ "+parseErr),
-    h("div",{style:{display:"flex",gap:10,justifyContent:"space-between"}},
-      h("button",{onClick:function(){setStep("paste");},style:{padding:"9px 16px",borderRadius:7,border:"1px solid #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:13}},"Already have a response →"),
-      h("div",{style:{display:"flex",gap:10}},
-        h("button",{onClick:onClose,style:{padding:"9px 18px",borderRadius:7,border:"1px solid #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:13}},"Cancel"),
-        h("button",{onClick:handleSend,style:{padding:"9px 22px",borderRadius:7,border:"none",background:"#34d399",color:"#0f172a",cursor:"pointer",fontSize:14,fontWeight:700}},"📤 Send Request →")
+    labelSelect,
+    parseErr&&h("div",{style:{background:"var(--danger-bg)",borderRadius:6,padding:"8px 12px",fontSize:12,color:"var(--danger)",marginBottom:12}},"⚠️ "+parseErr),
+
+    h("div",{style:{background:"var(--surface2)",borderRadius:10,padding:16,border:"1px solid var(--border)"}},
+      h("div",{style:{fontSize:14,fontWeight:700,color:"var(--text)",marginBottom:6}},"📋 Gmail Import"),
+      h("div",{style:{fontSize:12,color:"var(--text2)",marginBottom:10,lineHeight:1.6}},"Send a request to Claude, copy the response, paste it back."),
+      h("div",{style:{display:"flex",gap:8}},
+        h("button",{onClick:function(){setStep("paste");},style:{flex:1,padding:"9px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"Already have a response →"),
+        h("button",{onClick:handleSend,style:{flex:1,padding:"9px",borderRadius:7,border:"none",background:"var(--primary)",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}},"📤 Send Request →")
       )
     )
   );
@@ -393,71 +294,56 @@ function GmailBridgeModal(props){
     h(MH,{title:"📧 Request Sent",onClose:onClose}),
     h("div",{style:{textAlign:"center",padding:"20px 0 28px"}},
       h("div",{style:{fontSize:48,marginBottom:16}},"✅"),
-      h("div",{style:{fontSize:15,fontWeight:600,color:"#f1f5f9",marginBottom:8}},"Request sent to Claude"),
-      h("div",{style:{fontSize:13,color:"#64748b",lineHeight:1.8,maxWidth:380,margin:"0 auto"}},"Claude has opened in a new tab and is scanning ",h("strong",{style:{color:"#a5b4fc"}},selLabel.name),".",h("br"),h("br"),"Steps:",h("br"),"① Wait for Claude to finish scanning",h("br"),"② Copy Claude's full response (Ctrl+A, Ctrl+C)",h("br"),"③ Come back here and click the button below")
+      h("div",{style:{fontSize:15,fontWeight:600,color:"var(--text)",marginBottom:8}},"Request sent to Claude"),
+      h("div",{style:{fontSize:13,color:"var(--text3)",lineHeight:1.8,maxWidth:380,margin:"0 auto"}},"Scanning ",h("strong",{style:{color:"#a5b4fc"}},selLabel.name),".",h("br"),h("br"),"① Wait for Claude to finish",h("br"),"② Copy full response (Ctrl+A, Ctrl+C)",h("br"),"③ Come back and paste below")
     ),
-    h("button",{onClick:function(){setStep("paste");},style:{width:"100%",padding:11,borderRadius:8,border:"none",background:"#6366f1",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:14}},"📋 Paste Claude's Response →")
+    h("button",{onClick:function(){setStep("paste");},style:{width:"100%",padding:11,borderRadius:8,border:"none",background:"var(--primary)",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:14}},"📋 Paste Claude\'s Response →")
   );
   if(step==="paste") return h(Overlay,{onClose:onClose},
-    h(MH,{title:"📋 Paste Claude's Response",onClose:onClose}),
-    h("div",{style:{fontSize:13,color:"#94a3b8",marginBottom:12}},"Paste Claude's full response including the gmail_import code block."),
-    h("textarea",{value:pasteText,onChange:function(e){setPasteText(e.target.value);setParseErr("");},placeholder:"Paste here...",rows:12,style:{width:"100%",background:"#0f172a",border:"1px solid "+(parseErr?"#ef4444":"#334155"),borderRadius:8,padding:"10px 12px",color:"#e2e8f0",fontSize:12,fontFamily:"monospace",resize:"vertical",boxSizing:"border-box",marginBottom:8}}),
-    parseErr&&h("div",{style:{background:"#7c2d12",borderRadius:6,padding:"8px 12px",fontSize:12,color:"#fca5a5",marginBottom:10}},"⚠️ "+parseErr),
+    h(MH,{title:"📋 Paste Claude\'s Response",onClose:onClose}),
+    h("div",{style:{fontSize:13,color:"var(--text2)",marginBottom:12}},"Paste Claude\'s full response including the gmail_import code block."),
+    h("textarea",{value:pasteText,onChange:function(e){setPasteText(e.target.value);setParseErr("");},placeholder:"Paste here...",rows:12,style:{width:"100%",background:"var(--input-bg)",border:"1px solid "+(parseErr?"#ef4444":"var(--border)"),borderRadius:8,padding:"10px 12px",color:"var(--text)",fontSize:12,fontFamily:"monospace",resize:"vertical",boxSizing:"border-box",marginBottom:8}}),
+    parseErr&&h("div",{style:{background:"var(--danger-bg)",borderRadius:6,padding:"8px 12px",fontSize:12,color:"var(--danger)",marginBottom:10}},"⚠️ "+parseErr),
     h("div",{style:{display:"flex",gap:10,justifyContent:"space-between"}},
-      h("button",{onClick:function(){setStep("sent");},style:{padding:"9px 16px",borderRadius:7,border:"1px solid #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:13}},"← Back"),
-      h("button",{onClick:handleParse,disabled:!pasteText.trim(),style:{padding:"9px 22px",borderRadius:7,border:"none",background:pasteText.trim()?"#6366f1":"#334155",color:"#fff",cursor:pasteText.trim()?"pointer":"not-allowed",fontSize:13,fontWeight:600}},"Parse & Preview →")
+      h("button",{onClick:function(){setStep("pick");},style:{padding:"9px 16px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"← Back"),
+      h("button",{onClick:handleParse,disabled:!pasteText.trim(),style:{padding:"9px 22px",borderRadius:7,border:"none",background:pasteText.trim()?"var(--primary)":"var(--primary-dim)",color:"#fff",cursor:pasteText.trim()?"pointer":"not-allowed",fontSize:13,fontWeight:600}},"Parse & Preview →")
     )
   );
   if(step==="preview"&&preview) return h(Overlay,{onClose:onClose},
     h(MH,{title:"✈️ Review Bookings",onClose:onClose}),
-    h("div",{style:{fontSize:13,color:"#94a3b8",marginBottom:12}},
-    h("strong",{style:{color:"#e2e8f0"}},preview.length+" bookings")," — select which to import.",
-    dupCount>0&&h("span",{style:{marginLeft:8,background:"#92400e",color:"#fde68a",borderRadius:4,padding:"2px 8px",fontSize:11,fontWeight:700}},"⚠ "+dupCount+" duplicate"+(dupCount>1?"s":"")+" auto-deselected")
-  ),
+    h("div",{style:{fontSize:13,color:"var(--text2)",marginBottom:12}},h("strong",{style:{color:"var(--text)"}},preview.length+" bookings")," — select which to import."),
     h("div",{style:{display:"flex",gap:8,marginBottom:12}},
-      h("button",{onClick:function(){setSelectedIds(new Set(preview.map(function(e){return e.id;})));},style:{fontSize:11,color:"#6366f1",background:"none",border:"none",cursor:"pointer"}},"Select all"),
-      h("button",{onClick:function(){setSelectedIds(new Set());},style:{fontSize:11,color:"#64748b",background:"none",border:"none",cursor:"pointer"}},"Deselect all")
+      h("button",{onClick:function(){setSelectedIds(new Set(preview.map(function(e){return e.id;})));},style:{fontSize:11,color:"var(--primary)",background:"none",border:"none",cursor:"pointer"}},"Select all"),
+      h("button",{onClick:function(){setSelectedIds(new Set());},style:{fontSize:11,color:"var(--text3)",background:"none",border:"none",cursor:"pointer"}},"Deselect all")
     ),
     h("div",{style:{maxHeight:380,overflowY:"auto",marginBottom:16}},
       preview.map(function(e){
         var checked=selectedIds.has(e.id);
-        return h("div",{key:e.id,onClick:function(){toggleEntry(e.id);},style:{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:8,border:"1px solid "+(e._dup?"#92400e":checked?"#334155":"#1e293b"),background:checked?"#0f172a":"transparent",cursor:"pointer",marginBottom:6,opacity:e._dup&&!checked?0.55:1}},
-          h("div",{style:{marginTop:2,width:16,height:16,borderRadius:4,border:"2px solid "+(checked?"#6366f1":"#475569"),background:checked?"#6366f1":"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},checked&&h("span",{style:{color:"#fff",fontSize:10,fontWeight:700}},"✓")),
+        return h("div",{key:e.id,onClick:function(){toggleEntry(e.id);},style:{display:"flex",alignItems:"flex-start",gap:10,padding:"10px 12px",borderRadius:8,border:"1px solid "+(checked?"var(--border)":"transparent"),background:checked?"var(--input-bg)":"transparent",cursor:"pointer",marginBottom:6}},
+          h("div",{style:{marginTop:2,width:16,height:16,borderRadius:4,border:"2px solid "+(checked?"var(--primary)":"var(--text4)"),background:checked?"var(--primary)":"transparent",flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}},checked&&h("span",{style:{color:"#fff",fontSize:10,fontWeight:700}},"✓")),
           h("div",{style:{flex:1,minWidth:0}},
             h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:3,flexWrap:"wrap"}},
               h("span",{style:{background:COLORS[e.type]||COLORS.activity,borderRadius:4,padding:"2px 7px",fontSize:11,color:"#fff",fontWeight:600}},typeIcon(e.type)+" "+typeLabel(e.type)),
-              e._dup&&h("span",{style:{background:"#92400e",color:"#fde68a",borderRadius:4,padding:"2px 6px",fontSize:10,fontWeight:700}},"⚠ "+e._dupReason),
-              h("span",{style:{fontSize:13,color:e._dup?"#94a3b8":"#e2e8f0",fontWeight:600}},e.name||e.airline||e.company||"")
+              h("span",{style:{fontSize:13,color:"var(--text)",fontWeight:600}},e.name||e.airline||e.company||"")
             ),
-            h("div",{style:{fontSize:12,color:"#64748b"}},fmtD(e.checkIn||e.depDate||e.pickupDate||e.date||""),(e.checkOut||e.arrDate||e.dropoffDate)?" → "+fmtD(e.checkOut||e.arrDate||e.dropoffDate):"",(e.totalCost||e.cost)?" • "+fmt$(e.totalCost||e.cost):"",e.confirmation?" • #"+e.confirmation:""),
-            e.notes&&h("div",{style:{fontSize:11,color:"#475569",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},e.notes)
+            h("div",{style:{fontSize:12,color:"var(--text3)"}},fmtD(e.checkIn||e.depDate||e.pickupDate||e.date||""),(e.checkOut||e.arrDate||e.dropoffDate)?" → "+fmtD(e.checkOut||e.arrDate||e.dropoffDate):"",(e.totalCost||e.cost)?" • "+fmt$(e.totalCost||e.cost):"",e.confirmation?" • #"+e.confirmation:""),
+            e.notes&&h("div",{style:{fontSize:11,color:"var(--text4)",marginTop:2,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},e.notes)
           )
         );
       })
     ),
-    h("div",{style:{display:"flex",gap:10,justifyContent:"space-between",borderTop:"1px solid #334155",paddingTop:14}},
-      h("div",{style:{fontSize:13,color:"#94a3b8"}},selectedIds.size+" selected"),
+    h("div",{style:{display:"flex",gap:10,justifyContent:"space-between",borderTop:"1px solid var(--border)",paddingTop:14}},
+      h("div",{style:{fontSize:13,color:"var(--text2)"}},selectedIds.size+" selected"),
       h("div",{style:{display:"flex",gap:10}},
-        h("button",{onClick:function(){setStep("paste");},style:{padding:"9px 16px",borderRadius:7,border:"1px solid #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:13}},"← Back"),
-        h("button",{onClick:handleImport,disabled:selectedIds.size===0,style:{padding:"9px 22px",borderRadius:7,border:"none",background:selectedIds.size>0?"#6366f1":"#334155",color:"#fff",cursor:selectedIds.size>0?"pointer":"not-allowed",fontSize:13,fontWeight:600}},"Import "+selectedIds.size+" Booking"+(selectedIds.size!==1?"s":""))
+        h("button",{onClick:function(){setStep("paste");},style:{padding:"9px 16px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"← Back"),
+        h("button",{onClick:handleImport,disabled:selectedIds.size===0,style:{padding:"9px 22px",borderRadius:7,border:"none",background:selectedIds.size>0?"var(--primary)":"var(--primary-dim)",color:"#fff",cursor:selectedIds.size>0?"pointer":"not-allowed",fontSize:13,fontWeight:600}},"Import "+selectedIds.size+" Booking"+(selectedIds.size!==1?"s":""))
       )
     )
   );
   return null;
 }
 
-function PayBadge(p){var ps=p.status;var cfg=ps==="partially_paid"?{bg:"var(--amber-bg)",c:"var(--amber-ink)",l:"◑ Partial"}:ps==="unpaid"?{bg:"var(--coral-bg)",c:"var(--coral)",l:"✗ Unpaid"}:{bg:"var(--sage-bg)",c:"var(--sage-ink)",l:"✓ Paid"};return h("span",{style:{background:cfg.bg,color:cfg.c,borderRadius:20,padding:"3px 9px",fontSize:11,fontWeight:700,whiteSpace:"nowrap"}},cfg.l);}
-function FPayStatus(props){
-  var item=props.item,onChange=props.onChange;
-  var opts=[{v:"paid",l:"✓ Paid",bg:"#14532d",c:"#4ade80"},{v:"partially_paid",l:"◑ Partial",bg:"#713f12",c:"#fde047"},{v:"unpaid",l:"✗ Unpaid",bg:"#450a0a",c:"#f87171"}];
-  return h("div",{style:{marginBottom:12}},
-    h("label",{style:{display:"block",fontSize:12,color:"#94a3b8",marginBottom:6}},"Payment Status"),
-    h("div",{style:{display:"flex",gap:6}},
-      opts.map(function(o){var active=(item.paymentStatus||"paid")===o.v;return h("button",{key:o.v,onClick:function(){onChange("paymentStatus",o.v);},style:{flex:1,padding:"7px 8px",borderRadius:6,border:"2px solid "+(active?o.c:"#334155"),background:active?o.bg:"transparent",color:active?o.c:"#64748b",cursor:"pointer",fontSize:12,fontWeight:600}},o.l);})
-    )
-  );
-}
-// ── Entry Modal ──────────────────────────────────────────────────
+// ── Entry Modal// ── Entry Modal ──────────────────────────────────────────────────
 function EntryModal(props){
   var modal=props.modal,tab=props.tab,onSave=props.onSave,onDelete=props.onDelete,onClose=props.onClose;
   var initItem=function(){
@@ -473,9 +359,7 @@ function EntryModal(props){
   var nts=et==="accommodation"?nights(item.checkIn,item.checkOut):0;
 
   function onChange(k,v){
-    var ni=Object.assign({},item); ni[k]=v;
-    if(k==="paymentStatus"&&v==="paid")ni.amountDue="";
-    setItem(ni);
+    var ni=Object.assign({},item); ni[k]=v; setItem(ni);
     if(touched[k])setErrors(validate(ni));
   }
   function onBlur(k){
@@ -500,17 +384,15 @@ function EntryModal(props){
   var hasErr=Object.keys(errors).length>0&&Object.keys(touched).length>0;
   return h(Overlay,{onClose:onClose},
     h(MH,{title:(modal.isNew?"Add ":"Edit ")+tl,onClose:onClose}),
-    det.length>0&&h("div",{style:{background:"var(--sage-bg)",borderRadius:"var(--radius-sm)",padding:"10px 14px",marginBottom:16,fontSize:13,color:"var(--sage-ink)",fontWeight:600}},"✨ AI-extracted — review before saving."),
+    det.length>0&&h("div",{style:{background:"var(--success-bg)",borderRadius:8,padding:"10px 14px",marginBottom:16,fontSize:13,color:"var(--success-text)"}},"✨ AI-extracted — review before saving."),
     et==="accommodation"&&h(React_.Fragment,null,
       h(R2,null,h(FInput,Object.assign({label:"Name / Property",k:"name"},fp)),h(FSelect,Object.assign({label:"Platform",k:"platform",opts:PLATFORMS},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Check-In",k:"checkIn",type:"date"},fp)),h(FInput,Object.assign({label:"Check-Out",k:"checkOut",type:"date"},fp))),
-      nts>0&&h("div",{style:{fontSize:13,color:"#94a3b8",marginBottom:12}},"📅 "+nts+" night"+(nts!==1?"s":"")),
-      h(R2,null,h(FInput,Object.assign({label:"Cost/Night ("+_currSym+")",k:"costPerNight",type:"number",ph:"auto"},fp)),h(FInput,Object.assign({label:"Total Cost ("+_currSym+")",k:"totalCost",type:"number",ph:"auto"},fp))),
+      nts>0&&h("div",{style:{fontSize:13,color:"var(--text2)",marginBottom:12}},"📅 "+nts+" night"+(nts!==1?"s":"")),
+      h(R2,null,h(FInput,Object.assign({label:"Cost/Night ($)",k:"costPerNight",type:"number",ph:"auto"},fp)),h(FInput,Object.assign({label:"Total Cost ($)",k:"totalCost",type:"number",ph:"auto"},fp))),
       h(FInput,Object.assign({label:"Address",k:"address"},fp)),
-      h(R2,null,h(FInput,Object.assign({label:"Phone",k:"vendorPhone",ph:"+1 / +972..."},fp)),h(FInput,Object.assign({label:"Email",k:"vendorEmail",ph:"property@..."},fp))),
-      h(R2,null,h(FInput,Object.assign({label:"Booking URL",k:"url",ph:"https://..."},fp)),h(FInput,Object.assign({label:"Confirmation #",k:"confirmation"},fp))),
-      h(FPayStatus,fp),
-      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")&&h(FInput,Object.assign({label:"Amount Due ("+_currSym+")",k:"amountDue",type:"number",ph:"0"},fp)),
+      h(R2,null,h(FInput,Object.assign({label:"Contact",k:"contact"},fp)),h(FInput,Object.assign({label:"Booking URL",k:"url",ph:"https://..."},fp))),
+      h(FInput,Object.assign({label:"Confirmation",k:"confirmation"},fp)),
       h("div",{style:{display:"flex",gap:20,flexWrap:"wrap",marginBottom:8}},h(FToggle,Object.assign({label:"Parking",k:"parking"},fp)),h(FToggle,Object.assign({label:"Kitchen",k:"kitchen"},fp)),h(FToggle,Object.assign({label:"Breakfast",k:"breakfast"},fp))),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
@@ -519,11 +401,8 @@ function EntryModal(props){
       h(R2,null,h(FInput,Object.assign({label:"Departure Airport",k:"from"},fp)),h(FInput,Object.assign({label:"Arrival Airport",k:"to"},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Dep Date",k:"depDate",type:"date"},fp)),h(FInput,Object.assign({label:"Dep Time",k:"depTime",type:"time"},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Arr Date",k:"arrDate",type:"date"},fp)),h(FInput,Object.assign({label:"Arr Time",k:"arrTime",type:"time"},fp))),
-      h(R2,null,h(FInput,Object.assign({label:"Cost ("+_currSym+")",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Booking Ref",k:"bookingRef"},fp))),
-      h(R2,null,h(FSelect,Object.assign({label:"Booked Via",k:"bookingPlatform",opts:FLIGHT_PLATFORMS},fp)),h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp))),
-      h(R2,null,h(FInput,Object.assign({label:"Phone",k:"vendorPhone",ph:"+1..."},fp)),h(FInput,Object.assign({label:"Email",k:"vendorEmail",ph:"airline@..."},fp))),
-      h(FPayStatus,fp),
-      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")&&h(FInput,Object.assign({label:"Amount Due ("+_currSym+")",k:"amountDue",type:"number",ph:"0"},fp)),
+      h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Booking Ref",k:"bookingRef"},fp))),
+      h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp)),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
     et==="car"&&h(React_.Fragment,null,
@@ -531,30 +410,23 @@ function EntryModal(props){
       h(FInput,Object.assign({label:"Pickup Location",k:"pickupLocation"},fp)),
       h(FInput,Object.assign({label:"Dropoff Location",k:"dropoffLocation"},fp)),
       h(R2,null,h(FInput,Object.assign({label:"Pickup Date",k:"pickupDate",type:"date"},fp)),h(FInput,Object.assign({label:"Dropoff Date",k:"dropoffDate",type:"date"},fp))),
-      h(R2,null,h(FInput,Object.assign({label:"Cost ("+_currSym+")",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Confirmation #",k:"confirmation"},fp))),
-      h(R2,null,h(FSelect,Object.assign({label:"Booked Via",k:"bookingPlatform",opts:CAR_PLATFORMS},fp)),h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp))),
-      h(R2,null,h(FInput,Object.assign({label:"Phone",k:"vendorPhone",ph:"+1..."},fp)),h(FInput,Object.assign({label:"Email",k:"vendorEmail",ph:"rentals@..."},fp))),
-      h(FPayStatus,fp),
-      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")&&h(FInput,Object.assign({label:"Amount Due ("+_currSym+")",k:"amountDue",type:"number",ph:"0"},fp)),
+      h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Confirmation",k:"confirmation"},fp))),
+      h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp)),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
     et==="activity"&&h(React_.Fragment,null,
       h(R2,null,h(FInput,Object.assign({label:"Activity Name",k:"name"},fp)),h(FSelect,Object.assign({label:"Category",k:"category",opts:ACTIVITY_CATS},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Date",k:"date",type:"date"},fp)),h(FInput,Object.assign({label:"Duration",k:"duration"},fp))),
       h(FInput,Object.assign({label:"Location",k:"location"},fp)),
-      h(R2,null,h(FInput,Object.assign({label:"Cost ("+_currSym+")",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Confirmation #",k:"confirmation"},fp))),
-      h(R2,null,h(FSelect,Object.assign({label:"Booked Via",k:"bookingPlatform",opts:ACTIVITY_PLATFORMS},fp)),h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp))),
-      h(R2,null,h(FInput,Object.assign({label:"Phone",k:"vendorPhone",ph:"+1..."},fp)),h(FInput,Object.assign({label:"Email",k:"vendorEmail",ph:"info@..."},fp))),
-      h(FPayStatus,fp),
-      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")&&h(FInput,Object.assign({label:"Amount Due ("+_currSym+")",k:"amountDue",type:"number",ph:"0"},fp)),
+      h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp))),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
-    hasErr&&h("div",{style:{background:"var(--coral-bg)",borderRadius:"var(--radius-sm)",padding:"10px 14px",marginBottom:8,fontSize:13,color:"var(--coral)",fontWeight:600}},"Please fix errors above."),
-    h("div",{style:{display:"flex",justifyContent:"space-between",gap:10,marginTop:12,borderTop:"1px solid var(--line)",paddingTop:16}},
-      !modal.isNew?h("button",{onClick:function(){onDelete(item.id);},style:{padding:"9px 18px",borderRadius:"var(--radius-sm)",border:"1.5px solid var(--coral)",background:"transparent",color:"var(--coral)",cursor:"pointer",fontSize:13,fontWeight:700}},"Delete"):h("div"),
+    hasErr&&h("div",{style:{background:"var(--danger-bg)",border:"1px solid var(--danger-dim)",borderRadius:8,padding:"10px 14px",marginBottom:8,fontSize:13,color:"var(--danger)"}},"Please fix errors above."),
+    h("div",{style:{display:"flex",justifyContent:"space-between",gap:10,marginTop:8}},
+      !modal.isNew?h("button",{onClick:function(){onDelete(item.id);},style:{padding:"9px 18px",borderRadius:7,border:"1px solid var(--danger-dim)",background:"transparent",color:"var(--danger)",cursor:"pointer",fontSize:13,fontWeight:600}},"Delete"):h("div"),
       h("div",{style:{display:"flex",gap:10}},
-        h("button",{onClick:onClose,style:{padding:"9px 18px",borderRadius:"var(--radius-sm)",border:"1.5px solid var(--line)",background:"transparent",color:"var(--muted)",cursor:"pointer",fontSize:13,fontWeight:600}},"Cancel"),
-        h("button",{onClick:handleSave,style:{padding:"9px 22px",borderRadius:"var(--radius-sm)",border:"none",background:"var(--horizon)",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:700,boxShadow:"var(--shadow-sm)"}},"Save")
+        h("button",{onClick:onClose,style:{padding:"9px 18px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"Cancel"),
+        h("button",{onClick:handleSave,style:{padding:"9px 22px",borderRadius:7,border:"none",background:"var(--primary)",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}},"Save")
       )
     )
   );
@@ -588,7 +460,7 @@ function ImportModal(props){
   return h(Overlay,{onClose:onClose},
     h(MH,{title:"⬆️ Import Booking",onClose:onClose}),
     !method?h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},methods.map(function(m){
-      return h("button",{key:m.key,onClick:function(){setMethod(m.key);if(m.key!=="text")setTimeout(function(){fileRef.current&&fileRef.current.click();},100);},style:{background:"#0f172a",border:"1px solid #334155",borderRadius:10,padding:"18px 14px",cursor:"pointer",textAlign:"left",color:"#e2e8f0"}},
+      return h("button",{key:m.key,onClick:function(){setMethod(m.key);if(m.key!=="text")setTimeout(function(){fileRef.current&&fileRef.current.click();},100);},style:{background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:10,padding:"18px 14px",cursor:"pointer",textAlign:"left",color:"var(--text)"}},
         h("div",{style:{fontSize:28,marginBottom:8}},m.icon),h("div",{style:{fontWeight:700,fontSize:14,marginBottom:4}},m.label),h("div",{style:{fontSize:12,color:"#64748b"}},m.desc)
       );
     })):
@@ -599,7 +471,7 @@ function ImportModal(props){
         h("button",{onClick:function(){fileRef.current&&fileRef.current.click();},style:{padding:"12px 28px",borderRadius:8,border:"2px dashed #334155",background:"#0f172a",color:"#94a3b8",cursor:"pointer",fontSize:14}},loading?"🔍 Analyzing...":"Click to upload "+(method==="photo"?"image":method==="pdf"?"PDF":".ics"))
       ),
       method==="text"&&h("div",null,
-        h("textarea",{value:text,onChange:function(e){setText(e.target.value);},placeholder:"Paste confirmation email here...",rows:10,style:{width:"100%",background:"#0f172a",border:"1px solid #334155",borderRadius:8,padding:"10px 12px",color:"#e2e8f0",fontSize:13,resize:"vertical",boxSizing:"border-box",marginBottom:12}}),
+        h("textarea",{value:text,onChange:function(e){setText(e.target.value);},placeholder:"Paste confirmation email here...",rows:10,style:{width:"100%",background:"#0f172a",border:"1px solid #334155",borderRadius:8,padding:"10px 12px",color:"var(--text)",fontSize:13,resize:"vertical",boxSizing:"border-box",marginBottom:12}}),
         h("button",{onClick:function(){extract([{role:"user",content:"Extract travel booking details:\n\n"+text}]);},disabled:loading||!text.trim(),style:{width:"100%",padding:10,borderRadius:8,border:"none",background:loading||!text.trim()?"#334155":"#6366f1",color:"#fff",fontWeight:700,cursor:loading||!text.trim()?"not-allowed":"pointer",fontSize:14}},loading?"🔍 Extracting...":"Extract & Review")
       ),
       error&&h("div",{style:{marginTop:12,background:"#7c2d12",borderRadius:6,padding:"10px 12px",fontSize:13,color:"#fca5a5"}},"⚠️ "+error)
@@ -610,11 +482,11 @@ function ImportModal(props){
 function ICSRow(props){
   var ev=props.ev,onImport=props.onImport;
   var tS=useState("accommodation"); var type=tS[0],setType=tS[1];
-  return h("div",{style:{background:"#0f172a",borderRadius:8,padding:12,marginBottom:8,border:"1px solid #334155"}},
-    h("div",{style:{fontWeight:700,fontSize:13,color:"#f1f5f9",marginBottom:4}},ev.summary||"Untitled"),
-    h("div",{style:{fontSize:12,color:"#94a3b8",marginBottom:8}},fmtD(ev.startDate),(ev.endDate&&ev.endDate!==ev.startDate)?" → "+fmtD(ev.endDate):"",ev.location?" • "+ev.location:""),
+  return h("div",{style:{background:"var(--input-bg)",borderRadius:8,padding:12,marginBottom:8,border:"1px solid var(--border)"}},
+    h("div",{style:{fontWeight:700,fontSize:13,color:"var(--text)",marginBottom:4}},ev.summary||"Untitled"),
+    h("div",{style:{fontSize:12,color:"var(--text2)",marginBottom:8}},fmtD(ev.startDate),(ev.endDate&&ev.endDate!==ev.startDate)?" → "+fmtD(ev.endDate):"",ev.location?" • "+ev.location:""),
     h("div",{style:{display:"flex",gap:8,alignItems:"center"}},
-      h("select",{value:type,onChange:function(e){setType(e.target.value);},style:{flex:1,background:"#1e293b",border:"1px solid #334155",borderRadius:6,padding:"6px 8px",color:"#e2e8f0",fontSize:12}},
+      h("select",{value:type,onChange:function(e){setType(e.target.value);},style:{flex:1,background:"var(--surface)",border:"1px solid var(--border)",borderRadius:6,padding:"6px 8px",color:"var(--text)",fontSize:12}},
         h("option",{value:"accommodation"},"🏠 Accommodation"),h("option",{value:"flight"},"✈️ Flight"),h("option",{value:"car"},"🚗 Car Rental"),h("option",{value:"activity"},"🎯 Activity")
       ),
       h("button",{onClick:function(){onImport(type);},style:{padding:"6px 14px",borderRadius:6,border:"none",background:"#6366f1",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}},"Import & Review →")
@@ -653,19 +525,19 @@ function BackupModal(props){
   return h(Overlay,{onClose:onClose},
     h(MH,{title:"💾 Backup & Restore",onClose:onClose}),
     h("div",{style:{display:"flex",flexDirection:"column",gap:16}},
-      h("div",{style:{background:"#0f172a",borderRadius:10,padding:20,border:"1px solid #334155"}},
-        h("div",{style:{fontSize:15,fontWeight:700,color:"#f1f5f9",marginBottom:6}},"⬇️ Export Backup"),
-        h("div",{style:{fontSize:13,color:"#94a3b8",marginBottom:14}},trips.length+" trip"+(trips.length!==1?"s":"")+", "+total+" entr"+(total===1?"y":"ies")+"."),
+      h("div",{style:{background:"var(--input-bg)",borderRadius:10,padding:20,border:"1px solid var(--border)"}},
+        h("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)",marginBottom:6}},"⬇️ Export Backup"),
+        h("div",{style:{fontSize:13,color:"var(--text2)",marginBottom:14}},trips.length+" trip"+(trips.length!==1?"s":"")+", "+total+" entr"+(total===1?"y":"ies")+"."),
         h("button",{onClick:download,disabled:total===0,style:{width:"100%",padding:10,borderRadius:8,border:"none",background:total===0?"#334155":"#6366f1",color:"#fff",fontWeight:700,cursor:total===0?"not-allowed":"pointer",fontSize:14}},"⬇️ Download backup (.json)")
       ),
-      h("div",{style:{background:"#0f172a",borderRadius:10,padding:20,border:"1px solid #334155"}},
-        h("div",{style:{fontSize:15,fontWeight:700,color:"#f1f5f9",marginBottom:6}},"⬆️ Restore from Backup"),
-        h("div",{style:{fontSize:13,color:"#94a3b8",marginBottom:14}},"⚠️ This will replace all current data."),
+      h("div",{style:{background:"var(--input-bg)",borderRadius:10,padding:20,border:"1px solid var(--border)"}},
+        h("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)",marginBottom:6}},"⬆️ Restore from Backup"),
+        h("div",{style:{fontSize:13,color:"var(--text2)",marginBottom:14}},"⚠️ This will replace all current data."),
         h("input",{ref:fileRef,type:"file",accept:".json",onChange:onFile,style:{display:"none"}}),
         h("button",{onClick:function(){fileRef.current&&fileRef.current.click();},style:{padding:10,borderRadius:8,border:"2px dashed #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:14,width:"100%",fontWeight:600}},"Choose backup file (.json)")
       ),
-      success&&h("div",{style:{background:"#134e4a",borderRadius:8,padding:"10px 14px",fontSize:13,color:"#6ee7b7"}},"✅ "+success),
-      error&&h("div",{style:{background:"#7c2d12",borderRadius:8,padding:"10px 14px",fontSize:13,color:"#fca5a5"}},"⚠️ "+error)
+      success&&h("div",{style:{background:"var(--success-bg)",borderRadius:8,padding:"10px 14px",fontSize:13,color:"var(--success-text)"}},"✅ "+success),
+      error&&h("div",{style:{background:"var(--danger-bg)",borderRadius:8,padding:"10px 14px",fontSize:13,color:"var(--danger)"}},"⚠️ "+error)
     )
   );
 }
@@ -684,12 +556,12 @@ function TripManagerModal(props){
         var cnt=(t.acc||[]).length+(t.flt||[]).length+(t.car||[]).length+(t.act||[]).length;
         return h("div",{key:t.id,style:{display:"flex",alignItems:"center",gap:8,background:"#0f172a",borderRadius:8,padding:"10px 14px",border:"1px solid "+(active?"#6366f1":"#334155")}},
           editId===t.id?h(React_.Fragment,null,
-            h("input",{autoFocus:true,value:editName,onChange:function(e){setEditName(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"){onRename(t.id,editName||t.name);setEditId(null);}if(e.key==="Escape")setEditId(null);},style:{flex:1,background:"#1e293b",border:"1px solid #6366f1",borderRadius:6,padding:"5px 8px",color:"#e2e8f0",fontSize:13}}),
+            h("input",{autoFocus:true,value:editName,onChange:function(e){setEditName(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"){onRename(t.id,editName||t.name);setEditId(null);}if(e.key==="Escape")setEditId(null);},style:{flex:1,background:"var(--surface)",border:"1px solid var(--primary)",borderRadius:6,padding:"5px 8px",color:"var(--text)",fontSize:13}}),
             h("button",{onClick:function(){onRename(t.id,editName||t.name);setEditId(null);},style:{padding:"5px 10px",borderRadius:5,border:"none",background:"#6366f1",color:"#fff",cursor:"pointer",fontSize:12}},"Save"),
             h("button",{onClick:function(){setEditId(null);},style:{padding:"5px 8px",borderRadius:5,border:"1px solid #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:12}},"✕")
           ):h(React_.Fragment,null,
-            h("span",{style:{flex:1,fontSize:14,fontWeight:active?700:400,color:active?"#a5b4fc":"#e2e8f0"}},(active?"▶ ":"  ")+t.name),
-            h("span",{style:{fontSize:12,color:"#475569",marginRight:8}},cnt+" entries"),
+            h("span",{style:{flex:1,fontSize:14,fontWeight:active?700:400,color:active?"var(--primary)":"var(--text)"}},(active?"▶ ":"  ")+t.name),
+            h("span",{style:{fontSize:12,color:"var(--text4)",marginRight:8}},cnt+" entries"),
             !active&&h("button",{onClick:function(){onSwitch(t.id);},style:{padding:"4px 10px",borderRadius:5,border:"1px solid #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:12}},"Switch"),
             h("button",{onClick:function(){setEditId(t.id);setEditName(t.name);},style:{padding:"4px 8px",borderRadius:5,border:"1px solid #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:12}},"✏️"),
             trips.length>1&&h("button",{onClick:function(){if(window.confirm("Delete \""+t.name+"\"?"))onDelete(t.id);},style:{padding:"4px 8px",borderRadius:5,border:"1px solid #7f1d1d",background:"transparent",color:"#f87171",cursor:"pointer",fontSize:12}},"🗑️")
@@ -700,7 +572,7 @@ function TripManagerModal(props){
     h("div",{style:{borderTop:"1px solid #334155",paddingTop:16}},
       h("div",{style:{fontSize:13,fontWeight:600,color:"#94a3b8",marginBottom:10}},"Create New Trip"),
       h("div",{style:{display:"flex",gap:8}},
-        h("input",{value:newName,onChange:function(e){setNewName(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"&&newName.trim()){onCreate(newName.trim());setNewName("");}},placeholder:"Trip name (e.g. Japan 2026)",style:{flex:1,background:"#0f172a",border:"1px solid #334155",borderRadius:6,padding:"8px 10px",color:"#e2e8f0",fontSize:13}}),
+        h("input",{value:newName,onChange:function(e){setNewName(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"&&newName.trim()){onCreate(newName.trim());setNewName("");}},placeholder:"Trip name (e.g. Japan 2026)",style:{flex:1,background:"#0f172a",border:"1px solid #334155",borderRadius:6,padding:"8px 10px",color:"var(--text)",fontSize:13}}),
         h("button",{onClick:function(){if(newName.trim()){onCreate(newName.trim());setNewName("");}},disabled:!newName.trim(),style:{padding:"8px 16px",borderRadius:7,border:"none",background:newName.trim()?"#6366f1":"#334155",color:"#fff",cursor:newName.trim()?"pointer":"not-allowed",fontSize:13,fontWeight:600}},"+ Create")
       )
     )
@@ -712,90 +584,116 @@ function PDFPreviewModal(props){
   var html=props.html,onClose=props.onClose;
   var iframeRef=useRef();
   function doPrint(){var iframe=iframeRef.current;if(!iframe)return;iframe.contentWindow.focus();iframe.contentWindow.print();}
-  return h("div",{style:{position:"fixed",inset:0,background:"rgba(0,0,0,.85)",zIndex:2000,display:"flex",flexDirection:"column"}},
-    h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 20px",background:"#1e293b",borderBottom:"1px solid #334155",flexShrink:0}},
-      h("span",{style:{fontWeight:700,fontSize:15,color:"#f1f5f9"}},"📄 Print Preview"),
+  return h("div",{style:{position:"fixed",inset:0,background:"var(--overlay-bg)",zIndex:2000,display:"flex",flexDirection:"column"}},
+    h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"12px 20px",background:"var(--surface)",borderBottom:"1px solid var(--border)",flexShrink:0}},
+      h("span",{style:{fontWeight:700,fontSize:15,color:"var(--text)"}},"📄 Print Preview"),
       h("div",{style:{display:"flex",gap:10}},
         h("button",{onClick:doPrint,style:{padding:"8px 20px",borderRadius:8,border:"none",background:"#6366f1",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:13}},"🖨️ Print / Save as PDF"),
-        h("button",{onClick:onClose,style:{padding:"8px 16px",borderRadius:8,border:"1px solid #334155",background:"transparent",color:"#94a3b8",cursor:"pointer",fontSize:13}},"✕ Close")
+        h("button",{onClick:onClose,style:{padding:"8px 16px",borderRadius:8,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"✕ Close")
       )
     ),
     h("iframe",{ref:iframeRef,srcDoc:html,style:{flex:1,border:"none",background:"#fff"},title:"PDF Preview"})
   );
 }
 
-var TABLE_CDEFS={
-  accommodations:[{h:"Name",k:"name",f:null,sK:"name"},{h:"Platform",k:"platform"},{h:"Check-In",k:"checkIn",f:"date",sK:"date"},{h:"Check-Out",k:"checkOut",f:"date",sK:"endDate"},{h:"Nights",k:"_nts",f:"nts"},{h:"Cost/Night",k:"costPerNight",f:"$"},{h:"Cost",k:"totalCost",f:"$",sK:"cost"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Parking",k:"parking",f:"bool"},{h:"Kitchen",k:"kitchen",f:"bool"},{h:"Breakfast",k:"breakfast",f:"bool"},{h:"Address",k:"address",f:"addr"},{h:"City",k:"_city"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
-  flights:[{h:"Airline",k:"airline",sK:"name"},{h:"Flight#",k:"flightNo"},{h:"From",k:"from",f:"addr"},{h:"To",k:"to"},{h:"Dep Date",k:"depDate",f:"date",sK:"date"},{h:"Dep Time",k:"depTime"},{h:"Arr Date",k:"arrDate",f:"date",sK:"endDate"},{h:"Arr Time",k:"arrTime"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Ref",k:"bookingRef"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
-  cars:[{h:"Company",k:"company",sK:"name"},{h:"Type",k:"carType"},{h:"Pickup",k:"pickupLocation",f:"addr"},{h:"City",k:"_city"},{h:"Dropoff",k:"dropoffLocation",f:"addr"},{h:"Pickup Date",k:"pickupDate",f:"date",sK:"date"},{h:"Dropoff Date",k:"dropoffDate",f:"date",sK:"endDate"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
-  activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
-};
-// ── Table View ───────────────────────────────────────────────────
-function CardView(props){
-  var tab=props.tab,acc=props.acc,flt=props.flt,car=props.car,act=props.act,search=props.search,onEdit=props.onEdit;
-  var srcEntries=tab==="all"?acc.concat(flt,car,act):tab==="accommodations"?acc:tab==="flights"?flt:tab==="cars"?car:act;
-  var filtered=srcEntries.filter(function(e){return matchesSearch(e,search);});
-  var sorted=filtered.slice().sort(function(a,b){
-    var sa=a.checkIn||a.depDate||a.pickupDate||a.date||"";
-    var sb=b.checkIn||b.depDate||b.pickupDate||b.date||"";
-    if(!sa&&!sb)return 0; if(!sa)return 1; if(!sb)return -1;
-    return sa.localeCompare(sb);
-  });
-  if(!srcEntries.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted2)"}},h("div",{style:{fontSize:48,marginBottom:8}},"📭"),h("p",null,"No entries yet. Click + Add, ⬆️ Import, or 📧 Gmail."));
-  if(search&&!sorted.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted2)"}},h("div",{style:{fontSize:36,marginBottom:8}},"🔍"),h("p",null,"No results for \""+search+"\""));
-  return h("div",{style:{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(270px,1fr))",gap:16}},
-    sorted.map(function(e){
-      var col=COLORS[e.type]||COLORS.activity;
-      var name=e.name||e.airline||e.company||"Untitled";
-      var sub=tab==="all"?typeLabel(e.type):(e.type==="accommodation"?e.platform:e.type==="flight"?[e.airline,e.flightNo].filter(Boolean).join(" "):e.type==="car"?e.carType:e.category);
-      var d1=e.checkIn||e.depDate||e.pickupDate||e.date;
-      var d2=e.checkOut||e.arrDate||e.dropoffDate;
-      var loc=e.address||(e.from?(e.from+(e.to?" → "+e.to:"")):"")||e.pickupLocation||e.location||"";
-      var costVal=e.type==="accommodation"?e.totalCost:e.cost;
-      var due=entryDue(e);
-      return h("div",{key:e.id,onClick:function(){onEdit(e);},className:"ftp-card",
-        style:{background:"var(--surface)",borderRadius:"var(--radius-lg)",boxShadow:"var(--shadow-card)",border:"1px solid var(--line)",overflow:"hidden",cursor:"pointer",display:"flex"}
-      },
-        h("div",{style:{width:5,background:col,flexShrink:0}}),
-        h("div",{style:{padding:"16px 18px",flex:1,minWidth:0,display:"flex",flexDirection:"column"}},
-          h("div",{style:{display:"flex",alignItems:"flex-start",gap:12,marginBottom:12}},
-            h("div",{style:{width:38,height:38,borderRadius:"50%",background:col+"1A",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,flexShrink:0}},typeIcon(e.type)),
-            h("div",{style:{flex:1,minWidth:0,paddingTop:1}},
-              h("div",{style:{fontWeight:700,fontSize:15,color:"var(--ink)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},name),
-              sub&&h("div",{style:{fontSize:12,color:"var(--muted)",marginTop:2}},sub)
-            )
+// ── Detail Card View ─────────────────────────────────────────────
+function DetailCard(props){
+  var entry=props.entry,onEdit=props.onEdit,onBack=props.onBack,onDelete=props.onDelete;
+  var e=entry;
+  var typeColor=COLORS[e.type]||COLORS.activity;
+  var confirmId_s=React_.useState(false); var confirmDel=confirmId_s[0],setConfirmDel=confirmId_s[1];
+  function Row(p){
+    if(!p.v&&p.v!==0&&p.v!==false)return null;
+    var val=p.v===true?"Yes":p.v===false?"No":p.v;
+    return h("div",{style:{display:"flex",gap:12,padding:"8px 0",borderBottom:"1px solid var(--border)"}},
+      h("div",{style:{width:140,flexShrink:0,fontSize:12,color:"var(--text3)",fontWeight:600,paddingTop:1}},p.label),
+      h("div",{style:{flex:1,fontSize:13,color:"var(--text)",wordBreak:"break-word"}},
+        p.url?h("a",{href:p.url,target:"_blank",rel:"noreferrer",style:{color:"var(--primary)"}},"🔗 Open link"):val
+      )
+    );
+  }
+  function Section(p){
+    return h("div",{style:{background:"var(--surface)",borderRadius:10,padding:16,marginBottom:12,border:"1px solid var(--border)"}},
+      p.title&&h("div",{style:{fontSize:11,fontWeight:700,color:"var(--text3)",textTransform:"uppercase",letterSpacing:1,marginBottom:12}},p.title),
+      p.children
+    );
+  }
+  var acc=e.type==="accommodation",flt=e.type==="flight",car=e.type==="car",act=e.type==="activity";
+  return h("div",{style:{maxWidth:640,margin:"0 auto"}},
+    h("div",{style:{display:"flex",alignItems:"center",gap:12,marginBottom:16}},
+      h("button",{onClick:onBack,style:{padding:"7px 14px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"← Back"),
+      h("div",{style:{flex:1}}),
+      h("button",{onClick:function(){onEdit(e);},style:{padding:"7px 14px",borderRadius:7,border:"1px solid var(--primary)",background:"transparent",color:"var(--primary)",cursor:"pointer",fontSize:13,fontWeight:600}},"✏️ Edit"),
+      confirmDel?h(React_.Fragment,null,
+        h("button",{onClick:function(){onDelete(e.id);},style:{padding:"7px 14px",borderRadius:7,border:"none",background:"#7f1d1d",color:"var(--danger)",cursor:"pointer",fontSize:13,fontWeight:700}},"Confirm Delete"),
+        h("button",{onClick:function(){setConfirmDel(false);},style:{padding:"7px 10px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"✕")
+      ):h("button",{onClick:function(){setConfirmDel(true);},style:{padding:"7px 14px",borderRadius:7,border:"1px solid var(--danger-dim)",background:"transparent",color:"var(--danger)",cursor:"pointer",fontSize:13}},"🗑️ Delete")
+    ),
+    h(Section,null,
+      h("div",{style:{display:"flex",alignItems:"flex-start",gap:16}},
+        h("div",{style:{width:48,height:48,borderRadius:10,background:typeColor,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}},typeIcon(e.type)),
+        h("div",{style:{flex:1}},
+          h("div",{style:{fontSize:11,color:"var(--text3)",marginBottom:4,textTransform:"uppercase",letterSpacing:1}},typeLabel(e.type)+(e.platform?" • "+e.platform:"")+(e.category?" • "+e.category:"")+(e.carType?" • "+e.carType:"")),
+          h("div",{style:{fontSize:22,fontWeight:700,color:"var(--text)",marginBottom:6}},e.name||e.airline||e.company||""),
+          e.type==="accommodation"&&e.checkIn&&h("div",{style:{fontSize:13,color:"var(--text2)"}},
+            fmtD(e.checkIn)+(e.checkOut?" → "+fmtD(e.checkOut):""),
+            e.checkIn&&e.checkOut?h("span",{style:{marginLeft:8,background:typeColor+"33",color:typeColor,borderRadius:4,padding:"2px 8px",fontSize:12,fontWeight:600}},nights(e.checkIn,e.checkOut)+"n"):null
           ),
-          (d1||loc)&&h("div",{style:{fontSize:12,color:"var(--muted2)",marginBottom:14,lineHeight:1.6}},
-            d1&&h("div",null,fmtD(d1),(d2&&d2!==d1)?(" → "+fmtD(d2)):""),
-            loc&&h("div",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},"📍 "+loc)
-          ),
-          h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",marginTop:"auto",paddingTop:10,borderTop:"1px solid var(--line)"}},
-            h("div",null,
-              h("div",{style:{fontSize:16,fontWeight:800,color:"var(--ink)"}},fmt$(costVal)),
-              due>0&&h("div",{style:{fontSize:11,color:"var(--coral)",fontWeight:700,marginTop:1}},fmt$(due)+" due")
-            ),
-            h(PayBadge,{status:e.paymentStatus||"paid"})
-          )
+          e.type==="flight"&&e.depDate&&h("div",{style:{fontSize:13,color:"var(--text2)"}},e.from+" → "+e.to+" • "+fmtD(e.depDate)+(e.depTime?" "+e.depTime:"")),
+          e.type==="car"&&e.pickupDate&&h("div",{style:{fontSize:13,color:"var(--text2)"}},fmtD(e.pickupDate)+(e.dropoffDate?" → "+fmtD(e.dropoffDate):"")),
+          e.type==="activity"&&e.date&&h("div",{style:{fontSize:13,color:"var(--text2)"}},fmtD(e.date)+(e.duration?" • "+e.duration:"")),
+          (e.totalCost||e.cost)&&h("div",{style:{fontSize:20,fontWeight:700,color:typeColor,marginTop:6}},fmt$(e.totalCost||e.cost))
         )
-      );
-    })
+      )
+    ),
+    acc&&h(Section,{title:"Stay Details"},
+      h(Row,{label:"Address",v:e.address}),
+      h(Row,{label:"Contact",v:e.contact}),
+      h(Row,{label:"Cost/Night",v:e.costPerNight?fmt$(e.costPerNight):null}),
+      h(Row,{label:"Total Cost",v:e.totalCost?fmt$(e.totalCost):null}),
+      h(Row,{label:"Confirmation",v:e.confirmation}),
+      h(Row,{label:"Booking URL",v:e.url,url:true}),
+      h("div",{style:{display:"flex",gap:16,paddingTop:8}},
+        e.parking&&h("span",{style:{fontSize:13,color:"var(--success)"}},"🅿️ Parking"),
+        e.kitchen&&h("span",{style:{fontSize:13,color:"var(--success)"}},"🍳 Kitchen"),
+        e.breakfast&&h("span",{style:{fontSize:13,color:"var(--success)"}},"🥐 Breakfast")
+      )
+    ),
+    flt&&h(Section,{title:"Flight Details"},
+      h(Row,{label:"Flight #",v:e.flightNo}),
+      h(Row,{label:"Departure",v:e.from+(e.depDate?" — "+fmtD(e.depDate)+(e.depTime?" "+e.depTime:""):"")}),
+      h(Row,{label:"Arrival",v:e.to+(e.arrDate?" — "+fmtD(e.arrDate)+(e.arrTime?" "+e.arrTime:""):"")}),
+      h(Row,{label:"Cost",v:e.cost?fmt$(e.cost):null}),
+      h(Row,{label:"Booking Ref",v:e.bookingRef}),
+      h(Row,{label:"Booking URL",v:e.url,url:true})
+    ),
+    car&&h(Section,{title:"Car Rental Details"},
+      h(Row,{label:"Pickup",v:e.pickupLocation+(e.pickupDate?" — "+fmtD(e.pickupDate):"")}),
+      h(Row,{label:"Drop-off",v:e.dropoffLocation+(e.dropoffDate?" — "+fmtD(e.dropoffDate):"")}),
+      h(Row,{label:"Cost",v:e.cost?fmt$(e.cost):null}),
+      h(Row,{label:"Confirmation",v:e.confirmation}),
+      h(Row,{label:"Booking URL",v:e.url,url:true})
+    ),
+    act&&h(Section,{title:"Activity Details"},
+      h(Row,{label:"Location",v:e.location}),
+      h(Row,{label:"Cost",v:e.cost?fmt$(e.cost):null}),
+      h(Row,{label:"URL",v:e.url,url:true})
+    ),
+    e.notes&&h(Section,{title:"Notes"},
+      h("div",{style:{fontSize:13,color:"var(--text)",lineHeight:1.7,whiteSpace:"pre-wrap"}},e.notes)
+    )
   );
 }
 
+// ── Table View ───────────────────────────────────────────────────
 function TableView(props){
-  var tab=props.tab,acc=props.acc,flt=props.flt,car=props.car,act=props.act,search=props.search,onEdit=props.onEdit,onDelete=props.onDelete;
+  var tab=props.tab,acc=props.acc,flt=props.flt,car=props.car,act=props.act,search=props.search,onEdit=props.onEdit,onDelete=props.onDelete,onDetail=props.onDetail;
   var cS=useState(null); var confirmId=cS[0],setConfirmId=cS[1];
   var skS=useState("date"); var sk=skS[0],setSk=skS[1];
   var sdS=useState("asc"); var sd=sdS[0],setSd=sdS[1];
-  var colS=useState([{key:"name",label:"Name",sK:"name"},{key:"type",label:"Type",sK:"type"},{key:"date",label:"Start",sK:"date"},{key:"endDate",label:"End",sK:"endDate"},{key:"nights",label:"Nights",sK:null},{key:"cost",label:"Cost",sK:"cost"},{key:"pay",label:"Pay",sK:null},{key:"address",label:"Address",sK:null},{key:"city",label:"City",sK:null},{key:"url",label:"URL",sK:null},{key:"actions",label:"Actions",sK:null}]);
+  var colS=useState([{key:"name",label:"Name",sK:"name"},{key:"type",label:"Type",sK:"type"},{key:"date",label:"Start",sK:"date"},{key:"endDate",label:"End",sK:"endDate"},{key:"nights",label:"Nights",sK:null},{key:"cost",label:"Cost",sK:"cost"},{key:"address",label:"Address",sK:null},{key:"city",label:"City",sK:null},{key:"url",label:"URL",sK:null},{key:"actions",label:"Actions",sK:null}]);
   var cols=colS[0],setCols=colS[1];
-  var selS=useState(null); var selRowId=selS[0],setSelRowId=selS[1];
   var dragI=useRef(null),dragO=useRef(null);
-  var cwS=useState({}); var cw=cwS[0],setCW=cwS[1];
-  var rzRef=useRef({active:false,startX:0,startW:0,key:""});
-  var ptDragI=useRef(null),ptDragO=useRef(null);
-  var ptColsS=useState(function(){return{accommodations:TABLE_CDEFS.accommodations.slice(),flights:TABLE_CDEFS.flights.slice(),cars:TABLE_CDEFS.cars.slice(),activities:TABLE_CDEFS.activities.slice()};}); var ptCols=ptColsS[0],setPtCols=ptColsS[1];
-  // resize handled via setPointerCapture on each handle (no document listeners needed)
   function ts(k){if(sk===k)setSd(function(d){return d==="asc"?"desc":"asc";});else{setSk(k);setSd("asc");}}
   function getSD(e){return e.checkIn||e.depDate||e.pickupDate||e.date||"";}
   function getN(e){return(e.name||e.airline||e.company||"").toLowerCase();}
@@ -808,8 +706,8 @@ function TableView(props){
   function sortR(rows){
     var dir=sd==="asc"?1:-1;
     return rows.slice().sort(function(a,b){
-      if(sk==="date"){if(!a.date&&!b.date)return 0;if(!a.date)return 1;if(!b.date)return -1;return dir*a.date.localeCompare(b.date);}
-      if(sk==="endDate"){if(!a.endDate&&!b.endDate)return 0;if(!a.endDate)return 1;if(!b.endDate)return -1;return dir*a.endDate.localeCompare(b.endDate);}
+      if(sk==="date")return dir*(a.date||"").localeCompare(b.date||"");
+      if(sk==="endDate")return dir*(a.endDate||"").localeCompare(b.endDate||"");
       if(sk==="cost")return dir*(a.cN-b.cN);
       if(sk==="name")return dir*(a.name||"").localeCompare(b.name||"");
       if(sk==="type")return dir*(a.tK||"").localeCompare(b.tK||"");
@@ -821,120 +719,98 @@ function TableView(props){
     entries.forEach(function(e){var d=getSD(e);if(d)dc[d]=(dc[d]||0)+1;var n=getN(e);if(n)nc[n]=(nc[n]||0)+1;});
     return{dd:new Set(Object.keys(dc).filter(function(k){return dc[k]>1;})),dn:new Set(Object.keys(nc).filter(function(k){return nc[k]>1;}))};
   }
-  function Dup(p){return p.show?h("span",{title:p.t,style:{marginLeft:5,fontSize:10,background:"var(--amber-bg)",color:"var(--amber-ink)",borderRadius:3,padding:"1px 5px",fontWeight:700}},"⚠ DUP"):null;}
+  function Dup(p){return p.show?h("span",{title:p.t,style:{marginLeft:5,fontSize:10,background:"#92400e",color:"#fde68a",borderRadius:3,padding:"1px 5px",fontWeight:700}},"⚠ DUP"):null;}
   function XC(p){
     var xS=useState(false); var open=xS[0],setOpen=xS[1];
-    if(!p.val||p.val==="-")return h("span",{style:{color:"var(--muted2)"}},"-");
-    return h("span",{style:{position:"relative"}},h("span",{onDoubleClick:function(){setOpen(!open);},style:{cursor:"zoom-in",display:"block",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.val),open&&h("span",{onClick:function(){setOpen(false);},style:{position:"absolute",left:0,top:"100%",zIndex:50,background:"var(--surface)",border:"1.5px solid var(--horizon)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontSize:12,color:"var(--ink)",whiteSpace:"normal",maxWidth:320,wordBreak:"break-word",boxShadow:"var(--shadow-modal)"}},p.val,h("span",{style:{display:"block",marginTop:6,fontSize:10,color:"var(--muted)"}},"click to close")));
+    if(!p.val||p.val==="-")return h("span",{style:{color:"#475569"}},"-");
+    return h("span",{style:{position:"relative"}},h("span",{onDoubleClick:function(){setOpen(!open);},style:{cursor:"zoom-in",display:"block",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},p.val),open&&h("span",{onClick:function(){setOpen(false);},style:{position:"absolute",left:0,top:"100%",zIndex:50,background:"var(--surface)",border:"1px solid var(--primary)",borderRadius:6,padding:"8px 12px",fontSize:12,color:"#f1f5f9",whiteSpace:"normal",maxWidth:320,wordBreak:"break-word",boxShadow:"0 4px 20px rgba(0,0,0,.5)"}},p.val,h("span",{style:{display:"block",marginTop:6,fontSize:10,color:"#64748b"}},"click to close")));
   }
   function AB(p){
     return h("td",{style:{padding:"9px 12px",display:"flex",gap:6,alignItems:"center"}},
-      h("button",{onClick:function(){onEdit(p.raw);},style:{background:"var(--canvas)",border:"1px solid var(--line)",borderRadius:5,color:"var(--muted)",padding:"4px 10px",cursor:"pointer",fontSize:12,fontWeight:600}},"Edit"),
+      h("button",{onClick:function(){onEdit(p.raw);},style:{background:"#1e293b",border:"1px solid #334155",borderRadius:5,color:"#94a3b8",padding:"4px 10px",cursor:"pointer",fontSize:12}},"Edit"),
       confirmId===p.id?h(React_.Fragment,null,
-        h("button",{onClick:function(){onDelete(p.id);setConfirmId(null);},style:{background:"var(--coral)",border:"none",borderRadius:5,color:"#fff",padding:"4px 10px",cursor:"pointer",fontSize:12,fontWeight:700}},"Sure?"),
-        h("button",{onClick:function(){setConfirmId(null);},style:{background:"var(--canvas)",border:"1px solid var(--line)",borderRadius:5,color:"var(--muted)",padding:"4px 8px",cursor:"pointer",fontSize:12}},"✕")
-      ):h("button",{onClick:function(){setConfirmId(p.id);},style:{background:"transparent",border:"1px solid var(--coral)",borderRadius:5,color:"var(--coral)",padding:"4px 10px",cursor:"pointer",fontSize:12,fontWeight:600}},"Delete")
+        h("button",{onClick:function(){onDelete(p.id);setConfirmId(null);},style:{background:"#7f1d1d",border:"none",borderRadius:5,color:"#fca5a5",padding:"4px 10px",cursor:"pointer",fontSize:12,fontWeight:700}},"Sure?"),
+        h("button",{onClick:function(){setConfirmId(null);},style:{background:"#1e293b",border:"1px solid #334155",borderRadius:5,color:"#94a3b8",padding:"4px 8px",cursor:"pointer",fontSize:12}},"✕")
+      ):h("button",{onClick:function(){setConfirmId(p.id);},style:{background:"transparent",border:"1px solid #7f1d1d",borderRadius:5,color:"#f87171",padding:"4px 10px",cursor:"pointer",fontSize:12}},"Delete")
     );
   }
   function TH(p){
-    var wk="all::"+p.label; var w=cw[wk];
     return h("th",{draggable:!!p.drag,
       onDragStart:p.drag?function(e){dragI.current=p.i;e.dataTransfer.effectAllowed="move";}:null,
       onDragOver:p.drag?function(e){e.preventDefault();dragO.current=p.i;}:null,
       onDrop:p.drag?function(){var f=dragI.current,t=dragO.current;if(f===null||t===null||f===t)return;var n=cols.slice();var m=n.splice(f,1)[0];n.splice(t,0,m);setCols(n);dragI.current=null;dragO.current=null;}:null,
       onClick:p.sK?function(){ts(p.sK);}:null,
-      style:{padding:"10px 12px",textAlign:"left",color:p.sK&&sk===p.sK?"var(--ink)":"var(--muted)",fontWeight:700,whiteSpace:"nowrap",cursor:p.sK?"pointer":p.drag?"grab":"default",userSelect:"none",borderRight:"1px solid var(--line)",position:"relative",width:w?w+"px":undefined,boxSizing:"border-box"}
-    },p.label,p.sK?h("span",null,sk===p.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"",
-    h("div",{style:{position:"absolute",right:0,top:0,bottom:0,width:5,cursor:"col-resize",zIndex:2,background:"transparent"},
-      onPointerDown:function(e){e.stopPropagation();e.preventDefault();var div=e.currentTarget,th=div.parentElement,wasDrag=th.draggable,sx=e.clientX,sw=th.offsetWidth,key=wk;th.draggable=false;div.setPointerCapture(e.pointerId);div.onpointermove=function(ev){var nw=Math.max(40,sw+(ev.clientX-sx));setCW(function(p){var n=Object.assign({},p);n[key]=nw;return n;});};div.onpointerup=function(){th.draggable=wasDrag;div.onpointermove=null;div.onpointerup=null;};}})
-    );
+      style:{padding:"10px 12px",textAlign:"left",color:p.sK&&sk===p.sK?"var(--text)":"var(--text2)",fontWeight:600,whiteSpace:"nowrap",cursor:p.sK?"pointer":p.drag?"grab":"default",userSelect:"none",borderRight:"1px solid #1e293b"}
+    },p.label,p.sK?h("span",null,sk===p.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"");
   }
   var srcEntries=tab==="all"?acc.concat(flt,car,act):tab==="accommodations"?acc:tab==="flights"?flt:tab==="cars"?car:act;
   var filtered=srcEntries.filter(function(e){return matchesSearch(e,search);});
   var dupInfo=dups(srcEntries); var dd=dupInfo.dd,dn=dupInfo.dn;
   var rows=sortR(filtered.map(toRow));
-  if(!srcEntries.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted2)"}},h("div",{style:{fontSize:48}},"📭"),h("p",null,"No entries yet. Click + Add, ⬆️ Import, or 📧 Gmail."));
-  if(search&&!rows.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted2)"}},h("div",{style:{fontSize:36}},"🔍"),h("p",null,"No results for \""+search+"\""));
+  if(!srcEntries.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--text4)"}},h("div",{style:{fontSize:48}},"📭"),h("p",null,"No entries yet. Click + Add, ⬆️ Import, or 📧 Gmail."));
+  if(search&&!rows.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--text4)"}},h("div",{style:{fontSize:36}},"🔍"),h("p",null,"No results for \""+search+"\""));
 
   function allCell(col,row){
     var iDD=dd.has(row.date),iDN=dn.has((row.name||"").toLowerCase());
     switch(col.key){
-      case"name":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--ink)",maxWidth:160}},h(XC,{val:row.name}),h(Dup,{show:iDN,t:"Duplicate name"}));
-      case"type":return h("td",{key:col.key,style:{padding:"9px 12px"}},h("span",{style:{background:(COLORS[row.raw.type]||COLORS.activity)+"1A",borderRadius:4,padding:"2px 8px",fontSize:11,color:COLORS[row.raw.type]||COLORS.activity,fontWeight:700}},row.typeLbl));
-      case"date":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--ink)",whiteSpace:"nowrap"}},fmtD(row.date),h(Dup,{show:iDD,t:"Duplicate date"}));
-      case"endDate":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--ink)",whiteSpace:"nowrap"}},fmtD(row.endDate));
-      case"nights":return h("td",{key:col.key,style:{padding:"9px 12px",color:row.nts?"var(--horizon)":"var(--muted2)"}},row.nts?row.nts+"n":"-");
-      case"cost":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--ink)"}},h("div",null,row.cost),entryDue(row.raw)>0&&h("div",{style:{fontSize:10,color:"var(--coral)",fontWeight:700,marginTop:1}},fmt$(entryDue(row.raw))+" due"));
-      case"pay":return h("td",{key:col.key,style:{padding:"9px 12px"}},h(PayBadge,{status:row.raw.paymentStatus||"paid"}));
+      case"name":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--text)",maxWidth:160}},h(XC,{val:row.name}),h(Dup,{show:iDN,t:"Duplicate name"}));
+      case"type":return h("td",{key:col.key,style:{padding:"9px 12px"}},h("span",{style:{background:COLORS[row.raw.type]||COLORS.activity,borderRadius:4,padding:"2px 8px",fontSize:11,color:"#fff",fontWeight:600}},row.typeLbl));
+      case"date":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--text)",whiteSpace:"nowrap"}},fmtD(row.date),h(Dup,{show:iDD,t:"Duplicate date"}));
+      case"endDate":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--text)",whiteSpace:"nowrap"}},fmtD(row.endDate));
+      case"nights":return h("td",{key:col.key,style:{padding:"9px 12px",color:row.nts?"#a5b4fc":"#475569"}},row.nts?row.nts+"n":"-");
+      case"cost":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--text)"}},row.cost);
       case"address":return h("td",{key:col.key,style:{padding:"9px 12px",maxWidth:160}},h(XC,{val:row.address}));
-      case"city":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--ink)",whiteSpace:"nowrap"}},row.city||"-");
-      case"url":return h("td",{key:col.key,style:{padding:"9px 12px"}},row.url?h("a",{href:row.url,target:"_blank",rel:"noreferrer",style:{color:"var(--horizon)",textDecoration:"none"}},"🔗"):"-");
+      case"city":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--text)",whiteSpace:"nowrap"}},row.city||"-");
+      case"url":return h("td",{key:col.key,style:{padding:"9px 12px"}},row.url?h("a",{href:row.url,target:"_blank",rel:"noreferrer",style:{color:"#6366f1",textDecoration:"none"}},"🔗"):"-");
       case"actions":return h(AB,{key:col.key,id:row.id,raw:row.raw});
-      default:return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--muted2)"}},"-");
+      default:return h("td",{key:col.key,style:{padding:"9px 12px",color:"#475569"}},"-");
     }
   }
 
-  if(tab==="all") return h("div",{style:{overflowX:"auto",borderRadius:"var(--radius-md)",border:"1px solid var(--line)",boxShadow:"var(--shadow-sm)"}},
-    h("div",{style:{padding:"6px 12px",background:"var(--canvas)",borderBottom:"1px solid var(--line)",fontSize:11,color:"var(--muted2)"}},"↔ Drag to reorder • Double-click to expand • Click row to highlight"+(search?" • "+rows.length+" of "+srcEntries.length+" entries":"")),
-    h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13,background:"var(--surface)"}},
-      h("thead",null,h("tr",{style:{background:"var(--canvas)"}},cols.map(function(c,i){return h(TH,{key:c.key,label:c.label,sK:c.sK,drag:true,i:i});}))),
+  if(tab==="all") return h("div",{style:{overflowX:"auto",borderRadius:10,border:"1px solid var(--border)"}},
+    h("div",{style:{padding:"6px 12px",background:"var(--surface)",borderBottom:"1px solid var(--border)",fontSize:11,color:"var(--text3)"}},"↔ Drag columns to reorder • Double-click to expand"+(search?" • "+rows.length+" of "+srcEntries.length+" entries":"")),
+    h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
+      h("thead",null,h("tr",{style:{background:"#1e293b"}},cols.map(function(c,i){return h(TH,{key:c.key,label:c.label,sK:c.sK,drag:true,i:i});}))),
       h("tbody",null,rows.map(function(row,i){
         var iDD=dd.has(row.date),iDN=dn.has((row.name||"").toLowerCase());
-        var isSel=selRowId===row.id;
-        var bg=isSel?"#DCE8F2":iDD||iDN?"var(--amber-bg)":(i%2===0?"var(--surface)":"var(--canvas)");
-        return h("tr",{key:row.id,onClick:function(){setSelRowId(isSel?null:row.id);},style:{background:bg,borderTop:"1px solid var(--line)",cursor:"pointer",outline:isSel?"2px solid var(--horizon)":"none",outlineOffset:"-1px",transition:"background .1s"}},cols.map(function(c){return allCell(c,row);}));
+        var bg=iDD||iDN?(i%2===0?"var(--row-dup-odd)":"var(--row-dup-even)"):(i%2===0?"var(--row-odd)":"var(--row-even)");
+        return h("tr",{key:row.id,onClick:function(e){if(e.target.tagName!=="BUTTON"&&e.target.tagName!=="A"&&onDetail)onDetail(row.raw);},style:{background:bg,borderTop:"1px solid var(--border)",cursor:"pointer"},onMouseEnter:function(e){e.currentTarget.style.filter="brightness(1.1)";},onMouseLeave:function(e){e.currentTarget.style.filter="";} },cols.map(function(c){return allCell(c,row);}));
       }))
     )
   );
 
   var cdefs={
-    accommodations:[{h:"Name",k:"name",f:null,sK:"name"},{h:"Platform",k:"platform"},{h:"Check-In",k:"checkIn",f:"date",sK:"date"},{h:"Check-Out",k:"checkOut",f:"date",sK:"endDate"},{h:"Nights",k:"_nts",f:"nts"},{h:"Cost/Night",k:"costPerNight",f:"$"},{h:"Cost",k:"totalCost",f:"$",sK:"cost"},{h:"Parking",k:"parking",f:"bool"},{h:"Kitchen",k:"kitchen",f:"bool"},{h:"Breakfast",k:"breakfast",f:"bool"},{h:"Address",k:"address",f:"addr"},{h:"City",k:"_city"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
-    flights:[{h:"Airline",k:"airline",sK:"name"},{h:"Flight#",k:"flightNo"},{h:"From",k:"from",f:"addr"},{h:"To",k:"to"},{h:"Dep Date",k:"depDate",f:"date",sK:"date"},{h:"Dep Time",k:"depTime"},{h:"Arr Date",k:"arrDate",f:"date",sK:"endDate"},{h:"Arr Time",k:"arrTime"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Ref",k:"bookingRef"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
-    cars:[{h:"Company",k:"company",sK:"name"},{h:"Type",k:"carType"},{h:"Pickup",k:"pickupLocation",f:"addr"},{h:"City",k:"_city"},{h:"Dropoff",k:"dropoffLocation",f:"addr"},{h:"Pickup Date",k:"pickupDate",f:"date",sK:"date"},{h:"Dropoff Date",k:"dropoffDate",f:"date",sK:"endDate"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
-    activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
+    accommodations:[{h:"Name",k:"name",f:null,sK:"name"},{h:"Platform",k:"platform"},{h:"Check-In",k:"checkIn",f:"date",sK:"date"},{h:"Check-Out",k:"checkOut",f:"date",sK:"endDate"},{h:"Nights",k:"_nts",f:"nts"},{h:"Cost/Night",k:"costPerNight",f:"$"},{h:"Cost",k:"totalCost",f:"$",sK:"cost"},{h:"Parking",k:"parking",f:"bool"},{h:"Kitchen",k:"kitchen",f:"bool"},{h:"Breakfast",k:"breakfast",f:"bool"},{h:"Address",k:"address",f:"addr"},{h:"City",k:"_city"},{h:"URL",k:"url",f:"link"}],
+    flights:[{h:"Airline",k:"airline",sK:"name"},{h:"Flight#",k:"flightNo"},{h:"From",k:"from",f:"addr"},{h:"To",k:"to"},{h:"Dep Date",k:"depDate",f:"date",sK:"date"},{h:"Dep Time",k:"depTime"},{h:"Arr Date",k:"arrDate",f:"date",sK:"endDate"},{h:"Arr Time",k:"arrTime"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Ref",k:"bookingRef"},{h:"URL",k:"url",f:"link"}],
+    cars:[{h:"Company",k:"company",sK:"name"},{h:"Type",k:"carType"},{h:"Pickup",k:"pickupLocation",f:"addr"},{h:"City",k:"_city"},{h:"Dropoff",k:"dropoffLocation",f:"addr"},{h:"Pickup Date",k:"pickupDate",f:"date",sK:"date"},{h:"Dropoff Date",k:"dropoffDate",f:"date",sK:"endDate"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"URL",k:"url",f:"link"}],
+    activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
   };
-  var c=(ptCols&&ptCols[tab])||TABLE_CDEFS[tab]||TABLE_CDEFS.accommodations;
-  return h("div",{style:{overflowX:"auto",borderRadius:"var(--radius-md)",border:"1px solid var(--line)",boxShadow:"var(--shadow-sm)"}},
-    h("div",{style:{padding:"6px 12px",background:"var(--canvas)",borderBottom:"1px solid var(--line)",fontSize:11,color:"var(--muted2)"}},"↔ Drag headers to reorder • Drag edge to resize • Double-click cell to expand • Click row to highlight"+(search?" • "+rows.length+" of "+srcEntries.length+" entries":"")),
-    h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13,background:"var(--surface)"}},
-      h("thead",null,h("tr",{style:{background:"var(--canvas)"}},
-        c.map(function(col,ci){
-          var wk=tab+"::"+col.h; var w=cw[wk];
-          return h("th",{
-            key:col.h,draggable:true,
-            onDragStart:function(e){ptDragI.current=ci;e.dataTransfer.effectAllowed="move";},
-            onDragOver:function(e){e.preventDefault();ptDragO.current=ci;},
-            onDrop:function(){var f=ptDragI.current,t=ptDragO.current;if(f===null||t===null||f===t)return;setPtCols(function(prev){var nx=Object.assign({},prev);var arr=prev[tab].slice();var mv=arr.splice(f,1)[0];arr.splice(t,0,mv);nx[tab]=arr;return nx;});ptDragI.current=null;ptDragO.current=null;},
-            onClick:col.sK?function(){ts(col.sK);}:null,
-            style:{padding:"10px 12px",textAlign:"left",color:col.sK&&sk===col.sK?"var(--ink)":"var(--muted)",fontWeight:700,whiteSpace:"nowrap",cursor:col.sK?"pointer":"grab",userSelect:"none",borderRight:"1px solid var(--line)",position:"relative",width:w?w+"px":undefined,boxSizing:"border-box"}
-          },col.h,col.sK?h("span",null,sk===col.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"",
-          h("div",{style:{position:"absolute",right:0,top:0,bottom:0,width:5,cursor:"col-resize",zIndex:2,background:"transparent"},
-            onPointerDown:function(e){e.stopPropagation();e.preventDefault();var div=e.currentTarget,th=div.parentElement,wasDrag=th.draggable,sx=e.clientX,sw=th.offsetWidth,key=wk;th.draggable=false;div.setPointerCapture(e.pointerId);div.onpointermove=function(ev){var nw=Math.max(40,sw+(ev.clientX-sx));setCW(function(p){var n=Object.assign({},p);n[key]=nw;return n;});};div.onpointerup=function(){th.draggable=wasDrag;div.onpointermove=null;div.onpointerup=null;};}})
-          );
-        }),
-        h("th",{style:{padding:"10px 12px",color:"var(--muted)",fontWeight:700}},"Actions")
+  var c=cdefs[tab]||cdefs.accommodations;
+  return h("div",{style:{overflowX:"auto",borderRadius:10,border:"1px solid var(--border)"}},
+    h("div",{style:{padding:"6px 12px",background:"var(--surface)",borderBottom:"1px solid var(--border)",fontSize:11,color:"var(--text3)"}},"Double-click to expand"+(search?" • "+rows.length+" of "+srcEntries.length+" entries":"")),
+    h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
+      h("thead",null,h("tr",{style:{background:"var(--surface)"}},
+        c.map(function(col){return h("th",{key:col.h,onClick:col.sK?function(){ts(col.sK);}:null,style:{padding:"10px 12px",textAlign:"left",color:col.sK&&sk===col.sK?"var(--text)":"var(--text2)",fontWeight:600,whiteSpace:"nowrap",cursor:col.sK?"pointer":"default",userSelect:"none",borderRight:"1px solid #1e293b"}},col.h,col.sK?h("span",null,sk===col.sK?(sd==="asc"?" ↑":" ↓"):" ↕"):"");}),
+        h("th",{style:{padding:"10px 12px",color:"#94a3b8",fontWeight:600}},"Actions")
       )),
       h("tbody",null,rows.map(function(row,i){
         var e=row.raw;
         var iDD=dd.has(getSD(e)),iDN=dn.has(getN(e));
-        var isSel=selRowId===row.id;
-        var bg=isSel?"#DCE8F2":iDD||iDN?"var(--amber-bg)":(i%2===0?"var(--surface)":"var(--canvas)");
-        return h("tr",{key:row.id,onClick:function(){setSelRowId(isSel?null:row.id);},style:{background:bg,borderTop:"1px solid var(--line)",cursor:"pointer",outline:isSel?"2px solid var(--horizon)":"none",outlineOffset:"-1px",transition:"background .1s"}},
+        var bg=iDD||iDN?(i%2===0?"var(--row-dup-odd)":"var(--row-dup-even)"):(i%2===0?"var(--row-odd)":"var(--row-even)");
+        return h("tr",{key:row.id,onClick:function(ev){if(ev.target.tagName!=="BUTTON"&&ev.target.tagName!=="A"&&onDetail)onDetail(e);},style:{background:bg,borderTop:"1px solid var(--border)",cursor:"pointer"},onMouseEnter:function(ev){ev.currentTarget.style.filter="brightness(1.1)";},onMouseLeave:function(ev){ev.currentTarget.style.filter="";} },
           c.map(function(col){
-            var wk=tab+"::"+col.h; var w=cw[wk];
             var rv=col.k==="_nts"?nights(e.checkIn,e.checkOut):col.k==="_city"?cityOf(e.address||e.pickupLocation||e.location||""):e[col.k];
             var isN=col.k==="name"||col.k==="airline"||col.k==="company";
             var isD=col.k==="checkIn"||col.k==="depDate"||col.k==="pickupDate"||col.k==="date";
             var cell;
             if(col.f==="$")cell=h("span",null,fmt$(rv));
-            else if(col.f==="nts")cell=rv>0?h("span",{style:{color:"var(--horizon)",fontWeight:600}},rv+"n"):h("span",{style:{color:"var(--muted2)"}},"-");
-            else if(col.f==="bool")cell=rv?h("span",{style:{color:"var(--sage)"}},"✓"):h("span",{style:{color:"var(--muted2)"}},"✗");
-            else if(col.f==="link")cell=rv?h("a",{href:rv,target:"_blank",rel:"noreferrer",style:{color:"var(--horizon)",textDecoration:"none"}},"🔗"):h("span",{style:{color:"var(--muted2)"}},"-");
+            else if(col.f==="nts")cell=rv>0?h("span",{style:{color:"#a5b4fc"}},rv+"n"):h("span",{style:{color:"#475569"}},"-");
+            else if(col.f==="bool")cell=rv?h("span",{style:{color:"#10b981"}},"✓"):h("span",{style:{color:"#475569"}},"✗");
+            else if(col.f==="link")cell=rv?h("a",{href:rv,target:"_blank",rel:"noreferrer",style:{color:"#6366f1",textDecoration:"none"}},"🔗"):h("span",{style:{color:"#475569"}},"-");
             else if(col.f==="date")cell=h("span",null,fmtD(rv));
             else if(col.f==="addr")cell=h(XC,{val:rv||""});
-            else if(col.f==="pay")cell=h(PayBadge,{status:rv||"paid"});
             else cell=h("span",{style:{display:"block",maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},rv||"-");
-            return h("td",{key:col.h,style:{padding:"9px 12px",color:"var(--ink)",maxWidth:w?undefined:200,width:w?w+"px":undefined,overflow:"hidden",position:"relative"}},
+            return h("td",{key:col.h,style:{padding:"9px 12px",color:"var(--text)",maxWidth:200,position:"relative"}},
               isN?h(React_.Fragment,null,h(XC,{val:rv||""}),h(Dup,{show:iDN,t:"Duplicate name"})):cell,
               isD&&h(Dup,{show:iDD,t:"Duplicate date"})
             );
@@ -951,7 +827,7 @@ function CalendarView(props){
   var entries=props.entries,onEdit=props.onEdit;
   var dates=[];
   entries.forEach(function(e){var s=e.checkIn||e.depDate||e.pickupDate||e.date,en=e.checkOut||e.arrDate||e.dropoffDate;if(s)dates.push(new Date(s));if(en)dates.push(new Date(en));});
-  if(!dates.length)return h("div",{style:{textAlign:"center",padding:"40px 0",color:"var(--muted2)"}},"Add entries with dates to see the calendar.");
+  if(!dates.length)return h("div",{style:{textAlign:"center",padding:"40px 0",color:"#475569"}},"Add entries with dates to see the calendar.");
   var rs=new Date(Math.min.apply(null,dates));rs.setDate(rs.getDate()-2);
   var re=new Date(Math.max.apply(null,dates));re.setDate(re.getDate()+2);
   var months=[];var cur=new Date(rs.getFullYear(),rs.getMonth(),1),mend=new Date(re.getFullYear(),re.getMonth(),1);
@@ -960,7 +836,7 @@ function CalendarView(props){
   function label(e){return e.name||e.airline||e.company||e.category||"Entry";}
   return h("div",null,
     h("div",{style:{display:"flex",gap:12,marginBottom:16,flexWrap:"wrap"}},
-      [["🏠 Stay",COLORS.accommodation],["✈️ Flight",COLORS.flight],["🚗 Car",COLORS.car],["🎯 Activity",COLORS.activity]].map(function(item){return h("span",{key:item[0],style:{fontSize:12,color:"var(--muted)",fontWeight:600}},h("span",{style:{display:"inline-block",width:10,height:10,borderRadius:2,background:item[1],marginRight:4}}),item[0]);})
+      [["🏠 Stay",COLORS.accommodation],["✈️ Flight",COLORS.flight],["🚗 Car",COLORS.car],["🎯 Activity",COLORS.activity]].map(function(item){return h("span",{key:item[0],style:{fontSize:12,color:"#94a3b8"}},h("span",{style:{display:"inline-block",width:10,height:10,borderRadius:2,background:item[1],marginRight:4}}),item[0]);})
     ),
     months.map(function(m){
       var firstDay=new Date(m.yr,m.mn,1).getDay(),dim=new Date(m.yr,m.mn+1,0).getDate();
@@ -968,15 +844,15 @@ function CalendarView(props){
       for(var i=0;i<firstDay;i++)cells.push(h("div",{key:"b"+i}));
       for(var i=0;i<dim;i++){
         var d=i+1,date=new Date(m.yr,m.mn,d),active=date>=rs&&date<=re,isToday=new Date().toDateString()===date.toDateString(),de=active?forDate(date):[];
-        cells.push(h("div",{key:"d"+d,style:{background:active?"var(--surface)":"var(--canvas)",borderRadius:8,minHeight:52,padding:6,border:isToday?"1.5px solid var(--horizon)":"1px solid var(--line)",opacity:active?1:0.35}},
-          h("div",{style:{fontSize:12,fontWeight:700,color:isToday?"var(--horizon)":active?"var(--muted)":"var(--muted2)",marginBottom:4}},d),
-          de.slice(0,3).map(function(e){return h("div",{key:e.id,onClick:function(){onEdit(e);},style:{background:(COLORS[e.type]||COLORS.activity)+"1A",borderRadius:3,padding:"2px 5px",fontSize:10,color:COLORS[e.type]||COLORS.activity,fontWeight:600,marginBottom:2,cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},label(e));}),
-          de.length>3&&h("div",{style:{fontSize:10,color:"var(--muted2)"}},"+"+( de.length-3))
+        cells.push(h("div",{key:"d"+d,style:{background:active?"var(--surface)":"var(--bg)",borderRadius:6,minHeight:72,padding:6,border:isToday?"1px solid var(--primary)":"1px solid transparent",opacity:active?1:0.25}},
+          h("div",{style:{fontSize:12,fontWeight:600,color:isToday?"var(--primary)":active?"var(--text2)":"var(--surface2)",marginBottom:4}},d),
+          de.slice(0,3).map(function(e){return h("div",{key:e.id,onClick:function(){onEdit(e);},style:{background:COLORS[e.type]||COLORS.activity,borderRadius:3,padding:"2px 5px",fontSize:10,color:"#fff",marginBottom:2,cursor:"pointer",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},label(e));}),
+          de.length>3&&h("div",{style:{fontSize:10,color:"#64748b"}},"+"+( de.length-3))
         ));
       }
       return h("div",{key:m.yr+"-"+m.mn,style:{marginBottom:32}},
-        h("div",{style:{fontSize:16,fontWeight:800,color:"var(--ink)",marginBottom:10,paddingBottom:6,borderBottom:"1px solid var(--line)"}},new Date(m.yr,m.mn,1).toLocaleString("default",{month:"long",year:"numeric"})),
-        h("div",{style:{overflowX:"auto",WebkitOverflowScrolling:"touch"}},h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,minmax(52px,1fr))",gap:2,minWidth:380}},["S","M","T","W","T","F","S"].map(function(w){return h("div",{key:w,style:{textAlign:"center",padding:"4px 0",fontSize:11,fontWeight:700,color:"var(--muted2)"}},w);}),cells))
+        h("div",{style:{fontSize:16,fontWeight:700,color:"var(--text)",marginBottom:10,paddingBottom:6,borderBottom:"1px solid var(--border)"}},new Date(m.yr,m.mn,1).toLocaleString("default",{month:"long",year:"numeric"})),
+        h("div",{style:{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:2}},["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(function(w){return h("div",{key:w,style:{textAlign:"center",padding:"6px 0",fontSize:11,fontWeight:600,color:"var(--text4)"}},w);}),cells)
       );
     })
   );
@@ -984,7 +860,7 @@ function CalendarView(props){
 function GanttView(props){
   var entries=props.entries,onEdit=props.onEdit;
   var dated=entries.filter(function(e){return e.checkIn||e.depDate||e.pickupDate||e.date;});
-  if(!dated.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--muted2)"}},h("div",{style:{fontSize:48}},"📊"),h("p",null,"Add entries with dates to see the timeline."));
+  if(!dated.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"#475569"}},h("div",{style:{fontSize:48}},"📊"),h("p",null,"Add entries with dates to see the timeline."));
   var all=[];dated.forEach(function(e){var s=e.checkIn||e.depDate||e.pickupDate||e.date,en=e.checkOut||e.arrDate||e.dropoffDate||s;if(s)all.push(new Date(s));if(en)all.push(new Date(en));});
   var mn=new Date(Math.min.apply(null,all));mn.setDate(mn.getDate()-1);
   var mx=new Date(Math.max.apply(null,all));mx.setDate(mx.getDate()+1);
@@ -995,14 +871,14 @@ function GanttView(props){
   var ticks=[];var tc=new Date(mn);while(tc<=mx){ticks.push(new Date(tc));tc.setDate(tc.getDate()+Math.max(1,Math.floor(td/12)));}
   return h("div",{style:{overflowX:"auto"}},
     h("div",{style:{minWidth:700}},
-      h("div",{style:{position:"relative",height:28,marginLeft:160,marginBottom:4}},ticks.map(function(t,i){return h("div",{key:i,style:{position:"absolute",left:pos(t.toISOString().split("T")[0])+"%",fontSize:11,color:"var(--muted2)",whiteSpace:"nowrap",transform:"translateX(-50%)"}},t.toLocaleDateString("en-US",{month:"short",day:"numeric"}));})),
+      h("div",{style:{position:"relative",height:28,marginLeft:160,marginBottom:4}},ticks.map(function(t,i){return h("div",{key:i,style:{position:"absolute",left:pos(t.toISOString().split("T")[0])+"%",fontSize:11,color:"#64748b",whiteSpace:"nowrap",transform:"translateX(-50%)"}},t.toLocaleDateString("en-US",{month:"short",day:"numeric"}));})),
       sorted.map(function(e){
         var s=e.checkIn||e.depDate||e.pickupDate||e.date,en=e.checkOut||e.arrDate||e.dropoffDate||s;
         var l=pos(s),r=pos(en),w=Math.max(0.5,r-l);
         return h("div",{key:e.id,style:{display:"flex",alignItems:"center",marginBottom:8}},
-          h("div",{style:{width:156,minWidth:156,paddingRight:8,fontSize:12,color:"var(--muted)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textAlign:"right"}},typeIcon(e.type)+" "+lbl(e)),
-          h("div",{style:{flex:1,position:"relative",height:28,background:"var(--canvas)",borderRadius:4,border:"1px solid var(--line)"}},
-            h("div",{onClick:function(){onEdit(e);},style:{position:"absolute",left:l+"%",width:w+"%",height:"100%",background:COLORS[e.type]||COLORS.activity,borderRadius:4,cursor:"pointer",display:"flex",alignItems:"center",paddingLeft:6,fontSize:11,color:"#fff",fontWeight:700,overflow:"hidden",whiteSpace:"nowrap",minWidth:4,boxSizing:"border-box"}},w>5?lbl(e):"")
+          h("div",{style:{width:156,minWidth:156,paddingRight:8,fontSize:12,color:"var(--text2)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",textAlign:"right"}},typeIcon(e.type)+" "+lbl(e)),
+          h("div",{style:{flex:1,position:"relative",height:28,background:"var(--surface)",borderRadius:4}},
+            h("div",{onClick:function(){onEdit(e);},style:{position:"absolute",left:l+"%",width:w+"%",height:"100%",background:COLORS[e.type]||COLORS.activity,borderRadius:4,cursor:"pointer",display:"flex",alignItems:"center",paddingLeft:6,fontSize:11,color:"#fff",fontWeight:600,overflow:"hidden",whiteSpace:"nowrap",minWidth:4,boxSizing:"border-box",opacity:.9}},w>5?lbl(e):"")
           )
         );
       })
@@ -1017,11 +893,8 @@ function App(){
   var t3=useState(false); var loaded=t3[0],setLoaded=t3[1];
   var t0=useState(null); var user=t0[0],setUser=t0[1];
   var ta=useState(true); var authLoading=ta[0],setAuthLoading=ta[1];
-  var taE=useState(""); var authError=taE[0],setAuthError=taE[1];
-  var dbgS=useState([]); var debugLog=dbgS[0],setDebugLog=dbgS[1];
-  function dbg(msg){var t=new Date().toLocaleTimeString();setDebugLog(function(p){return p.concat([t+" — "+msg]).slice(-20);});}
   var t4=useState("all"); var tab=t4[0],setTab=t4[1];
-  var t5=useState("cards"); var view=t5[0],setView=t5[1];
+  var t5=useState("table"); var view=t5[0],setView=t5[1];
   var t6=useState(null); var modal=t6[0],setModal=t6[1];
   var t7=useState(false); var imp=t7[0],setImp=t7[1];
   var t8=useState(false); var typePicker=t8[0],setTypePicker=t8[1];
@@ -1029,25 +902,18 @@ function App(){
   var t10=useState(false); var tripMgr=t10[0],setTripMgr=t10[1];
   var t11=useState(""); var search=t11[0],setSearch=t11[1];
   var t12=useState(false); var gmailModal=t12[0],setGmailModal=t12[1];
-  var t13=useState("USD"); var currency=t13[0],setCurrencyRaw=t13[1];
-  var t14=useState(""); var dedupMsg=t14[0],setDedupMsg=t14[1];
-  var t15=useState({status:"loading",date:""}); var ratesInfo=t15[0],setRatesInfo=t15[1];
-  var t16=useState("checking"); var houseAccess=t16[0],setHouseAccess=t16[1];
-  var t17=useState([]); var members=t17[0],setMembers=t17[1];
-  var t18=useState(false); var accessModal=t18[0],setAccessModal=t18[1];
-  var t19=useState(""); var newMemberEmail=t19[0],setNewMemberEmail=t19[1];
-  var t20=useState(""); var accessErr=t20[0],setAccessErr=t20[1];
+  var t13=useState(null); var detailEntry=t13[0],setDetailEntry=t13[1];
+  var t14=useState(function(){return storeGet("dark_mode")!==false;}); var darkMode=t14[0],setDarkMode=t14[1];
+
+  // Apply dark/light mode
+  useEffect(function(){
+    document.body.classList.toggle("light-mode",!darkMode);
+    storeSet("dark_mode",darkMode);
+  },[darkMode]);
 
   // Auth state listener
   useEffect(function(){
-    dbg("Mount: firebase="+(typeof firebase!=="undefined")+" auth="+(!!auth)+" db="+(!!db)+" UA="+navigator.userAgent.slice(0,60));
-    dbg("Standalone(PWA)="+(window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches));
-    if(!auth){dbg("auth is null — Firebase failed to init");setAuthLoading(false);return;}
-    dbg("Calling getRedirectResult()...");
-    auth.getRedirectResult().then(function(r){dbg("getRedirectResult resolved, user="+(r&&r.user?r.user.email:"none"));}).catch(function(e){dbg("getRedirectResult ERROR: "+e.code+" "+e.message);console.error("Redirect result error:",e);setAuthError((e.code||"")+": "+(e.message||"Sign-in failed."));});
-    dbg("Registering onAuthStateChanged listener...");
     var unsubAuth=auth.onAuthStateChanged(function(u){
-      dbg("onAuthStateChanged fired: "+(u?u.email:"null"));
       setUser(u);
       setAuthLoading(false);
     });
@@ -1070,75 +936,24 @@ function App(){
       var hasActive=savedActive&&tripList.filter(function(t){return t.id===savedActive;}).length>0;
       setActiveTripIdRaw(hasActive?savedActive:(tripList[0]&&tripList[0].id)||null);
       setLoaded(true);
-      var savedCur=storeGet("currency_pref");if(savedCur){var _cs=savedCur==="EUR"?"€":savedCur==="ILS"?"₪":"$";_currSym=_cs;_currCode=savedCur;setCurrencyRaw(savedCur);}
-      // Real-time sync handled by the user-dependent useEffect below
+      // Subscribe to real-time updates from Firestore
+      if(typeof db!=="undefined"&&auth.currentUser){
+        var uid=auth.currentUser.uid;
+        db.collection("users").doc(uid).collection("data").doc("trips_index").onSnapshot(function(doc){
+          if(doc.exists){
+            var data=doc.data();
+            if(data&&data.value){
+              var remote=JSON.parse(data.value);
+              setTripsRaw(remote);
+            }
+          }
+        });
+      }
     })();
   },[]);
 
-  useEffect(function(){
-    try{
-      var cached=JSON.parse(localStorage.getItem("exch_cache")||"null");
-      if(cached&&cached.ts&&(Date.now()-cached.ts)<3600000){
-        EXCH.EUR=cached.EUR;EXCH.ILS=cached.ILS;
-        setRatesInfo({status:"ok",date:cached.date});
-        return;
-      }
-    }catch(ex){}
-    fetch("https://open.er-api.com/v6/latest/USD")
-      .then(function(r){return r.json();})
-      .then(function(d){
-        if(!d.rates||d.result==="error")throw new Error("bad response");
-        EXCH.EUR=d.rates.EUR;EXCH.ILS=d.rates.ILS;
-        var date=new Date(d.time_last_update_unix*1000).toISOString().slice(0,10);
-        try{localStorage.setItem("exch_cache",JSON.stringify({EUR:d.rates.EUR,ILS:d.rates.ILS,date:date,ts:Date.now()}));}catch(ex){}
-        setRatesInfo({status:"ok",date:date});
-      })
-      .catch(function(){setRatesInfo({status:"err",date:""});});
-  },[]);
-  useEffect(function(){
-    if(!user||!db){setHouseAccess("checking");return;}
-    var email=(user.email||"").toLowerCase().trim();
-    var unsub=null;
-    (async function(){
-      try{
-        var snap=await houseDocRef().get();
-        if(!snap.exists){
-          var legacy=await storeGetCloudLegacyUID(user.uid,"trips_index");
-          await houseDocRef().set({allowedEmails:[email],ownerEmail:email,createdAt:Date.now()});
-          if(legacy)await houseDataRef("trips_index").set({value:JSON.stringify(legacy),updated:Date.now()});
-          setMembers([email]);
-          setHouseAccess("member");
-        }else{
-          var data=snap.data();
-          var allowed=(data.allowedEmails||[]).map(function(e){return String(e).toLowerCase().trim();});
-          setMembers(data.allowedEmails||[]);
-          setHouseAccess(allowed.indexOf(email)>=0?"member":"pending");
-        }
-        unsub=db.collection("households").doc(HOUSEHOLD_ID).collection("data").doc("trips_index").onSnapshot(function(doc){
-          if(doc.exists){var d=doc.data();if(d&&d.value)setTripsRaw(JSON.parse(d.value));}
-        },function(e){console.warn("Snapshot error:",e);});
-      }catch(e){console.warn("Household check failed:",e);setHouseAccess("pending");}
-    })();
-    return function(){if(unsub)unsub();};
-  },[user]);
-  function addMember(){
-    var email=newMemberEmail.trim().toLowerCase();
-    setAccessErr("");
-    if(!email||email.indexOf("@")<0){setAccessErr("Enter a valid email address.");return;}
-    if(members.map(function(m){return m.toLowerCase();}).indexOf(email)>=0){setAccessErr("Already a member.");return;}
-    houseDocRef().update({allowedEmails:firebase.firestore.FieldValue.arrayUnion(email)})
-      .then(function(){setMembers(members.concat([email]));setNewMemberEmail("");})
-      .catch(function(e){setAccessErr("Failed: "+e.message);});
-  }
-  function removeMember(email){
-    if(members.length<=1)return;
-    houseDocRef().update({allowedEmails:firebase.firestore.FieldValue.arrayRemove(email)})
-      .then(function(){setMembers(members.filter(function(m){return m!==email;}));})
-      .catch(function(e){setAccessErr("Failed: "+e.message);});
-  }
   function saveTrips(updated){setTripsRaw(updated);storeSet("trips_index",updated);}
   function setActiveTripId(id){setActiveTripIdRaw(id);storeSet("active_trip_id",id);}
-  function setCurrency(c){var sym=c==="EUR"?"€":c==="ILS"?"₪":"$";_currSym=sym;_currCode=c;setCurrencyRaw(c);storeSet("currency_pref",c);}
   var activeTrip=useMemo(function(){return trips.filter(function(t){return t.id===activeTripId;})[0]||trips[0]||null;},[trips,activeTripId]);
   var acc=activeTrip&&activeTrip.acc||[];
   var flt=activeTrip&&activeTrip.flt||[];
@@ -1167,22 +982,6 @@ function App(){
     else if(type==="activity")setAct(act.filter(function(x){return String(x.id)!==String(id);}));
     setModal(null);
   }
-  function dedupeExisting(){
-    function dedupeArr(arr){
-      var kept=[];
-      arr.forEach(function(e){
-        var di=-1;
-        for(var i=0;i<kept.length;i++){if(isDuplicate(e,[kept[i]])){di=i;break;}}
-        if(di===-1){kept.push(Object.assign({},e));}
-        else{kept[di]=mergeEntries(kept[di],e);}
-      });
-      return kept;
-    }
-    var na=dedupeArr(acc.slice()),nf=dedupeArr(flt.slice()),nc=dedupeArr(car.slice()),nac=dedupeArr(act.slice());
-    var removed=(acc.length-na.length)+(flt.length-nf.length)+(car.length-nc.length)+(act.length-nac.length);
-    if(removed>0){updateTrip(function(t){return Object.assign({},t,{acc:na,flt:nf,car:nc,act:nac});});}
-    return removed;
-  }
   function save(item){
     var type=item.type;
     function ups(arr,setFn,nt){var next=arr.filter(function(x){return x.id===item.id;}).length>0?arr.map(function(x){return x.id===item.id?item:x;}):arr.concat([item]);setFn(next);setTab(nt);}
@@ -1194,11 +993,7 @@ function App(){
   }
   function importEntries(entries){
     var byType={accommodation:[],flight:[],car:[],activity:[]};
-    var allExisting=acc.concat(flt,car,act);
-    var accepted=[];
-    entries.forEach(function(e){
-      if(!isDuplicate(e,allExisting)&&!isDuplicate(e,accepted)){accepted.push(e);if(byType[e.type])byType[e.type].push(e);}
-    });
+    entries.forEach(function(e){if(byType[e.type])byType[e.type].push(e);});
     updateTrip(function(t){
       return Object.assign({},t,{
         acc:byType.accommodation.length?(t.acc||[]).concat(byType.accommodation):(t.acc||[]),
@@ -1221,11 +1016,6 @@ function App(){
   var cCC=car.reduce(function(s,e){return s+safeNum(e.cost);},0);
   var acC=act.reduce(function(s,e){return s+safeNum(e.cost);},0);
   var tot=aCC+fCC+cCC+acC;
-  var aDue=acc.reduce(function(s,e){return s+entryDue(e);},0);
-  var fDue=flt.reduce(function(s,e){return s+entryDue(e);},0);
-  var cDue=car.reduce(function(s,e){return s+entryDue(e);},0);
-  var acDue=act.reduce(function(s,e){return s+entryDue(e);},0);
-  var totDue=aDue+fDue+cDue+acDue;
 
   var gaps=[];
   if(acc.length>1){
@@ -1233,147 +1023,82 @@ function App(){
     for(var i=0;i<sacc.length-1;i++){var gd=(new Date(sacc[i+1].checkIn)-new Date(sacc[i].checkOut))/86400000;if(gd>0)gaps.push(gd+" night gap after \""+(sacc[i].name||"Stay "+(i+1))+"\" (out: "+fmtD(sacc[i].checkOut)+")");}
   }
 
-  function TB(p){return h("button",{onClick:function(){setTab(p.k);},style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"none",cursor:"pointer",fontSize:13,fontWeight:700,background:tab===p.k?"var(--horizon)":"transparent",color:tab===p.k?"#fff":"var(--muted)"}},p.label);}
+  function TB(p){return h("button",{onClick:function(){setTab(p.k);},style:{padding:"7px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,background:tab===p.k?"var(--surface2)":"transparent",color:tab===p.k?"var(--text)":"var(--text2)"}},p.label);}
 
   // Auth loading
-  if(authLoading)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--canvas)",color:"var(--muted)",fontSize:15}},"Loading...");
+  if(authLoading)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)",color:"var(--text2)",fontSize:16}},"Loading...");
 
   // Login screen
-  if(!user)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--canvas)"}},
-    h("div",{style:{textAlign:"center",padding:"44px 40px",background:"var(--surface)",borderRadius:"var(--radius-xl)",boxShadow:"var(--shadow-modal)",maxWidth:380,width:"100%",margin:"0 20px"}},
-      h("div",{style:{width:64,height:64,borderRadius:"50%",background:"var(--horizon)1A",display:"flex",alignItems:"center",justifyContent:"center",fontSize:30,margin:"0 auto 18px"}},"✈️"),
-      h("h1",{style:{margin:"0 0 8px",fontSize:24,fontWeight:800,color:"var(--ink)"}},"Family Trip Planner"),
-      h("p",{style:{margin:"0 0 32px",fontSize:14,color:"var(--muted)"}},"Sign in to access your trips"),
+  if(!user)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)"}},
+    h("div",{style:{textAlign:"center",padding:"40px",background:"var(--surface)",borderRadius:16,border:"1px solid var(--border)",maxWidth:360,width:"100%",margin:"0 20px"}},
+      h("div",{style:{fontSize:56,marginBottom:16}},"✈️"),
+      h("h1",{style:{margin:"0 0 8px",fontSize:24,fontWeight:700,color:"var(--text)"}},"Family Trip Planner"),
+      h("p",{style:{margin:"0 0 32px",fontSize:14,color:"var(--text3)"}},"Sign in to access your trips"),
       h("button",{
-        onClick:function(){
-          dbg("Button tapped. auth="+(!!auth));
-          if(auth){
-          setAuthError("");
-          dbg("Calling signInWithPopup()...");
-          auth.signInWithPopup(googleProvider).then(function(r){dbg("signInWithPopup SUCCESS: "+(r&&r.user?r.user.email:"?"));}).catch(function(e){
-            dbg("signInWithPopup ERROR: "+e.code+" "+e.message);
-            console.error("Sign in error:",e);
-            if(e.code==="auth/popup-blocked"||e.code==="auth/operation-not-supported-in-this-environment"){
-              dbg("Falling back to signInWithRedirect()...");
-              auth.signInWithRedirect(googleProvider).catch(function(e2){dbg("signInWithRedirect ERROR: "+e2.code+" "+e2.message);console.error("Redirect error:",e2);setAuthError((e2.code||"")+": "+(e2.message||"Sign-in failed."));});
-            }else{
-              setAuthError((e.code||"")+": "+(e.message||"Sign-in failed."));
-            }
-          });
-        }},
-        style:{width:"100%",padding:"13px 20px",borderRadius:"var(--radius-md)",border:"1.5px solid var(--line)",background:"var(--surface)",color:"var(--ink)",fontSize:15,fontWeight:700,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12,boxShadow:"var(--shadow-sm)"}
+        onClick:function(){auth.signInWithPopup(googleProvider).catch(function(e){console.error("Sign in error:",e);});},
+        style:{width:"100%",padding:"12px 20px",borderRadius:10,border:"none",background:"#fff",color:"#1f2937",fontSize:15,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12}
       },
         h("img",{src:"https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg",style:{width:20,height:20}}),
         "Sign in with Google"
-      ),
-      authError&&h("div",{style:{marginTop:16,background:"var(--coral-bg)",borderRadius:"var(--radius-sm)",padding:"10px 14px",fontSize:12,color:"var(--coral)",textAlign:"left",wordBreak:"break-word",fontWeight:600}},"⚠️ "+authError),
-      h("div",{style:{marginTop:20,background:"var(--canvas)",border:"1px solid var(--line)",borderRadius:"var(--radius-sm)",padding:"10px",fontSize:10,color:"var(--muted)",textAlign:"left",fontFamily:"monospace",maxHeight:220,overflowY:"auto"}},
-        h("div",{style:{color:"var(--ink)",fontWeight:700,marginBottom:6}},"🔍 Debug log (screenshot this):"),
-        debugLog.length===0?h("div",null,"(waiting for events...)"):debugLog.map(function(l,i){return h("div",{key:i,style:{marginBottom:2,wordBreak:"break-all"}},l);})
       )
     )
   );
 
-  if(houseAccess==="checking")return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--canvas)",color:"var(--muted)",fontSize:15}},"Checking access...");
+  if(!loaded)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)",color:"var(--text2)",fontSize:16}},"Loading your trips...");
 
-  if(houseAccess==="pending")return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--canvas)"}},
-    h("div",{style:{textAlign:"center",padding:"40px",background:"var(--surface)",borderRadius:"var(--radius-xl)",boxShadow:"var(--shadow-modal)",maxWidth:380,width:"100%",margin:"0 20px"}},
-      h("div",{style:{fontSize:44,marginBottom:16}},"🔒"),
-      h("h1",{style:{margin:"0 0 8px",fontSize:20,fontWeight:800,color:"var(--ink)"}},"Access Pending"),
-      h("p",{style:{margin:"0 0 16px",fontSize:13,color:"var(--muted)",lineHeight:1.6}},"Signed in as ",h("strong",{style:{color:"var(--ink)"}},user.email),". This email hasn't been added to the household yet."),
-      h("p",{style:{margin:"0 0 24px",fontSize:13,color:"var(--muted2)",lineHeight:1.6}},"Ask the household owner to open ⚙️ → 👥 Access and add your email."),
-      h("button",{onClick:function(){if(auth)auth.signOut();},style:{padding:"9px 20px",borderRadius:"var(--radius-sm)",border:"1.5px solid var(--line)",background:"transparent",color:"var(--muted)",cursor:"pointer",fontSize:13,fontWeight:600}},"Sign out")
-    )
-  );
-
-  if(!loaded)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--canvas)",color:"var(--muted)",fontSize:15}},"Loading your trips...");
-
-  return h("div",{style:{fontFamily:"'Plus Jakarta Sans',sans-serif",background:"var(--canvas)",minHeight:"100vh",color:"var(--ink)"}},
-    h("div",{style:{background:"var(--surface)",borderBottom:"1px solid var(--line)",padding:"16px 24px"}},
+  return h("div",{style:{fontFamily:"Inter,sans-serif",background:"var(--bg)",minHeight:"100vh",color:"var(--text)"}},
+    h("div",{style:{background:"linear-gradient(135deg,var(--surface),var(--bg))",borderBottom:"1px solid var(--border)",padding:"16px 24px"}},
       h("div",{style:{maxWidth:1200,margin:"0 auto"}},
         h("div",{style:{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}},
           h("div",{style:{display:"flex",alignItems:"center",gap:12}},
-            h("div",null,h("h1",{style:{margin:0,fontSize:21,fontWeight:800,color:"var(--ink)",letterSpacing:"-0.01em"}},"✈️ Family Trip Planner"),h("p",{style:{margin:"2px 0 0",fontSize:13,color:"var(--muted)"}},"All your travel details in one place")),
-            trips.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:8,marginLeft:16,flexWrap:"wrap"}},
-              h("div",{style:{display:"flex",gap:4,background:"var(--canvas)",borderRadius:"var(--radius-md)",padding:3,flexWrap:"wrap"}},trips.map(function(t){return h("button",{key:t.id,onClick:function(){setActiveTripId(t.id);setSearch("");},style:{padding:"6px 13px",borderRadius:"var(--radius-sm)",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,background:activeTripId===t.id?"var(--horizon)":"transparent",color:activeTripId===t.id?"#fff":"var(--muted)",whiteSpace:"nowrap",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},t.name);})),
-              h("button",{onClick:function(){setTripMgr(true);},title:"Manage trips",style:{padding:"6px 10px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",background:"transparent",color:"var(--muted)",cursor:"pointer",fontSize:13}},"⚙️"),
-              h("button",{onClick:function(){setAccessModal(true);},title:"Manage who has access",style:{padding:"6px 10px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",background:"transparent",color:"var(--muted)",cursor:"pointer",fontSize:13}},"👥"),
-              h("span",{
-  title:ratesInfo.status==="ok"?"Live ECB rates as of "+ratesInfo.date+" (1h cache)":ratesInfo.status==="err"?"Could not fetch live rates — using approximate fallback":"Fetching live exchange rates...",
-  style:{fontSize:11,cursor:"help",color:ratesInfo.status==="ok"?"var(--sage)":ratesInfo.status==="err"?"var(--amber)":"var(--muted2)",marginRight:2}
-},ratesInfo.status==="loading"?"⟳":ratesInfo.status==="ok"?"●":"≈"),
-              h("select",{value:currency,onChange:function(e){setCurrency(e.target.value);},title:"Currency (amounts stored in USD, converted for display)",style:{background:"var(--canvas)",border:"1px solid var(--line)",borderRadius:"var(--radius-sm)",padding:"5px 7px",color:"var(--muted)",fontSize:12,cursor:"pointer",fontWeight:600}},CURRENCIES.map(function(c){return h("option",{key:c.code,value:c.code},c.sym+" "+c.code);})),
-              user&&h("button",{onClick:function(){if(auth)auth.signOut();},title:"Sign out",style:{padding:"6px 10px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",background:"transparent",color:"var(--muted)",cursor:"pointer",fontSize:12,fontWeight:600,display:"flex",alignItems:"center",gap:6}},user.photoURL&&h("img",{src:user.photoURL,style:{width:18,height:18,borderRadius:"50%"}}),h("span",null,"Sign out"))
+            h("div",null,h("h1",{style:{margin:0,fontSize:22,fontWeight:700,color:"var(--text)"}},"✈️ Family Trip Planner"),h("p",{style:{margin:"2px 0 0",fontSize:13,color:"var(--text3)"}},"All your travel details in one place")),
+            trips.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:8,marginLeft:16}},
+              h("div",{style:{display:"flex",gap:4,background:"var(--bg)",borderRadius:8,padding:3,flexWrap:"wrap"}},trips.map(function(t){return h("button",{key:t.id,onClick:function(){setActiveTripId(t.id);setSearch("");},style:{padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:activeTripId===t.id?"var(--primary)":"transparent",color:activeTripId===t.id?"#fff":"var(--text2)",whiteSpace:"nowrap",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},t.name);})),
+              h("button",{onClick:function(){setTripMgr(true);},title:"Manage trips",style:{padding:"5px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text3)",cursor:"pointer",fontSize:13}},"⚙️"),
+              user&&h("button",{onClick:function(){auth.signOut();},title:"Sign out",style:{padding:"5px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text3)",cursor:"pointer",fontSize:12}},user.photoURL?h("img",{src:user.photoURL,style:{width:20,height:20,borderRadius:"50%",verticalAlign:"middle"}}):"Sign out")
             )
           ),
           h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
-            [["🏠 Stays",aCC,aDue,COLORS.accommodation],["✈️ Flights",fCC,fDue,COLORS.flight],["🚗 Cars",cCC,cDue,COLORS.car],["🎯 Activities",acC,acDue,COLORS.activity]].map(function(item){return h("div",{key:item[0],style:{background:"var(--surface)",borderRadius:"var(--radius-md)",padding:"9px 14px",border:"1px solid var(--line)",boxShadow:"var(--shadow-sm)",borderLeft:"3px solid "+item[3],minWidth:92}},h("div",{style:{fontSize:11,color:"var(--muted)",fontWeight:600}},item[0]),h("div",{style:{fontSize:15,fontWeight:800,color:"var(--ink)"}},fmt$(item[1])),item[2]>0&&h("div",{style:{fontSize:11,color:"var(--coral)",fontWeight:700,marginTop:1}},fmt$(item[2])+" due"));}),
-            h("div",{style:{background:"var(--surface)",borderRadius:"var(--radius-md)",padding:"9px 14px",border:"1px solid var(--line)",boxShadow:"var(--shadow-sm)",borderLeft:"3px solid "+(totDue>0?"var(--coral)":"var(--horizon)"),minWidth:92}},h("div",{style:{fontSize:11,color:"var(--muted)",fontWeight:600}},"💰 Total"),h("div",{style:{fontSize:15,fontWeight:800,color:"var(--ink)"}},fmt$(tot)),totDue>0&&h("div",{style:{fontSize:11,color:"var(--coral)",fontWeight:700,marginTop:1}},fmt$(totDue)+" due"))
+            [["🏠 Stays",aCC,COLORS.accommodation],["✈️ Flights",fCC,COLORS.flight],["🚗 Cars",cCC,COLORS.car],["🎯 Activities",acC,COLORS.activity]].map(function(item){return h("div",{key:item[0],style:{background:"var(--surface)",borderRadius:8,padding:"6px 12px",borderLeft:"3px solid "+item[2]}},h("div",{style:{fontSize:11,color:"var(--text2)"}},item[0]),h("div",{style:{fontSize:15,fontWeight:700,color:item[2]}},fmt$(item[1])));}),
+            h("div",{style:{background:"var(--surface)",borderRadius:8,padding:"6px 12px",borderLeft:"3px solid var(--text)"}},h("div",{style:{fontSize:11,color:"var(--text2)"}},"💰 Total"),h("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)"}},fmt$(tot)))
           )
         ),
-        gaps.length>0&&h("div",{style:{marginTop:10,background:"var(--amber-bg)",borderRadius:"var(--radius-sm)",padding:"8px 12px",fontSize:13,color:"var(--amber-ink)",fontWeight:600}},"⚠️ "+gaps.join(" • "))
+        gaps.length>0&&h("div",{style:{marginTop:10,background:"var(--warning-bg)",borderRadius:6,padding:"8px 12px",fontSize:13,color:"var(--warning-text)"}},"⚠️ "+gaps.join(" • "))
       )
     ),
     h("div",{style:{maxWidth:1200,margin:"0 auto",padding:"16px 24px"}},
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,marginBottom:16}},
-        h("div",{style:{display:"flex",gap:6,background:"var(--surface)",borderRadius:"var(--radius-md)",padding:4,border:"1px solid var(--line)"}},h(TB,{k:"all",label:"🗂️ All"}),h(TB,{k:"accommodations",label:"🏠 Stays"}),h(TB,{k:"flights",label:"✈️ Flights"}),h(TB,{k:"cars",label:"🚗 Cars"}),h(TB,{k:"activities",label:"🎯 Activities"})),
+        h("div",{style:{display:"flex",gap:6,background:"var(--surface)",borderRadius:10,padding:4}},h(TB,{k:"all",label:"🗂️ All"}),h(TB,{k:"accommodations",label:"🏠 Stays"}),h(TB,{k:"flights",label:"✈️ Flights"}),h(TB,{k:"cars",label:"🚗 Cars"}),h(TB,{k:"activities",label:"🎯 Activities"})),
         h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
-          h("div",{style:{display:"flex",gap:4,background:"var(--surface)",borderRadius:"var(--radius-sm)",padding:3,border:"1px solid var(--line)"}},
-            [["cards","▦ Cards"],["table","☰ Table"],["calendar","📅 Calendar"],["gantt","📊 Timeline"]].map(function(item){return h("button",{key:item[0],onClick:function(){setView(item[0]);},style:{padding:"6px 12px",borderRadius:"var(--radius-sm)",border:"none",cursor:"pointer",fontSize:12,fontWeight:700,background:view===item[0]?"var(--horizon)":"transparent",color:view===item[0]?"#fff":"var(--muted)"}},item[1]);})
+          h("div",{style:{display:"flex",gap:4,background:"var(--surface)",borderRadius:8,padding:3}},
+            [["table","☰ Table"],["calendar","📅 Calendar"],["gantt","📊 Timeline"]].map(function(item){return h("button",{key:item[0],onClick:function(){setView(item[0]);},style:{padding:"6px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:view===item[0]?"var(--surface2)":"transparent",color:view===item[0]?"var(--text)":"var(--text3)"}},item[1]);})
           ),
-          h("button",{onClick:function(){setPdfPreview(true);},style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",cursor:"pointer",background:"var(--surface)",color:"var(--muted)",fontWeight:700,fontSize:13}},"📄 PDF"),
-          h("button",{onClick:function(){setImp("backup");},style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",cursor:"pointer",background:"var(--surface)",color:"var(--muted)",fontWeight:700,fontSize:13}},"💾 Backup"),
-          h("button",{onClick:function(){
-            var n=dedupeExisting();
-            setDedupMsg(n>0?n+" duplicate"+(n!==1?"s":"")+" removed ✓":"No duplicates found");
-            setTimeout(function(){setDedupMsg("");},3500);
-          },style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",cursor:"pointer",background:"var(--surface)",color:"var(--sage)",fontWeight:700,fontSize:13}},"🧹 De-dup"),
-          h("button",{onClick:function(){setImp(true);},style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"1px solid var(--line)",cursor:"pointer",background:"var(--surface)",color:"var(--muted)",fontWeight:700,fontSize:13}},"⬆️ Import"),
-          h("button",{onClick:function(){setGmailModal(true);},style:{padding:"7px 14px",borderRadius:"var(--radius-sm)",border:"1px solid var(--sage)",cursor:"pointer",background:"var(--sage-bg)",color:"var(--sage-ink)",fontWeight:700,fontSize:13}},"📧 Gmail"),
-          h("button",{onClick:function(){openNew();},style:{padding:"7px 16px",borderRadius:"var(--radius-sm)",border:"none",cursor:"pointer",background:"var(--horizon)",color:"#fff",fontWeight:700,fontSize:13,boxShadow:"var(--shadow-sm)"}},"+ Add")
+          h("button",{onClick:function(){setPdfPreview(true);},style:{padding:"7px 14px",borderRadius:8,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:600,fontSize:13}},"📄 PDF"),
+          h("button",{onClick:function(){setImp("backup");},style:{padding:"7px 14px",borderRadius:8,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:600,fontSize:13}},"💾 Backup"),
+          h("button",{onClick:function(){setImp(true);},style:{padding:"7px 14px",borderRadius:8,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:600,fontSize:13}},"⬆️ Import"),
+          h("button",{onClick:function(){setGmailModal(true);},style:{padding:"7px 14px",borderRadius:8,border:"1px solid #1a4a3a",cursor:"pointer",background:"#0d2b22",color:"#34d399",fontWeight:600,fontSize:13}},"📧 Gmail"),
+          h("button",{onClick:function(){setDarkMode(function(d){return !d;});},title:darkMode?"Switch to Light Mode":"Switch to Dark Mode",style:{padding:"7px 12px",borderRadius:8,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:600,fontSize:15}},darkMode?"☀️":"🌙"),
+          h("button",{onClick:function(){openNew();},style:{padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",background:"var(--primary)",color:"#fff",fontWeight:600,fontSize:13}},"+ Add")
         )
       ),
-      dedupMsg&&h("div",{style:{marginBottom:10,background:"var(--sage-bg)",borderRadius:"var(--radius-sm)",padding:"8px 14px",fontSize:13,color:"var(--sage-ink)",fontWeight:700}},dedupMsg),
-      (view==="table"||view==="cards")&&h("div",{style:{marginBottom:14,position:"relative"}},
-        h("input",{type:"text",value:search,onChange:function(e){setSearch(e.target.value);},placeholder:"Search by name, location, airline, notes, confirmation...",style:{width:"100%",background:"var(--surface)",border:"1px solid var(--line)",borderRadius:"var(--radius-md)",padding:"10px 14px 10px 38px",color:"var(--ink)",fontSize:13,boxSizing:"border-box",boxShadow:"var(--shadow-sm)"}}),
-        h("span",{style:{position:"absolute",left:13,top:"50%",transform:"translateY(-50%)",fontSize:15,color:"var(--muted2)"}},"🔍"),
-        search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"var(--muted)",cursor:"pointer",fontSize:18}},"×")
+      view==="table"&&!detailEntry&&h("div",{style:{marginBottom:14,position:"relative"}},
+        h("input",{type:"text",value:search,onChange:function(e){setSearch(e.target.value);},placeholder:"Search by name, location, airline, notes, confirmation...",style:{width:"100%",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"9px 14px 9px 38px",color:"var(--text)",fontSize:13,boxSizing:"border-box"}}),
+        h("span",{style:{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"var(--text4)"}},"🔍"),
+        search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"var(--text3)",cursor:"pointer",fontSize:18}},"×")
       ),
-      view==="cards"&&h(CardView,{tab:tab,acc:acc,flt:flt,car:car,act:act,search:search,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}}),
-      view==="table"&&h(TableView,{tab:tab,acc:acc,flt:flt,car:car,act:act,search:search,onEdit:function(item){setModal({isNew:false,item:item,det:[]});},onDelete:del}),
+      view==="table"&&!detailEntry&&h(TableView,{tab:tab,acc:acc,flt:flt,car:car,act:act,search:search,onEdit:function(item){setModal({isNew:false,item:item,det:[]});},onDelete:del,onDetail:function(entry){setDetailEntry(entry);}}),
+      view==="table"&&detailEntry&&h(DetailCard,{entry:detailEntry,onBack:function(){setDetailEntry(null);},onEdit:function(item){setDetailEntry(null);setModal({isNew:false,item:item,det:[]});},onDelete:function(id){del(id);setDetailEntry(null);}}),
       view==="calendar"&&h(CalendarView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}}),
       view==="gantt"&&h(GanttView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}})
     ),
     pdfPreview&&h(PDFPreviewModal,{html:buildPrintHTML(tab,acc,flt,car,act,activeTrip&&activeTrip.name),onClose:function(){setPdfPreview(false);}}),
     tripMgr&&h(TripManagerModal,{trips:trips,activeTripId:activeTripId,onClose:function(){setTripMgr(false);},onCreate:createTrip,onRename:renameTrip,onDelete:deleteTrip,onSwitch:function(id){setActiveTripId(id);setTripMgr(false);setSearch("");}}),
-    gmailModal&&h(GmailBridgeModal,{onClose:function(){setGmailModal(false);},onImportEntries:importEntries,existingEntries:allE}),
-    accessModal&&h(Overlay,{onClose:function(){setAccessModal(false);setAccessErr("");setNewMemberEmail("");}},
-      h(MH,{title:"👥 Household Access",onClose:function(){setAccessModal(false);}}),
-      h("p",{style:{fontSize:13,color:"#94a3b8",marginBottom:16,lineHeight:1.6}},"Anyone added here can see and edit ALL trips and data. Share this URL with them after adding their email:"),
-      h("div",{style:{background:"#0f172a",border:"1px solid #334155",borderRadius:8,padding:"8px 12px",fontSize:12,color:"#a5b4fc",marginBottom:20,wordBreak:"break-all"}},window.location.href),
-      h("div",{style:{display:"flex",flexDirection:"column",gap:8,marginBottom:16}},
-        members.map(function(m){
-          var isMe=user&&m.toLowerCase()===(user.email||"").toLowerCase();
-          return h("div",{key:m,style:{display:"flex",alignItems:"center",gap:10,background:"#0f172a",borderRadius:8,padding:"9px 12px",border:"1px solid #334155"}},
-            h("span",{style:{flex:1,fontSize:13,color:"#e2e8f0"}},m,isMe&&h("span",{style:{color:"#64748b",marginLeft:6}},"(you)")),
-            members.length>1&&h("button",{onClick:function(){removeMember(m);},style:{padding:"4px 10px",borderRadius:5,border:"1px solid #7f1d1d",background:"transparent",color:"#f87171",cursor:"pointer",fontSize:12}},"Remove")
-          );
-        })
-      ),
-      h("div",{style:{borderTop:"1px solid #334155",paddingTop:16}},
-        h("div",{style:{fontSize:13,fontWeight:600,color:"#94a3b8",marginBottom:10}},"Add a member"),
-        h("div",{style:{display:"flex",gap:8}},
-          h("input",{type:"email",value:newMemberEmail,onChange:function(e){setNewMemberEmail(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")addMember();},placeholder:"family.member@gmail.com",style:{flex:1,background:"#0f172a",border:"1px solid #334155",borderRadius:6,padding:"8px 10px",color:"#e2e8f0",fontSize:13}}),
-          h("button",{onClick:addMember,style:{padding:"8px 16px",borderRadius:7,border:"none",background:"#6366f1",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}},"+ Add")
-        ),
-        accessErr&&h("div",{style:{marginTop:10,background:"#7c2d12",borderRadius:6,padding:"8px 12px",fontSize:12,color:"#fca5a5"}},accessErr)
-      )
-    ),
+    gmailModal&&h(GmailBridgeModal,{onClose:function(){setGmailModal(false);},onImportEntries:importEntries}),
     typePicker&&h(Overlay,{onClose:function(){setTypePicker(false);}},
       h(MH,{title:"What would you like to add?",onClose:function(){setTypePicker(false);}}),
       h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},
         [["accommodations","🏠","Stay",COLORS.accommodation],["flights","✈️","Flight",COLORS.flight],["cars","🚗","Car Rental",COLORS.car],["activities","🎯","Activity",COLORS.activity]].map(function(item){
-          return h("button",{key:item[0],onClick:function(){setTypePicker(false);openNew(item[0]);},style:{background:"#0f172a",border:"2px solid "+item[3],borderRadius:12,padding:"22px 14px",cursor:"pointer",textAlign:"center",color:"#e2e8f0"}},
+          return h("button",{key:item[0],onClick:function(){setTypePicker(false);openNew(item[0]);},style:{background:"var(--input-bg)",border:"2px solid "+item[3],borderRadius:12,padding:"22px 14px",cursor:"pointer",textAlign:"center",color:"var(--text)"}},
             h("div",{style:{fontSize:32,marginBottom:8}},item[1]),h("div",{style:{fontWeight:700,fontSize:15,color:item[3]}},item[2])
           );
         })
