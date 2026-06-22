@@ -1104,61 +1104,81 @@ function App(){
   },[]);
 
   // Household lookup — runs after auth resolves.
-  // If user has no household: auto-create one silently (or join via invite link).
+  // Uses a localStorage-cached household ID to avoid needing Firestore list permissions.
+  // Falls back to auto-create for new users; handles invite links (?join=id).
   useEffect(function(){
     if(authLoading)return;
     if(!user){setHouseholdLoading(false);return;}
     var email=user.email.toLowerCase();
 
-    function autoCreate(){
-      // If invite link present, join that household instead of creating a new one
-      if(joinParam){
-        return db.collection("households").doc(joinParam).get().then(function(doc){
-          if(!doc.exists){doCreate();return;}
-          var data=doc.data();
-          var emails=data.allowedEmails||[];
-          if(emails.indexOf(email)>-1){_householdId=joinParam;setHouseholdId(joinParam);setHouseholdDoc(data);setHouseholdLoading(false);return;}
-          var newEmails=emails.concat([email]);
-          return db.collection("households").doc(joinParam).update({allowedEmails:newEmails}).then(function(){
-            var updated=Object.assign({},data,{allowedEmails:newEmails});
-            _householdId=joinParam;setHouseholdId(joinParam);setHouseholdDoc(updated);setHouseholdLoading(false);
-            // Remove ?join= from URL without reload
-            window.history.replaceState({},"",window.location.pathname);
-          });
-        }).catch(function(){doCreate();});
-      }
-      doCreate();
+    function resolveHousehold(id,data){
+      _householdId=id;
+      try{localStorage.setItem("household_id",id);}catch(e){}
+      setHouseholdId(id);setHouseholdDoc(data);setHouseholdLoading(false);
     }
 
     function doCreate(){
       var id="hh_"+Date.now()+"_"+Math.random().toString(36).slice(2,9);
-      var displayName=(user.displayName||email.split("@")[0]);
+      var displayName=user.displayName||email.split("@")[0];
       var data={name:displayName+"'s Family",ownerEmail:email,allowedEmails:[email],createdAt:Date.now()};
       db.collection("households").doc(id).set(data)
         .then(function(){
-          // Migrate from old shared path if any data exists there
           return db.collection("shared").doc("family_data").collection("data").doc("trips_index").get()
             .then(function(oldDoc){
               if(oldDoc.exists)return db.collection("households").doc(id).collection("data").doc("trips_index").set(oldDoc.data());
             }).catch(function(){});
         })
-        .then(function(){_householdId=id;setHouseholdId(id);setHouseholdDoc(data);setHouseholdLoading(false);})
-        .catch(function(e){console.warn("Household create failed:",e);setHouseholdLoading(false);});
+        .then(function(){resolveHousehold(id,data);})
+        .catch(function(e){
+          console.warn("Household create failed:",e);
+          // Firestore unavailable — work offline with localStorage
+          setHouseholdLoading(false);
+        });
     }
 
-    db.collection("households").where("allowedEmails","array-contains",email).limit(1).get()
-      .then(function(snap){
-        if(!snap.empty){
-          var doc=snap.docs[0];
-          _householdId=doc.id;
-          setHouseholdId(doc.id);
-          setHouseholdDoc(doc.data());
+    function doJoin(joinId){
+      db.collection("households").doc(joinId).get().then(function(doc){
+        if(!doc.exists){doCreate();return;}
+        var data=doc.data();
+        var emails=data.allowedEmails||[];
+        if(emails.indexOf(email)>-1){resolveHousehold(joinId,data);window.history.replaceState({},"",window.location.pathname);return;}
+        var newEmails=emails.concat([email]);
+        db.collection("households").doc(joinId).update({allowedEmails:newEmails})
+          .then(function(){
+            resolveHousehold(joinId,Object.assign({},data,{allowedEmails:newEmails}));
+            window.history.replaceState({},"",window.location.pathname);
+          })
+          .catch(function(){doCreate();});
+      }).catch(function(){doCreate();});
+    }
+
+    // If invite link: always join/verify that household first
+    if(joinParam){doJoin(joinParam);return;}
+
+    // Check localStorage cache for known household ID
+    var cachedId=null;
+    try{cachedId=localStorage.getItem("household_id");}catch(e){}
+    if(cachedId){
+      db.collection("households").doc(cachedId).get()
+        .then(function(doc){
+          if(doc.exists){
+            var data=doc.data();
+            var emails=data.allowedEmails||[];
+            if(emails.indexOf(email)>-1){resolveHousehold(cachedId,data);return;}
+          }
+          // Cached ID invalid or user removed — create a new one
+          try{localStorage.removeItem("household_id");}catch(e){}
+          doCreate();
+        })
+        .catch(function(){
+          // Firestore unreachable — work offline
+          _householdId=cachedId;
+          setHouseholdId(cachedId);
           setHouseholdLoading(false);
-        } else {
-          autoCreate();
-        }
-      })
-      .catch(function(e){console.warn("Household lookup failed:",e);setHouseholdLoading(false);});
+        });
+    } else {
+      doCreate();
+    }
   },[user,authLoading]);
 
   var unsubSnapshotRef=useRef(null);
@@ -1215,8 +1235,15 @@ function App(){
       var hasActive=savedActive&&local.filter(function(t){return t.id===savedActive;}).length>0;
       setActiveTripIdRaw(hasActive?savedActive:(local[0]&&local[0].id)||null);
       setLoaded(true);
+    } else if(user){
+      // Household lookup failed entirely (Firestore unreachable) — use localStorage
+      var local2=storeGet("trips_index")||[Object.assign(newTrip("My Trip"),{acc:[],flt:[],car:[],act:[]})];
+      setTripsRaw(local2);
+      var savedActive3=storeGet("active_trip_id");
+      var hasActive3=savedActive3&&local2.filter(function(t){return t.id===savedActive3;}).length>0;
+      setActiveTripIdRaw(hasActive3?savedActive3:(local2[0]&&local2[0].id)||null);
+      setLoaded(true);
     }
-    // if user && !householdId: waiting for household setup, don't set loaded
   },[user,authLoading,householdId,householdLoading]);
 
   function setCurrency(c){_currSym=c==="EUR"?"€":c==="ILS"?"₪":"$";setCurrencyRaw(c);storeSet("currency_pref",c);}
