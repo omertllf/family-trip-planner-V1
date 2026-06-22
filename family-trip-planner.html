@@ -81,9 +81,15 @@ var FIELD_LABELS={name:"Name",airline:"Airline",from:"Departure airport",to:"Arr
 
 function entryDue(e){if(!e||!e.paymentStatus||e.paymentStatus==="paid")return 0;return safeNum(e.amountDue);}
 var _currSym="$";
-var CURRENCIES=[{code:"USD",sym:"$",rate:1},{code:"EUR",sym:"€",rate:0.93},{code:"ILS",sym:"₪",rate:3.73}];
+var CURRENCIES=[{code:"USD",sym:"$"},{code:"EUR",sym:"€"},{code:"ILS",sym:"₪"}];
+var EXCH={EUR:0.93,ILS:3.73};
 function safeNum(v){var n=parseFloat(v);return isNaN(n)?0:n;}
-function fmt$(v){if(v===""||v===null||v===undefined)return"-";var rate=1;for(var _i=0;_i<CURRENCIES.length;_i++){if(CURRENCIES[_i].sym===_currSym){rate=CURRENCIES[_i].rate;break;}}return _currSym+safeNum(safeNum(v)*rate).toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});}
+function fmt$(v){
+  if(v===""||v===null||v===undefined)return"-";
+  var usd=safeNum(v);
+  var converted=_currSym==="€"?usd*EXCH.EUR:_currSym==="₪"?usd*EXCH.ILS:usd;
+  return _currSym+converted.toLocaleString("en-US",{minimumFractionDigits:0,maximumFractionDigits:0});
+}
 function nights(a,b){if(!a||!b)return 0;var d=(new Date(b)-new Date(a))/86400000;return d>0?d:0;}
 function fmtD(v){if(!v||v==="-")return"-";var p=v.split("-");return p.length===3?p[1]+"."+p[2]+"."+p[0].slice(2):v;}
 function cityOf(addr){if(!addr)return"";var p=addr.split(",").map(function(s){return s.trim();}).filter(Boolean);return p.length>=2?p[p.length-2]:p[0]||"";}
@@ -981,6 +987,7 @@ function App(){
   var t12=useState(false); var gmailModal=t12[0],setGmailModal=t12[1];
   var t13=useState(null); var detailEntry=t13[0],setDetailEntry=t13[1];
   var t15=useState("USD"); var currency=t15[0],setCurrencyRaw=t15[1];
+  var t16=useState({status:"loading",date:""}); var ratesInfo=t16[0],setRatesInfo=t16[1];
   var t14=useState(function(){return storeGet("dark_mode")!==false;}); var darkMode=t14[0],setDarkMode=t14[1];
 
   // Apply dark/light mode
@@ -993,6 +1000,29 @@ function App(){
   useEffect(function(){
     var saved=storeGet("currency_pref");
     if(saved)setCurrency(saved);
+  },[]);
+
+  // Fetch live exchange rates (open.er-api.com — CORS-safe, no key required)
+  useEffect(function(){
+    try{
+      var cached=JSON.parse(localStorage.getItem("exch_cache")||"null");
+      if(cached&&cached.ts&&(Date.now()-cached.ts)<3600000){
+        EXCH.EUR=cached.EUR;EXCH.ILS=cached.ILS;
+        setRatesInfo({status:"ok",date:cached.date});
+        return;
+      }
+    }catch(ex){}
+    fetch("https://open.er-api.com/v6/latest/USD")
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(!d.rates||d.result==="error")throw new Error("bad response");
+        EXCH.EUR=d.rates.EUR;
+        EXCH.ILS=d.rates.ILS;
+        var date=new Date(d.time_last_update_unix*1000).toISOString().slice(0,10);
+        try{localStorage.setItem("exch_cache",JSON.stringify({EUR:d.rates.EUR,ILS:d.rates.ILS,date:date,ts:Date.now()}));}catch(ex){}
+        setRatesInfo({status:"ok",date:date});
+      })
+      .catch(function(){setRatesInfo({status:"err",date:""});});
   },[]);
 
   // Auth state listener
@@ -1064,7 +1094,7 @@ function App(){
     }
   },[user,authLoading]);
 
-  function setCurrency(c){var found=CURRENCIES.filter(function(x){return x.code===c;})[0];_currSym=found?found.sym:"$";setCurrencyRaw(c);storeSet("currency_pref",c);}
+  function setCurrency(c){_currSym=c==="EUR"?"€":c==="ILS"?"₪":"$";setCurrencyRaw(c);storeSet("currency_pref",c);}
   function saveTrips(updated){setTripsRaw(updated);storeSet("trips_index",updated);}
   function setActiveTripId(id){setActiveTripIdRaw(id);storeSet("active_trip_id",id);}
   var activeTrip=useMemo(function(){return trips.filter(function(t){return t.id===activeTripId;})[0]||trips[0]||null;},[trips,activeTripId]);
@@ -1173,7 +1203,11 @@ function App(){
             trips.length>0&&h("div",{style:{display:"flex",alignItems:"center",gap:8,marginLeft:16}},
               h("div",{style:{display:"flex",gap:4,background:"var(--bg)",borderRadius:8,padding:3,flexWrap:"wrap"}},trips.map(function(t){return h("button",{key:t.id,onClick:function(){setActiveTripId(t.id);setSearch("");},style:{padding:"5px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:activeTripId===t.id?"var(--primary)":"transparent",color:activeTripId===t.id?"#fff":"var(--text2)",whiteSpace:"nowrap",maxWidth:140,overflow:"hidden",textOverflow:"ellipsis"}},t.name);})),
               h("button",{onClick:function(){setTripMgr(true);},title:"Manage trips",style:{padding:"5px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text3)",cursor:"pointer",fontSize:13}},"⚙️"),
-              h("select",{value:currency,onChange:function(e){setCurrency(e.target.value);},title:"Display currency (amounts stored in USD, converted at fixed rates)",style:{background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:6,padding:"4px 6px",color:"var(--text2)",fontSize:12,cursor:"pointer"}},CURRENCIES.map(function(cur){return h("option",{key:cur.code,value:cur.code},cur.sym+" "+cur.code);})),
+              h("span",{
+                title:ratesInfo.status==="ok"?"Live rates as of "+ratesInfo.date+" (cached 1h)":ratesInfo.status==="err"?"Live rates unavailable — using approximate fallback":"Fetching live exchange rates...",
+                style:{fontSize:10,cursor:"help",color:ratesInfo.status==="ok"?"#4ade80":ratesInfo.status==="err"?"#fbbf24":"#64748b",userSelect:"none",lineHeight:1}
+              },ratesInfo.status==="loading"?"⟳":ratesInfo.status==="ok"?"●":"≈"),
+              h("select",{value:currency,onChange:function(e){setCurrency(e.target.value);},title:"Display currency — amounts stored in USD, converted for display",style:{background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:6,padding:"4px 6px",color:"var(--text2)",fontSize:12,cursor:"pointer"}},CURRENCIES.map(function(cur){return h("option",{key:cur.code,value:cur.code},cur.sym+" "+cur.code);})),
               h("button",{onClick:function(){setDarkMode(function(d){return !d;});},title:darkMode?"Switch to Light Mode":"Switch to Dark Mode",style:{padding:"5px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",cursor:"pointer",fontSize:15}},darkMode?"☀️":"🌙"),
               user&&h("button",{onClick:function(){auth.signOut();},title:"Sign out",style:{padding:"5px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text3)",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",gap:6}},user.photoURL&&h("img",{src:user.photoURL,style:{width:20,height:20,borderRadius:"50%",flexShrink:0}}),"Sign out")
             )
