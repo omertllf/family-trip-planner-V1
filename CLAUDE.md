@@ -3,9 +3,10 @@
 ## Project Identity
 
 - **App:** Family Trip Planner (single-file PWA)
-- **Deployed URL:** `https://omertllf.github.io/family-trip-planner-V1/family-trip-planner.html`
+- **Deployed URL (primary):** `https://familytripplanner.vercel.app/family-trip-planner.html`
+- **Deployed URL (GitHub Pages):** `https://omertllf.github.io/family-trip-planner-V1/family-trip-planner.html`
 - **Source file:** `family-trip-planner.html` (single file — all HTML, CSS, JS inline)
-- **Stack:** React 18 (UMD, no build step), Firebase Firestore + Auth (compat SDK 12.14.0), GitHub Pages
+- **Stack:** React 18 (UMD, no build step), Firebase Firestore + Auth (compat SDK 12.14.0), GitHub Pages + Vercel
 
 ---
 
@@ -16,7 +17,7 @@
 | **React** | UMD build via CDN, `React.createElement` (no JSX), all in one `<script>` tag |
 | **State** | Firestore `onSnapshot` as source of truth when signed in; localStorage fallback |
 | **Auth** | Google Auth via `signInWithPopup` (primary); redirect only on `popup-blocked` |
-| **Data path** | `users/{uid}/data/{key}` — per-user, not household (note: memory mentions household model but file uses per-user path) |
+| **Data path** | `users/{uid}/data/{key}` — per-user, not household |
 | **Persistence** | `storeSet()` writes both localStorage and Firestore simultaneously |
 | **PWA** | `sw.js` + `manifest.json` + `icon-192.svg` (separate files, not inline) |
 
@@ -76,7 +77,7 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 --input-bg: #0f172a
 ```
 
-> ⚠️ Memory references a "premium UI redesign" with warm palette (`--canvas`, `--coral`, `--sage`, `--horizon:#1E3A5F`, Plus Jakarta Sans). **This is NOT in the current file.** The file uses the original dark theme. Either that redesign was never merged or was done in a separate branch.
+> ⚠️ Memory references a "premium UI redesign" with warm palette (`--canvas`, `--coral`, `--sage`, `--horizon:#1E3A5F`, Plus Jakarta Sans). **This is NOT in the current file.** The file uses the original dark/light toggle theme.
 
 ---
 
@@ -84,10 +85,10 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 
 | Item | Status |
 |------|--------|
-| Debug log panel on login screen (exposes user-agent) | Should be removed — **not present in current file** (may already be removed) |
-| Residual dark hex values in Gmail/Backup/Import/PDF modals | Present — modals use hardcoded `#0f172a`, `#334155`, `#334155`, `#7c2d12` etc. |
-| Household model vs per-user Firestore path | Memory says household model; file uses `users/{uid}/data/` — discrepancy, verify |
-| `signInWithRedirect` fallback | Not implemented in file; only `signInWithPopup` present |
+| Residual dark hex values in Gmail/Backup/Import/PDF modals | Present — modals use hardcoded `#0f172a`, `#334155`, `#7c2d12` etc. instead of CSS vars |
+| `signInWithRedirect` fallback | Not implemented; only `signInWithPopup` present |
+| Household model | Never deployed — file uses per-user `users/{uid}/data/` path throughout |
+| Premium UI redesign | Never merged into main file |
 
 ---
 
@@ -96,7 +97,7 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 1. **No `onSnapshot` + separate `storeGetCloud` fetch** — race condition. `onSnapshot` IS the initial load.
 2. **`signInWithPopup` always primary** — `signInWithRedirect` fails on iOS Safari (ITP).
 3. **Costs always stored in USD** — conversion is display-only via `fmt$()`.
-4. **`claudeExtract()`** calls `claude-sonnet-4-20250514` — check if model string is still current before using.
+4. **`claudeExtract()`** calls `claude-sonnet-4-20250514` — verify model string is current before using.
 5. **Validate with `node --check`** after every edit (extract inline script, prepend React/Firebase stubs).
 
 ---
@@ -105,8 +106,9 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 
 1. Edit file locally
 2. Copy into GitHub repo via GitHub Desktop
-3. Commit + push
-4. Wait ~60s → hard-refresh deployed URL
+3. Commit + push to main → Vercel auto-deploys immediately
+4. Also available on GitHub Pages (~60s delay)
+- Firebase authorized domains: both `familytripplanner.vercel.app` and `omertllf.github.io` must be listed
 
 ---
 
@@ -135,11 +137,3 @@ Auth domain: family-trip-planner-f1b14.firebaseapp.com
 ```
 
 Firestore Security Rules must be managed manually in Firebase Console.
-
----
-
-## Open Questions (resolve before next session)
-
-- [ ] Was the "premium UI redesign" merged? Current file says no.
-- [ ] Was the household model (`households/family-trip-planner-household/data/{key}`) ever deployed? Current file uses per-user path.
-- [ ] Was the debug log panel ever added and removed, or never added?
