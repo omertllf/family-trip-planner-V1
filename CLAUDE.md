@@ -1,69 +1,145 @@
-# CLAUDE.md
+# Family Trip Planner — Project Memory
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Project Identity
 
-## What This Is
+- **App:** Family Trip Planner (single-file PWA)
+- **Deployed URL:** `https://omertllf.github.io/family-trip-planner-V1/family-trip-planner.html`
+- **Source file:** `family-trip-planner.html` (single file — all HTML, CSS, JS inline)
+- **Stack:** React 18 (UMD, no build step), Firebase Firestore + Auth (compat SDK 12.14.0), GitHub Pages
 
-A zero-build, single-file Progressive Web App for family trip planning. The entire application lives in `family-trip-planner.html` — no bundler, no package manager, no build step. React 18.2.0 is loaded from CDN.
-
-## Running the App
-
-Open `family-trip-planner.html` directly in a browser, or serve the directory with any static server:
-
-```bash
-python3 -m http.server 8080
-# then open http://localhost:8080/family-trip-planner.html
-```
-
-No install step. No build step. Changes to `family-trip-planner.html` take effect on page reload.
+---
 
 ## Architecture
 
-**Everything is in `family-trip-planner.html`** — one `<script>` tag containing the full React app as a single IIFE. React is pulled from CDN via `<script>` tags in `<head>`. There is no module system, no imports, no TypeScript.
+| Layer | Detail |
+|-------|--------|
+| **React** | UMD build via CDN, `React.createElement` (no JSX), all in one `<script>` tag |
+| **State** | Firestore `onSnapshot` as source of truth when signed in; localStorage fallback |
+| **Auth** | Google Auth via `signInWithPopup` (primary); redirect only on `popup-blocked` |
+| **Data path** | `users/{uid}/data/{key}` — per-user, not household (note: memory mentions household model but file uses per-user path) |
+| **Persistence** | `storeSet()` writes both localStorage and Firestore simultaneously |
+| **PWA** | `sw.js` + `manifest.json` + `icon-192.svg` (separate files, not inline) |
 
-### Data Model
+---
 
-All state lives in React and is persisted to `localStorage`:
+## Data Model
 
-- `trips_index` — array of all trips, each with shape `{id, name, acc[], flt[], car[], act[]}`
-- `active_trip_id` — currently selected trip ID
-- Legacy keys (`acc`, `flt`, `car`, `act`) are migrated on first load
+```
+trips_index: Trip[]
 
-Entry shapes:
-- **Accommodation** (`acc`): `{id, type, name, platform, checkIn, checkOut, address, contact, url, parking, kitchen, breakfast, totalCost, costPerNight, confirmation, notes}`
-- **Flight** (`flt`): `{id, type, airline, flightNo, from, to, depDate, depTime, arrDate, arrTime, cost, bookingRef, url, notes}`
-- **Car** (`car`): `{id, type, company, carType, pickupLocation, dropoffLocation, pickupDate, dropoffDate, cost, confirmation, url, notes}`
-- **Activity** (`act`): `{id, type, name, category, date, duration, location, cost, url, notes}`
+Trip {
+  id: "trip_" + timestamp
+  name: string
+  acc: Accommodation[]
+  flt: Flight[]
+  car: CarRental[]
+  act: Activity[]
+}
+```
 
-### Key Components (all defined in the single script)
+Entry types: `accommodation`, `flight`, `car`, `activity`
+Costs stored in **USD**; display currency converted client-side via live rates (open.er-api.com, 1h cache).
 
-- `App` — root; owns all state, dispatches to `setTrips`/`setActiveId`
-- `TableView` — sortable/filterable tabular display
-- `CalendarView` — month grid with entry chips
-- `GanttView` — horizontal timeline chart
-- `EntryModal` — add/edit form for all four entry types; validates required fields and date logic
-- `ImportModal` — handles PDF, image, `.ics`, and pasted-text imports; calls `claudeExtract`
-- `GmailBridgeModal` — Gmail label scanning workflow
-- `BackupModal` — JSON export/import
-- `TripManagerModal` — create, rename, delete, switch trips
-- `PDFPreviewModal` — print-formatted HTML export
-- `FInput`, `FSelect`, `FToggle`, `FTextarea` — thin form field wrappers
+---
 
-### AI Extraction
+## Key Components
 
-`claudeExtract(apiKey, content, type)` at the top of the script calls:
-- Endpoint: `https://api.anthropic.com/v1/messages`
-- Model: `claude-sonnet-4-20250514`
-- The user supplies their own Anthropic API key at runtime (stored in `localStorage` as `claude_api_key`)
+| Component | Purpose |
+|-----------|---------|
+| `App` | Root; auth state, trip selection, layout |
+| `TableView` | Main data view; sortable, drag-reorder columns, duplicate detection |
+| `DetailCard` | Single-entry detail view (click row → detail) |
+| `CalendarView` | Month grid view |
+| `GanttView` | Timeline/Gantt view |
+| `EntryModal` | Add/edit modal for all 4 entry types |
+| `ImportModal` | AI extraction from PDF/image/text/ICS |
+| `GmailBridgeModal` | Paste-back Gmail import (no direct MCP from iframe) |
+| `BackupModal` | JSON export/import |
+| `TripManagerModal` | Create/rename/delete/switch trips |
+| `PDFPreviewModal` | iframe print preview |
 
-### PWA
+---
 
-`sw.js` implements a cache-first service worker that caches all four static files (`family-trip-planner.html`, `manifest.json`, `icon-192.svg`, `icon-512.svg`) under the cache name `trip-planner-v1`. Bump the cache name in `sw.js` when deploying breaking changes.
+## Current UI Theme (Dark Mode Default)
 
-### Validation Rules
+CSS variables via `:root` (dark) and `body.light-mode` (light):
 
-Required fields by type: Accommodation → `name, checkIn, checkOut`; Flight → `airline, from, to, depDate`; Car → `company, pickupLocation, pickupDate`; Activity → `name, date`. Date logic: check-out after check-in, arrival not before departure, drop-off not before pick-up.
+```css
+--bg: #0f172a          /* dark slate */
+--surface: #1e293b
+--surface2: #334155
+--border: #1e293b
+--text: #e2e8f0
+--primary: #6366f1     /* indigo */
+--danger: #f87171
+--success: #10b981
+--input-bg: #0f172a
+```
 
-## Deployment
+> ⚠️ Memory references a "premium UI redesign" with warm palette (`--canvas`, `--coral`, `--sage`, `--horizon:#1E3A5F`, Plus Jakarta Sans). **This is NOT in the current file.** The file uses the original dark theme. Either that redesign was never merged or was done in a separate branch.
 
-Drop the four files (`family-trip-planner.html`, `manifest.json`, `sw.js`, `icon-*.svg`) onto any static host (GitHub Pages, Netlify, etc.). No build pipeline needed.
+---
+
+## Known Issues / Pending Work
+
+| Item | Status |
+|------|--------|
+| Debug log panel on login screen (exposes user-agent) | Should be removed — **not present in current file** (may already be removed) |
+| Residual dark hex values in Gmail/Backup/Import/PDF modals | Present — modals use hardcoded `#0f172a`, `#334155`, `#334155`, `#7c2d12` etc. |
+| Household model vs per-user Firestore path | Memory says household model; file uses `users/{uid}/data/` — discrepancy, verify |
+| `signInWithRedirect` fallback | Not implemented in file; only `signInWithPopup` present |
+
+---
+
+## Critical Engineering Rules
+
+1. **No `onSnapshot` + separate `storeGetCloud` fetch** — race condition. `onSnapshot` IS the initial load.
+2. **`signInWithPopup` always primary** — `signInWithRedirect` fails on iOS Safari (ITP).
+3. **Costs always stored in USD** — conversion is display-only via `fmt$()`.
+4. **`claudeExtract()`** calls `claude-sonnet-4-20250514` — check if model string is still current before using.
+5. **Validate with `node --check`** after every edit (extract inline script, prepend React/Firebase stubs).
+
+---
+
+## Deployment Workflow
+
+1. Edit file locally
+2. Copy into GitHub repo via GitHub Desktop
+3. Commit + push
+4. Wait ~60s → hard-refresh deployed URL
+
+---
+
+## Gmail Integration
+
+- **Architecture:** Paste-back bridge (Claude generates prompt → user runs in separate Claude chat → pastes response back)
+- **Why not direct MCP:** Artifact iframes cannot authenticate MCP servers
+- **Parse order:** fenced ` ```gmail_import ``` ` block → raw `{"entries":[...]}` JSON → bare array
+- **Known labels on file:**
+
+| Label ID | Name |
+|----------|------|
+| `Label_3699931737615885849` | 2026 trip to USA |
+| `Label_5603701076709231285` | Italy summer vacation |
+| `Label_6679335078370083063` | Romania |
+| `Label_8098878853189728542` | Greece Olympus |
+| `Label_8820736268900932572` | Paris |
+
+---
+
+## Firebase Config (public, in-file)
+
+```
+Project: family-trip-planner-f1b14
+Auth domain: family-trip-planner-f1b14.firebaseapp.com
+```
+
+Firestore Security Rules must be managed manually in Firebase Console.
+
+---
+
+## Open Questions (resolve before next session)
+
+- [ ] Was the "premium UI redesign" merged? Current file says no.
+- [ ] Was the household model (`households/family-trip-planner-household/data/{key}`) ever deployed? Current file uses per-user path.
+- [ ] Was the debug log panel ever added and removed, or never added?

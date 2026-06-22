@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Family Trip Planner — Product Overview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, system-ui, sans-serif; background: #f1f5f9; color: #0f172a; }
+
+  /* ── Page header ── */
+  .page-header {
+    background: #0f172a;
+    color: #e2e8f0;
+    padding: 48px 60px 40px;
+    text-align: center;
+  }
+  .page-header h1 { font-size: 32px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+  .page-header p  { font-size: 15px; color: #94a3b8; max-width: 560px; margin: 0 auto; line-height: 1.6; }
+  .badge { display: inline-block; background: #6366f1; color: #fff; font-size: 11px; font-weight: 700;
+           padding: 3px 10px; border-radius: 20px; margin-bottom: 16px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+  /* ── Grid of sections ── */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    padding: 40px 60px 48px;
+    max-width: 1300px;
+    margin: 0 auto;
+  }
+  .section {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08);
+  }
+  .section.wide { grid-column: 1 / -1; }
+
+  .screen {
+    background: #0f172a;
+    padding: 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .caption {
+    padding: 18px 22px 20px;
+    border-top: 1px solid #e2e8f0;
+  }
+  .caption h3 { font-size: 15px; font-weight: 700; margin-bottom: 5px; color: #0f172a; }
+  .caption p  { font-size: 13px; color: #475569; line-height: 1.6; }
+
+  /* ─────────────────────────────────────────────
+     Shared dark UI helpers
+  ───────────────────────────────────────────── */
+  .ui { font-family: Inter, sans-serif; background: #0f172a; color: #e2e8f0; padding: 0; }
+  .ui-top-bar {
+    background: #0f172a;
+    border-bottom: 1px solid #1e293b;
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .ui-logo { font-size: 18px; font-weight: 800; color: #e2e8f0; display: flex; align-items: center; gap: 8px; }
+  .ui-logo span { font-size: 20px; }
+  .ui-sub { font-size: 10px; color: #64748b; margin-top: 1px; }
+  .ui-spacer { flex: 1; }
+  .ui-btn {
+    padding: 6px 14px; border-radius: 7px; border: none; cursor: pointer;
+    font-size: 12px; font-weight: 600;
+  }
+  .ui-btn-primary { background: #6366f1; color: #fff; }
+  .ui-btn-ghost   { background: #1e293b; color: #94a3b8; }
+  .ui-btn-sign    { background: #1e293b; color: #e2e8f0; border-radius: 20px; font-size: 11px; }
+  .ui-currency    { background: #1e293b; color: #e2e8f0; border-radius: 6px; padding: 5px 10px; font-size: 12px; }
+
+  /* cost summary strip */
+  .cost-strip {
+    display: flex;
+    gap: 12px;
+    padding: 14px 20px;
+    background: #0f172a;
+  }
+  .cost-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 10px 14px;
+    min-width: 110px;
+    position: relative;
+  }
+  .cost-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 8px; bottom: 8px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+  }
+  .cost-card.stays::before  { background: #6366f1; }
+  .cost-card.flights::before{ background: #0ea5e9; }
+  .cost-card.cars::before   { background: #f59e0b; }
+  .cost-card.acts::before   { background: #10b981; }
+  .cost-card.total::before  { background: #f97316; }
+  .cost-label { font-size: 10px; color: #64748b; margin-bottom: 3px; }
+  .cost-val   { font-size: 17px; font-weight: 800; color: #e2e8f0; }
+  .cost-due   { font-size: 10px; color: #f87171; margin-top: 2px; }
+
+  /* filter tabs */
+  .tabs { display: flex; gap: 6px; padding: 10px 20px; background: #0f172a; }
+  .tab {
+    padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600;
+    background: #1e293b; color: #94a3b8; cursor: pointer;
+  }
+  .tab.active { background: #6366f1; color: #fff; }
+
+  /* view toolbar */
+  .toolbar { display: flex; gap: 6px; padding: 8px 20px 10px; background: #0f172a; flex-wrap: wrap; }
+  .tool-btn {
+    padding: 5px 10px; border-radius: 7px; font-size: 11px; font-weight: 600;
+    background: #1e293b; color: #94a3b8; border: 1px solid #334155;
+  }
+  .tool-btn.active { background: #1e293b; color: #e2e8f0; border-color: #6366f1; }
+  .tool-btn.gmail  { background: #1e293b; color: #e2e8f0; border-color: #10b981; }
+  .tool-btn.add    { background: #6366f1; color: #fff; border-color: #6366f1; }
+
+  /* search bar */
+  .search-bar {
+    margin: 4px 20px 10px;
+    background: #1e293b;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    color: #64748b;
+    border: 1px solid #334155;
+  }
+
+  /* table */
+  .data-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .data-table thead th {
+    background: #1e293b; color: #94a3b8; padding: 7px 10px; text-align: left;
+    font-weight: 600; font-size: 10px; border-bottom: 1px solid #334155;
+    white-space: nowrap;
+  }
+  .data-table tbody tr { border-bottom: 1px solid #1e293b; }
+  .data-table tbody tr:nth-child(even) { background: #111827; }
+  .data-table tbody tr.dup { background: #1c1408; }
+  .data-table tbody td { padding: 7px 10px; color: #e2e8f0; vertical-align: middle; white-space: nowrap; }
+  .data-table tbody td.muted { color: #64748b; }
+  .type-badge {
+    display: inline-flex; align-items: center; gap: 3px;
+    padding: 2px 7px; border-radius: 5px; font-size: 10px; font-weight: 700; color: #fff;
+  }
+  .type-badge.stay   { background: #6366f1; }
+  .type-badge.flight { background: #0ea5e9; }
+  .type-badge.car    { background: #f59e0b; }
+  .type-badge.act    { background: #10b981; }
+  .pay-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 10px; font-weight: 700;
+  }
+  .pay-badge.paid   { background: #134e4a; color: #6ee7b7; }
+  .pay-badge.unpaid { background: #7c2d12; color: #f87171; }
+  .dup-badge {
+    display: inline-block; padding: 2px 5px; border-radius: 4px; font-size: 9px; font-weight: 700;
+    background: #7c2d12; color: #fed7aa; margin-left: 4px;
+  }
+
+  /* ── CALENDAR SCREEN ── */
+  .cal-header { padding: 14px 20px 10px; }
+  .cal-month  { font-size: 18px; font-weight: 800; color: #e2e8f0; }
+  .cal-legend { display: flex; gap: 14px; margin-top: 6px; }
+  .cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #94a3b8; }
+  .cal-legend-dot  { width: 10px; height: 10px; border-radius: 2px; }
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 1px; background: #1e293b; margin: 0 20px 20px;
+    border-radius: 8px; overflow: hidden;
+  }
+  .cal-day-hdr {
+    background: #1e293b; text-align: center; font-size: 10px; color: #64748b;
+    padding: 6px 4px; font-weight: 600;
+  }
+  .cal-day {
+    background: #0f172a; min-height: 72px; padding: 5px;
+    font-size: 11px; color: #64748b;
+  }
+  .cal-day.has-entry { }
+  .cal-day .day-num { font-size: 11px; color: #94a3b8; margin-bottom: 3px; }
+  .cal-entry {
+    border-radius: 4px; padding: 2px 5px; font-size: 9px; font-weight: 600;
+    color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;
+  }
+
+  /* ── GANTT SCREEN ── */
+  .gantt-timeline {
+    display: flex; gap: 0; padding: 0 20px 0 180px;
+    border-bottom: 1px solid #334155; background: #0f172a;
+  }
+  .gantt-date-lbl {
+    min-width: 54px; font-size: 9px; color: #64748b; padding: 8px 2px 6px;
+    border-left: 1px solid #1e293b; text-align: center;
+  }
+  .gantt-row {
+    display: flex; align-items: center;
+    border-bottom: 1px solid #1e293b; position: relative; background: #0f172a;
+  }
+  .gantt-row:nth-child(even) { background: #111827; }
+  .gantt-label {
+    width: 180px; flex-shrink: 0; padding: 8px 12px;
+    font-size: 11px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    border-right: 1px solid #1e293b;
+  }
+  .gantt-track { flex: 1; position: relative; height: 36px; }
+  .gantt-bar {
+    position: absolute; height: 20px; top: 8px; border-radius: 4px;
+    display: flex; align-items: center; padding: 0 8px;
+    font-size: 9px; font-weight: 700; color: #fff; white-space: nowrap; overflow: hidden;
+  }
+
+  /* ── GMAIL MODAL ── */
+  .modal-overlay {
+    background: rgba(0,0,0,0.55); display: flex; align-items: center; justify-content: center;
+    padding: 20px; min-height: 340px;
+  }
+  .modal-box {
+    background: #1e293b; border-radius: 12px; width: 100%; max-width: 460px;
+    padding: 22px; border: 1px solid #334155;
+  }
+  .modal-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;
+  }
+  .modal-title { font-size: 16px; font-weight: 700; color: #e2e8f0; }
+  .modal-close { background: none; border: none; color: #64748b; font-size: 20px; cursor: pointer; }
+  .modal-label { font-size: 11px; color: #94a3b8; margin-bottom: 6px; }
+  .modal-select {
+    width: 100%; background: #0f172a; border: 1px solid #334155; border-radius: 6px;
+    padding: 8px 10px; color: #e2e8f0; font-size: 13px; margin-bottom: 16px;
+  }
+  .modal-inner-box {
+    background: #334155; border-radius: 10px; padding: 16px; border: 1px solid #475569;
+  }
+  .modal-inner-title { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 6px; }
+  .modal-inner-desc  { font-size: 12px; color: #94a3b8; margin-bottom: 14px; line-height: 1.5; }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-btn-ghost   { flex: 1; padding: 9px; border-radius: 7px; border: 1px solid #475569; background: transparent; color: #94a3b8; font-size: 12px; cursor: pointer; text-align: center; }
+  .modal-btn-primary { flex: 1; padding: 9px; border-radius: 7px; border: none; background: #6366f1; color: #fff; font-size: 12px; font-weight: 700; cursor: pointer; text-align: center; }
+
+  /* ── DETAIL CARD ── */
+  .detail-wrap { padding: 16px 20px 20px; }
+  .detail-nav { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+  .detail-back { padding: 6px 14px; border-radius: 7px; border: 1px solid #334155; background: transparent; color: #94a3b8; font-size: 12px; cursor: pointer; }
+  .detail-spacer { flex: 1; }
+  .detail-edit { padding: 6px 14px; border-radius: 7px; border: 1px solid #6366f1; background: transparent; color: #6366f1; font-size: 12px; font-weight: 700; }
+  .detail-del  { padding: 6px 14px; border-radius: 7px; border: 1px solid #7f1d1d; background: transparent; color: #f87171; font-size: 12px; }
+  .detail-card {
+    background: #1e293b; border-radius: 10px; padding: 16px; margin-bottom: 10px; border: 1px solid #334155;
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .detail-icon {
+    width: 44px; height: 44px; border-radius: 10px; background: #6366f1;
+    display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
+  }
+  .detail-type { font-size: 10px; color: #64748b; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px; }
+  .detail-name { font-size: 20px; font-weight: 800; color: #e2e8f0; margin-bottom: 5px; }
+  .detail-dates { font-size: 12px; color: #94a3b8; }
+  .detail-nights {
+    display: inline-block; background: #6366f133; color: #a5b4fc;
+    border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 700; margin-left: 8px;
+  }
+  .detail-cost { font-size: 20px; font-weight: 800; color: #6366f1; margin-top: 6px; }
+  .detail-section {
+    background: #1e293b; border-radius: 10px; padding: 14px 16px; margin-bottom: 8px; border: 1px solid #334155;
+  }
+  .detail-section-title {
+    font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 10px;
+  }
+  .detail-row { display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid #334155; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-row-label { width: 130px; flex-shrink: 0; font-size: 11px; color: #64748b; font-weight: 600; padding-top: 1px; }
+  .detail-row-val   { flex: 1; font-size: 12px; color: #e2e8f0; word-break: break-word; }
+
+  /* ── Page footer ── */
+  .page-footer {
+    text-align: center; padding: 24px; font-size: 12px; color: #94a3b8;
+    border-top: 1px solid #e2e8f0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ PAGE HEADER ═══ -->
+<div class="page-header">
+  <div class="badge">Product Overview</div>
+  <h1>✈️ Family Trip Planner</h1>
+  <p>A cross-device family travel organizer — track flights, stays, cars and activities across multiple trips, synced in real-time via Firebase.</p>
+</div>
+
+<!-- ═══ SECTION GRID ═══ -->
+<div class="grid">
+
+  <!-- ══ 1. TABLE VIEW (full-width) ══ -->
+  <div class="section wide">
+    <div class="screen">
+      <!-- top bar -->
+      <div class="ui-top-bar">
+        <div>
+          <div class="ui-logo"><span>✈️</span> Family Trip Planner</div>
+          <div class="ui-sub">All your travel details in one place</div>
+        </div>
+        <div class="ui-spacer"></div>
+        <button class="ui-btn ui-btn-primary" style="margin-right:6px;">My Trip ▾</button>
+        <span style="font-size:16px;margin-right:6px;color:#94a3b8;">⚙️</span>
+        <span class="ui-currency">₪ ILS ▾</span>
+        <span style="font-size:16px;margin:0 8px;color:#94a3b8;">🌙</span>
+        <button class="ui-btn ui-btn-sign">O &nbsp; Sign out</button>
+      </div>
+
+      <!-- cost strip -->
+      <div class="cost-strip">
+        <div class="cost-card stays">
+          <div class="cost-label">🏠 Stays</div>
+          <div class="cost-val">₪15,145</div>
+          <div class="cost-due">₪2,905 due</div>
+        </div>
+        <div class="cost-card flights">
+          <div class="cost-label">✈️ Flights</div>
+          <div class="cost-val">₪22,416</div>
+        </div>
+        <div class="cost-card cars">
+          <div class="cost-label">🚗 Cars</div>
+          <div class="cost-val">₪4,888</div>
+        </div>
+        <div class="cost-card acts">
+          <div class="cost-label">🎯 Activities</div>
+          <div class="cost-val">₪11,665</div>
+          <div class="cost-due">₪639 due</div>
+        </div>
+        <div class="cost-card total">
+          <div class="cost-label">🔥 Total</div>
+          <div class="cost-val">₪54,114</div>
+          <div class="cost-due">₪3,545 due</div>
+        </div>
+      </div>
+
+      <!-- category tabs -->
+      <div class="tabs">
+        <div class="tab active">🗂️ All</div>
+        <div class="tab">🏠 Stays</div>
+        <div class="tab">✈️ Flights</div>
+        <div class="tab">🚗 Cars</div>
+        <div class="tab">🎯 Activities</div>
+      </div>
+
+      <!-- toolbar -->
+      <div class="toolbar">
+        <div class="tool-btn active">≡ Table</div>
+        <div class="tool-btn">📅 Calendar</div>
+        <div class="tool-btn">📊 Timeline</div>
+        <div class="tool-btn">📄 PDF</div>
+        <div class="tool-btn">💾 Backup</div>
+        <div class="tool-btn">⬆️ Import</div>
+        <div class="tool-btn gmail">📧 Gmail</div>
+        <div class="tool-btn add">+ Add</div>
+      </div>
+
+      <!-- search -->
+      <div class="search-bar">🔍 &nbsp; Search by name, location, airline, notes, confirmation...</div>
+
+      <!-- table -->
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name ↕</th><th>Type ↕</th><th>Start ↕</th><th>End ↕</th>
+            <th>Nights</th><th>Cost ↕</th><th>Pay</th><th>Due</th>
+            <th>Address</th><th>City</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>EL AL</td>
+            <td><span class="type-badge flight">✈️ Flight</span></td>
+            <td class="muted">-</td><td class="muted">-</td><td class="muted">-</td>
+            <td class="muted">-</td>
+            <td><span class="pay-badge paid">Paid</span></td>
+            <td class="muted">-</td><td>Tel Aviv (TLV)</td><td>Athens</td>
+          </tr>
+          <tr class="dup">
+            <td>EMVI Apartments VI...<span class="dup-badge">⚠ DUP</span></td>
+            <td><span class="type-badge stay">🏠 Stay</span></td>
+            <td>07.22.26</td><td>07.24.26</td>
+            <td style="color:#6366f1;font-weight:700;">2n</td>
+            <td>₪944</td>
+            <td><span class="pay-badge unpaid">Unpaid</span></td>
+            <td>₪944</td>
+            <td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;">Vravrona, Attica, Gre...</td>
+            <td>Attica</td>
+          </tr>
+          <tr class="dup">
+            <td>El Al LY543<span class="dup-badge">⚠ DUP</span></td>
+            <td><span class="type-badge flight">✈️ Flight</span></td>
+            <td>07.22.26</td><td>07.22.26</td><td class="muted">-</td>
+            <td>₪1,480</td>
+            <td><span class="pay-badge paid">Paid</span></td>
+            <td class="muted">-</td><td>TLV</td><td>ATH</td>
+          </tr>
+          <tr class="dup">
+            <td>Fairfield by Marriott I...<span class="dup-badge">⚠ DUP</span></td>
+            <td><span class="type-badge stay">🏠 Stay</span></td>
+            <td>07.24.26</td><td>07.25.26</td>
+            <td style="color:#6366f1;font-weight:700;">1n</td>
+            <td>₪567</td>
+            <td><span class="pay-badge paid">Paid</span></td>
+            <td class="muted">-</td>
+            <td>5775 Dean Martin Dr...</td><td>Las Vegas</td>
+          </tr>
+          <tr class="dup">
+            <td>United Airlines UA125<span class="dup-badge">⚠ DUP</span></td>
+            <td><span class="type-badge flight">✈️ Flight</span></td>
+            <td>07.24.26</td><td>07.24.26</td><td class="muted">-</td>
+            <td>₪20,640</td>
+            <td><span class="pay-badge paid">Paid</span></td>
+            <td class="muted">-</td><td>ATH</td><td>EWR</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="caption">
+      <h3>1 — Trip Dashboard &amp; Table View</h3>
+      <p>Central hub showing live cost totals per category (Stays, Flights, Cars, Activities) and a sortable, searchable table of all bookings. Columns are drag-reorderable. Duplicate entries are auto-detected and highlighted in amber. Currency switches between USD, EUR and ILS using live exchange rates.</p>
+    </div>
+  </div>
+
+  <!-- ══ 2. CALENDAR VIEW ══ -->
+  <div class="section">
+    <div class="screen">
+      <div class="ui-top-bar" style="padding:10px 16px;">
+        <div class="ui-logo" style="font-size:14px;"><span>✈️</span> Family Trip Planner</div>
+        <div class="ui-spacer"></div>
+        <div class="tabs" style="padding:0;gap:4px;">
+          <div class="tool-btn" style="font-size:10px;">≡ Table</div>
+          <div class="tool-btn active" style="font-size:10px;">📅 Calendar</div>
+          <div class="tool-btn" style="font-size:10px;">📊 Timeline</div>
+        </div>
+      </div>
+
+      <div class="cal-header">
+        <div class="cal-month">July 2026</div>
+        <div class="cal-legend">
+          <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#6366f1;"></div>Stay</div>
+          <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#0ea5e9;"></div>Flight</div>
+          <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#f59e0b;"></div>Car</div>
+          <div class="cal-legend-item"><div class="cal-legend-dot" style="background:#10b981;"></div>Activity</div>
+        </div>
+      </div>
+
+      <div class="cal-grid" style="font-size:10px;">
+        <div class="cal-day-hdr">Sun</div><div class="cal-day-hdr">Mon</div>
+        <div class="cal-day-hdr">Tue</div><div class="cal-day-hdr">Wed</div>
+        <div class="cal-day-hdr">Thu</div><div class="cal-day-hdr">Fri</div>
+        <div class="cal-day-hdr">Sat</div>
+
+        <!-- Week 1 placeholder empty days (Jul starts Wed) -->
+        <div class="cal-day"></div><div class="cal-day"></div><div class="cal-day"></div>
+        <div class="cal-day"><div class="day-num">1</div></div>
+        <div class="cal-day"><div class="day-num">2</div></div>
+        <div class="cal-day"><div class="day-num">3</div></div>
+        <div class="cal-day"><div class="day-num">4</div></div>
+
+        <!-- Week 2 -->
+        <div class="cal-day"><div class="day-num">5</div></div>
+        <div class="cal-day"><div class="day-num">6</div></div>
+        <div class="cal-day"><div class="day-num">7</div></div>
+        <div class="cal-day"><div class="day-num">8</div></div>
+        <div class="cal-day"><div class="day-num">9</div></div>
+        <div class="cal-day"><div class="day-num">10</div></div>
+        <div class="cal-day"><div class="day-num">11</div></div>
+
+        <!-- Week 3 -->
+        <div class="cal-day"><div class="day-num">12</div></div>
+        <div class="cal-day"><div class="day-num">13</div></div>
+        <div class="cal-day"><div class="day-num">14</div></div>
+        <div class="cal-day"><div class="day-num">15</div></div>
+        <div class="cal-day"><div class="day-num">16</div></div>
+        <div class="cal-day"><div class="day-num">17</div></div>
+        <div class="cal-day"><div class="day-num">18</div></div>
+
+        <!-- Week 4: entries start appearing -->
+        <div class="cal-day"><div class="day-num">19</div></div>
+        <div class="cal-day"><div class="day-num">20</div></div>
+        <div class="cal-day"><div class="day-num">21</div></div>
+        <div class="cal-day has-entry">
+          <div class="day-num">22</div>
+          <div class="cal-entry" style="background:#0ea5e9;">✈️ EL AL</div>
+          <div class="cal-entry" style="background:#6366f1;">🏠 EMVI Apts</div>
+        </div>
+        <div class="cal-day has-entry">
+          <div class="day-num">23</div>
+          <div class="cal-entry" style="background:#6366f1;">🏠 EMVI Apts</div>
+        </div>
+        <div class="cal-day has-entry">
+          <div class="day-num">24</div>
+          <div class="cal-entry" style="background:#0ea5e9;">✈️ UA125</div>
+          <div class="cal-entry" style="background:#6366f1;">🏠 Fairfield</div>
+          <div class="cal-entry" style="background:#f59e0b;">🚗 Dollar</div>
+        </div>
+        <div class="cal-day has-entry">
+          <div class="day-num">25</div>
+          <div class="cal-entry" style="background:#f59e0b;">🚗 Dollar</div>
+          <div class="cal-entry" style="background:#6366f1;">🏠 Desert Oasis</div>
+        </div>
+
+        <!-- Week 5 -->
+        <div class="cal-day has-entry">
+          <div class="day-num">26</div>
+          <div class="cal-entry" style="background:#10b981;">🎯 Slot Canyon</div>
+          <div class="cal-entry" style="background:#f59e0b;">🚗 Dollar</div>
+        </div>
+        <div class="cal-day has-entry">
+          <div class="day-num">27</div>
+          <div class="cal-entry" style="background:#6366f1;">🏠 Rio Del Sol</div>
+          <div class="cal-entry" style="background:#f59e0b;">🚗 Dollar</div>
+        </div>
+        <div class="cal-day has-entry">
+          <div class="day-num">28</div>
+          <div class="cal-entry" style="background:#6366f1;">🏠 Greatwolf</div>
+          <div class="cal-entry" style="background:#f59e0b;">🚗 Dollar</div>
+        </div>
+        <div class="cal-day has-entry">
+          <div class="day-num">29</div>
+          <div class="cal-entry" style="background:#f59e0b;">🚗 Dollar</div>
+        </div>
+        <div class="cal-day has-entry">
+          <div class="day-num">30</div>
+          <div class="cal-entry" style="background:#f59e0b;">🚗 Dollar</div>
+        </div>
+        <div class="cal-day has-entry">
+          <div class="day-num">31</div>
+          <div class="cal-entry" style="background:#f59e0b;">🚗 Dollar</div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">
+      <h3>2 — Calendar View</h3>
+      <p>Monthly grid showing all bookings plotted by date. Color-coded by type: purple (stays), blue (flights), amber (cars), green (activities). Spot overlaps and gaps at a glance.</p>
+    </div>
+  </div>
+
+  <!-- ══ 3. TIMELINE / GANTT VIEW ══ -->
+  <div class="section">
+    <div class="screen">
+      <div class="ui-top-bar" style="padding:10px 16px;">
+        <div class="ui-logo" style="font-size:14px;"><span>✈️</span> Family Trip Planner</div>
+        <div class="ui-spacer"></div>
+        <div class="tabs" style="padding:0;gap:4px;">
+          <div class="tool-btn" style="font-size:10px;">≡ Table</div>
+          <div class="tool-btn" style="font-size:10px;">📅 Calendar</div>
+          <div class="tool-btn active" style="font-size:10px;">📊 Timeline</div>
+        </div>
+      </div>
+
+      <!-- date ruler -->
+      <div class="gantt-timeline" style="overflow:hidden;">
+        <div class="gantt-date-lbl">Jul 21</div>
+        <div class="gantt-date-lbl">Jul 23</div>
+        <div class="gantt-date-lbl">Jul 25</div>
+        <div class="gantt-date-lbl">Jul 27</div>
+        <div class="gantt-date-lbl">Jul 29</div>
+        <div class="gantt-date-lbl">Jul 31</div>
+        <div class="gantt-date-lbl">Aug 2</div>
+        <div class="gantt-date-lbl">Aug 4</div>
+        <div class="gantt-date-lbl">Aug 6</div>
+        <div class="gantt-date-lbl">Aug 8</div>
+        <div class="gantt-date-lbl">Aug 10</div>
+      </div>
+
+      <!-- rows -->
+      <div class="gantt-row">
+        <div class="gantt-label">🏠 EMVI Apartments VI...</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="background:#6366f1;left:2%;width:12%;">EMVI Apts</div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label">✈️ El Al</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="background:#0ea5e9;left:2%;width:2%;"></div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label">✈️ EL AL</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="background:#0ea5e9;left:2%;width:2%;"></div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label">🏠 Fairfield by Marriott...</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="background:#6366f1;left:14%;width:6%;"></div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label">✈️ United Airlines</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="background:#0ea5e9;left:14%;width:2%;"></div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label">🚗 Dollar (via Trip.com)</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="background:#f59e0b;left:14%;width:62%;">Dollar (via Trip.com)</div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label">🏠 Desert Oasis - Family...</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="background:#6366f1;left:14%;width:22%;">Desert Oasis</div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label">🎯 Full Day Slot Canyon...</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="background:#10b981;left:26%;width:2%;"></div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label">🏠 Rio Del Sol Inn Needles</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="background:#6366f1;left:28%;width:5%;"></div>
+        </div>
+      </div>
+      <div class="gantt-row">
+        <div class="gantt-label">🏠 Greatwolf Lodge</div>
+        <div class="gantt-track">
+          <div class="gantt-bar" style="background:#6366f1;left:34%;width:6%;"></div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">
+      <h3>3 — Timeline / Gantt View</h3>
+      <p>Horizontal Gantt chart showing every booking as a proportional time bar. Ideal for spotting coverage gaps, overlapping rentals, and the overall shape of the trip at a glance.</p>
+    </div>
+  </div>
+
+  <!-- ══ 4. GMAIL IMPORT MODAL ══ -->
+  <div class="section">
+    <div class="screen">
+      <div class="ui-top-bar" style="padding:10px 16px;opacity:0.4;">
+        <div class="ui-logo" style="font-size:14px;"><span>✈️</span> Family Trip Planner</div>
+        <div class="ui-spacer"></div>
+        <div class="tool-btn active" style="font-size:10px;border-color:#10b981;color:#e2e8f0;">📧 Gmail</div>
+      </div>
+
+      <div class="modal-overlay">
+        <div class="modal-box">
+          <div class="modal-header">
+            <div class="modal-title">📧 Import from Gmail</div>
+            <button class="modal-close">×</button>
+          </div>
+          <div class="modal-label">Gmail Label</div>
+          <select class="modal-select">
+            <option>2026 trip to USA</option>
+          </select>
+          <div class="modal-inner-box">
+            <div class="modal-inner-title">📋 Gmail Import</div>
+            <div class="modal-inner-desc">Send a request to Claude, copy the response, paste it back.</div>
+            <div class="modal-actions">
+              <div class="modal-btn-ghost">Already have a response →</div>
+              <div class="modal-btn-primary">📤 Send Request →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">
+      <h3>4 — Gmail Import</h3>
+      <p>Scan a Gmail label (e.g. "2026 trip to USA") for booking confirmation emails. Claude AI extracts structured booking data and presents a preview — select which entries to import with one click.</p>
+    </div>
+  </div>
+
+  <!-- ══ 5. DETAIL CARD ══ -->
+  <div class="section">
+    <div class="screen">
+      <div class="ui-top-bar" style="padding:10px 16px;">
+        <div class="ui-logo" style="font-size:14px;"><span>✈️</span> Family Trip Planner</div>
+        <div class="ui-spacer"></div>
+        <div class="tabs" style="padding:0;gap:4px;">
+          <div class="tool-btn active" style="font-size:10px;">≡ Table</div>
+        </div>
+      </div>
+
+      <div class="detail-wrap">
+        <div class="detail-nav">
+          <div class="detail-back">← Back</div>
+          <div class="detail-spacer"></div>
+          <div class="detail-edit">✏️ Edit</div>
+          <div class="detail-del">🗑️ Delete</div>
+        </div>
+
+        <div class="detail-card">
+          <div class="detail-icon">🏠</div>
+          <div>
+            <div class="detail-type">STAY • BOOKING.COM</div>
+            <div class="detail-name">EMVI Apartments VI near airport</div>
+            <div class="detail-dates">07.22.26 → 07.24.26 <span class="detail-nights">2n</span></div>
+            <div class="detail-cost">₪944</div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-section-title">Stay Details</div>
+          <div class="detail-row">
+            <div class="detail-row-label">Address</div>
+            <div class="detail-row-val">Vravrona, Attica, Greece (near Athens airport)</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-row-label">Cost/Night</div>
+            <div class="detail-row-val">₪472</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-row-label">Total Cost</div>
+            <div class="detail-row-val">₪944</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-row-label">Confirmation</div>
+            <div class="detail-row-val" style="color:#64748b;font-style:italic;">●●●●●●●●●●</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-row-label">Booking URL</div>
+            <div class="detail-row-val" style="color:#6366f1;">🔗 Open link</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-row-label">Payment</div>
+            <div class="detail-row-val">unpaid</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="caption">
+      <h3>5 — Booking Detail View</h3>
+      <p>Full detail card for any booking — dates, cost per night, address, confirmation number, payment status and vendor links. Accessible by double-clicking any row. Edit or delete from the same screen.</p>
+    </div>
+  </div>
+
+</div><!-- /grid -->
+
+<div class="page-footer">
+  Family Trip Planner &nbsp;·&nbsp; Single-file React PWA &nbsp;·&nbsp; Firebase Firestore sync &nbsp;·&nbsp; GitHub Pages
+</div>
+
+</body>
+</html>
