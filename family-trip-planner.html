@@ -995,42 +995,65 @@ function App(){
     return function(){unsubAuth();};
   },[]);
 
+  var unsubSnapshotRef=useRef(null);
   useEffect(function(){
-    (async function(){
-      // Try Firestore first, fall back to localStorage
-      var tripList=await storeGetCloud("trips_index");
-      if(!tripList)tripList=storeGet("trips_index");
-      if(!tripList){
-        var legAcc=storeGet("acc")||[]; var legFlt=storeGet("flt")||[]; var legCar=storeGet("car")||[]; var legAct=storeGet("act")||[];
-        var firstTrip=Object.assign(newTrip("My Trip"),{acc:legAcc,flt:legFlt,car:legCar,act:legAct});
-        tripList=[firstTrip]; storeSet("trips_index",tripList);
-      }
-      setTripsRaw(tripList);
-      var savedActive=await storeGetCloud("active_trip_id");
-      if(!savedActive)savedActive=storeGet("active_trip_id");
-      var hasActive=savedActive&&tripList.filter(function(t){return t.id===savedActive;}).length>0;
-      setActiveTripIdRaw(hasActive?savedActive:(tripList[0]&&tripList[0].id)||null);
-      // onSnapshot IS the initial load for signed-in users
-      if(typeof db!=="undefined"&&auth.currentUser){
-        var uid=auth.currentUser.uid;
-        db.collection("users").doc(uid).collection("data").doc("trips_index").onSnapshot(function(doc){
-          if(doc.exists){
-            var data=doc.data();
-            if(data&&data.value){
-              var remote=JSON.parse(data.value);
-              setTripsRaw(remote);
-            }
+    // Don't run until auth has resolved
+    if(authLoading)return;
+    // Tear down any previous snapshot listener before setting up a new one
+    if(unsubSnapshotRef.current){unsubSnapshotRef.current();unsubSnapshotRef.current=null;}
+
+    if(user&&typeof db!=="undefined"){
+      // Signed-in: Firestore is source of truth. onSnapshot provides initial load + live updates.
+      var uid=user.uid;
+      var unsub=db.collection("users").doc(uid).collection("data").doc("trips_index").onSnapshot(function(doc){
+        if(doc.exists){
+          var data=doc.data();
+          if(data&&data.value){
+            var remote=JSON.parse(data.value);
+            setTripsRaw(remote);
+            // Restore active trip
+            var savedActive=storeGet("active_trip_id");
+            var hasActive=savedActive&&remote.filter(function(t){return t.id===savedActive;}).length>0;
+            setActiveTripIdRaw(hasActive?savedActive:(remote[0]&&remote[0].id)||null);
           }
-          setLoaded(true);
-        },function(err){
-          console.warn("onSnapshot error:",err);
-          setLoaded(true);
-        });
-      } else {
+        } else {
+          // No cloud data yet — check localStorage then seed
+          var local=storeGet("trips_index");
+          if(!local){
+            var leg=Object.assign(newTrip("My Trip"),{acc:storeGet("acc")||[],flt:storeGet("flt")||[],car:storeGet("car")||[],act:storeGet("act")||[]});
+            local=[leg];
+            storeSet("trips_index",local);
+          }
+          setTripsRaw(local);
+          var savedActive2=storeGet("active_trip_id");
+          var hasActive2=savedActive2&&local.filter(function(t){return t.id===savedActive2;}).length>0;
+          setActiveTripIdRaw(hasActive2?savedActive2:(local[0]&&local[0].id)||null);
+        }
         setLoaded(true);
+      },function(err){
+        console.warn("onSnapshot error:",err);
+        // Fall back to localStorage on Firestore error
+        var local=storeGet("trips_index")||[Object.assign(newTrip("My Trip"),{acc:[],flt:[],car:[],act:[]})];
+        setTripsRaw(local);
+        setActiveTripIdRaw((local[0]&&local[0].id)||null);
+        setLoaded(true);
+      });
+      unsubSnapshotRef.current=unsub;
+    } else {
+      // Not signed in — use localStorage only
+      var local=storeGet("trips_index");
+      if(!local){
+        var leg=Object.assign(newTrip("My Trip"),{acc:storeGet("acc")||[],flt:storeGet("flt")||[],car:storeGet("car")||[],act:storeGet("act")||[]});
+        local=[leg];
+        storeSet("trips_index",local);
       }
-    })();
-  },[]);
+      setTripsRaw(local);
+      var savedActive=storeGet("active_trip_id");
+      var hasActive=savedActive&&local.filter(function(t){return t.id===savedActive;}).length>0;
+      setActiveTripIdRaw(hasActive?savedActive:(local[0]&&local[0].id)||null);
+      setLoaded(true);
+    }
+  },[user,authLoading]);
 
   function saveTrips(updated){setTripsRaw(updated);storeSet("trips_index",updated);}
   function setActiveTripId(id){setActiveTripIdRaw(id);storeSet("active_trip_id",id);}
