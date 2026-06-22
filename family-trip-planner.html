@@ -117,20 +117,22 @@ function newTrip(name){return{id:"trip_"+Date.now(),name:name||"New Trip",acc:[]
 function storeGet(k){
   try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}
 }
+function sharedRef(k){
+  // All authenticated users share one Firestore namespace so family members see the same data.
+  return db.collection("shared").doc("family_data").collection("data").doc(k);
+}
 function storeSet(k,v){
   try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
   try{
     if(typeof db!=="undefined"&&typeof auth!=="undefined"&&auth.currentUser){
-      var uid=auth.currentUser.uid;
-      db.collection("users").doc(uid).collection("data").doc(k).set({value:JSON.stringify(v),updated:Date.now()}).catch(function(e){console.warn("Firestore write failed:",e);});
+      sharedRef(k).set({value:JSON.stringify(v),updated:Date.now()}).catch(function(e){console.warn("Firestore write failed:",e);});
     }
   }catch(e){console.warn("Firestore error:",e);}
 }
 async function storeGetCloud(k){
   try{
     if(typeof db==="undefined"||!auth.currentUser)return null;
-    var uid=auth.currentUser.uid;
-    var doc=await db.collection("users").doc(uid).collection("data").doc(k).get();
+    var doc=await sharedRef(k).get();
     if(doc.exists){var d=doc.data();return d.value?JSON.parse(d.value):null;}
     return null;
   }catch(e){console.warn("Firestore read failed:",e);return null;}
@@ -1042,36 +1044,53 @@ function App(){
     if(unsubSnapshotRef.current){unsubSnapshotRef.current();unsubSnapshotRef.current=null;}
 
     if(user&&typeof db!=="undefined"){
-      // Signed-in: Firestore is source of truth. onSnapshot provides initial load + live updates.
+      // Signed-in: Firestore shared path is source of truth. onSnapshot provides initial load + live updates.
       var uid=user.uid;
-      var unsub=db.collection("users").doc(uid).collection("data").doc("trips_index").onSnapshot(function(doc){
+      var unsub=sharedRef("trips_index").onSnapshot(function(doc){
         if(doc.exists){
           var data=doc.data();
           if(data&&data.value){
             var remote=JSON.parse(data.value);
             setTripsRaw(remote);
-            // Restore active trip
             var savedActive=storeGet("active_trip_id");
             var hasActive=savedActive&&remote.filter(function(t){return t.id===savedActive;}).length>0;
             setActiveTripIdRaw(hasActive?savedActive:(remote[0]&&remote[0].id)||null);
           }
         } else {
-          // No cloud data yet — check localStorage then seed
-          var local=storeGet("trips_index");
-          if(!local){
-            var leg=Object.assign(newTrip("My Trip"),{acc:storeGet("acc")||[],flt:storeGet("flt")||[],car:storeGet("car")||[],act:storeGet("act")||[]});
-            local=[leg];
+          // No shared cloud data yet — try to migrate from old per-user path, then localStorage
+          db.collection("users").doc(uid).collection("data").doc("trips_index").get().then(function(oldDoc){
+            var local=null;
+            if(oldDoc.exists){
+              var od=oldDoc.data();
+              if(od&&od.value){local=JSON.parse(od.value);}
+            }
+            if(!local){local=storeGet("trips_index");}
+            if(!local){
+              var leg=Object.assign(newTrip("My Trip"),{acc:storeGet("acc")||[],flt:storeGet("flt")||[],car:storeGet("car")||[],act:storeGet("act")||[]});
+              local=[leg];
+            }
             storeSet("trips_index",local);
-          }
-          setTripsRaw(local);
-          var savedActive2=storeGet("active_trip_id");
-          var hasActive2=savedActive2&&local.filter(function(t){return t.id===savedActive2;}).length>0;
-          setActiveTripIdRaw(hasActive2?savedActive2:(local[0]&&local[0].id)||null);
+            setTripsRaw(local);
+            var savedActive2=storeGet("active_trip_id");
+            var hasActive2=savedActive2&&local.filter(function(t){return t.id===savedActive2;}).length>0;
+            setActiveTripIdRaw(hasActive2?savedActive2:(local[0]&&local[0].id)||null);
+            setLoaded(true);
+          }).catch(function(){
+            var local=storeGet("trips_index")||[Object.assign(newTrip("My Trip"),{acc:[],flt:[],car:[],act:[]})];
+            setTripsRaw(local);
+            setActiveTripIdRaw((local[0]&&local[0].id)||null);
+            setLoaded(true);
+          });
+          return;
         }
         setLoaded(true);
       },function(err){
-        console.warn("onSnapshot error:",err);
-        // Fall back to localStorage on Firestore error
+        console.error("Firestore onSnapshot error:",err);
+        // Show a visible error so the user knows this is a permissions/rules issue
+        var isPermission=err&&(err.code==="permission-denied"||err.message&&err.message.indexOf("permission")>-1);
+        if(isPermission){
+          alert("Could not load shared data from the cloud.\n\nFirebase rules need to be updated to allow family members.\n\nPlease set Firestore rules to:\nallow read, write: if request.auth != null;\n\nFalling back to local data for now.");
+        }
         var local=storeGet("trips_index")||[Object.assign(newTrip("My Trip"),{acc:[],flt:[],car:[],act:[]})];
         setTripsRaw(local);
         setActiveTripIdRaw((local[0]&&local[0].id)||null);
