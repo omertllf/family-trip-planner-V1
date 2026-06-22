@@ -973,64 +973,11 @@ function GanttView(props){
 }
 
 // ── App ──────────────────────────────────────────────────────────
-function HouseholdSetupScreen(props){
-  var user=props.user,onCreated=props.onCreated,joinId=props.joinId;
-  var t1=useState(""); var name=t1[0],setName=t1[1];
-  var t2=useState(false); var loading=t2[0],setLoading=t2[1];
-  var t3=useState(""); var err=t3[0],setErr=t3[1];
-
-  useEffect(function(){
-    if(!joinId||!user)return;
-    setLoading(true);
-    var email=user.email.toLowerCase();
-    db.collection("households").doc(joinId).get().then(function(doc){
-      if(!doc.exists){setErr("Invite link is invalid or expired.");setLoading(false);return;}
-      var data=doc.data();
-      var emails=data.allowedEmails||[];
-      if(emails.indexOf(email)>-1){_householdId=joinId;onCreated(joinId,data);return;}
-      return db.collection("households").doc(joinId).update({allowedEmails:emails.concat([email])}).then(function(){
-        _householdId=joinId;
-        onCreated(joinId,Object.assign({},data,{allowedEmails:emails.concat([email])}));
-      });
-    }).catch(function(e){setErr("Failed to join: "+e.message);setLoading(false);});
-  },[]);
-
-  function create(){
-    if(!name.trim()){setErr("Please enter a household name.");return;}
-    setLoading(true);
-    var id="hh_"+Date.now()+"_"+Math.random().toString(36).slice(2,9);
-    var email=user.email.toLowerCase();
-    var data={name:name.trim(),ownerEmail:email,allowedEmails:[email],createdAt:Date.now()};
-    db.collection("households").doc(id).set(data)
-      .then(function(){
-        // Migrate data from old shared path if it exists
-        return db.collection("shared").doc("family_data").collection("data").doc("trips_index").get()
-          .then(function(oldDoc){
-            if(oldDoc.exists)return db.collection("households").doc(id).collection("data").doc("trips_index").set(oldDoc.data());
-          }).catch(function(){});
-      })
-      .then(function(){_householdId=id;onCreated(id,data);})
-      .catch(function(e){setErr("Failed to create: "+e.message);setLoading(false);});
-  }
-
-  if(joinId&&loading)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)",color:"var(--text2)",fontSize:16}},"Joining household...");
-
-  return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)"}},
-    h("div",{style:{textAlign:"center",padding:"40px",background:"var(--surface)",borderRadius:16,border:"1px solid var(--border)",maxWidth:400,width:"100%",margin:"0 20px"}},
-      h("div",{style:{fontSize:56,marginBottom:16}},"🏡"),
-      h("h1",{style:{margin:"0 0 8px",fontSize:22,fontWeight:700,color:"var(--text)"}},"Set up your household"),
-      h("p",{style:{margin:"0 0 24px",fontSize:14,color:"var(--text3)"}},"A household lets your family share and edit trips together."),
-      err&&h("div",{style:{background:"#3b1a1a",border:"1px solid var(--danger)",borderRadius:8,padding:"10px 14px",color:"var(--danger)",fontSize:13,marginBottom:16}},err),
-      h("input",{type:"text",placeholder:"e.g. Smith Family",value:name,onChange:function(e){setName(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")create();},style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 14px",color:"var(--text)",fontSize:14,marginBottom:16,boxSizing:"border-box"}}),
-      h("button",{onClick:create,disabled:loading,style:{width:"100%",padding:"12px",borderRadius:10,border:"none",background:"var(--primary)",color:"#fff",fontSize:15,fontWeight:600,cursor:loading?"not-allowed":"pointer",opacity:loading?0.7:1}},loading?"Creating...":"Create Household"),
-      h("p",{style:{margin:"20px 0 0",fontSize:12,color:"var(--text4)"}},"Signed in as "+user.email+" · ",h("span",{style:{cursor:"pointer",color:"var(--text3)",textDecoration:"underline"},onClick:function(){auth.signOut();}},"Sign out"))
-    )
-  );
-}
-
 function HouseholdModal(props){
-  var householdId=props.householdId,householdDoc=props.householdDoc,onClose=props.onClose;
+  var householdId=props.householdId,householdDoc=props.householdDoc,onClose=props.onClose,onRenamed=props.onRenamed;
   var t1=useState(false); var copied=t1[0],setCopied=t1[1];
+  var t2=useState(false); var editing=t2[0],setEditing=t2[1];
+  var t3=useState((householdDoc&&householdDoc.name)||"My Family"); var nameVal=t3[0],setNameVal=t3[1];
   var baseUrl=window.location.origin+window.location.pathname;
   var inviteUrl=baseUrl+"?join="+householdId;
 
@@ -1039,12 +986,29 @@ function HouseholdModal(props){
   }
   function shareWhatsApp(){window.open("https://wa.me/?text="+encodeURIComponent("Join our family trips on Family Trip Planner! "+inviteUrl));}
   function shareEmail(){window.open("mailto:?subject="+encodeURIComponent("Join our Family Trip Planner")+"&body="+encodeURIComponent("Hi!\n\nJoin our family trip planner to see and edit our trips together.\n\nClick this link to join:\n"+inviteUrl+"\n\nSee you there!"));}
+  function saveName(){
+    if(!nameVal.trim())return;
+    db.collection("households").doc(householdId).update({name:nameVal.trim()}).then(function(){
+      if(onRenamed)onRenamed(nameVal.trim());
+      setEditing(false);
+    }).catch(function(){setEditing(false);});
+  }
 
   var members=(householdDoc&&householdDoc.allowedEmails)||[];
   var ownerEmail=householdDoc&&householdDoc.ownerEmail;
+  var displayName=householdDoc&&householdDoc.name||"My Family";
 
   return h(Overlay,{onClose:onClose},
-    h(MH,{title:"👥 "+(householdDoc&&householdDoc.name||"Household"),onClose:onClose}),
+    h(MH,{title:"👥 "+displayName,onClose:onClose}),
+    h("div",{style:{marginBottom:16,display:"flex",alignItems:"center",gap:8}},
+      editing
+        ? h("div",{style:{display:"flex",gap:6,flex:1}},
+            h("input",{type:"text",value:nameVal,onChange:function(e){setNameVal(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")saveName();if(e.key==="Escape")setEditing(false);},autoFocus:true,style:{flex:1,background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:6,padding:"6px 10px",color:"var(--text)",fontSize:13}}),
+            h("button",{onClick:saveName,style:{padding:"6px 12px",borderRadius:6,border:"none",background:"var(--primary)",color:"#fff",cursor:"pointer",fontSize:13}},"Save"),
+            h("button",{onClick:function(){setEditing(false);},style:{padding:"6px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text3)",cursor:"pointer",fontSize:13}},"✕")
+          )
+        : h("span",{style:{fontSize:13,color:"var(--text3)",cursor:"pointer",textDecoration:"underline"},onClick:function(){setEditing(true);setNameVal(displayName);}},"Rename")
+    ),
     h("div",{style:{marginBottom:20}},
       h("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:700,letterSpacing:"0.05em",marginBottom:8}},"MEMBERS"),
       members.map(function(email){
@@ -1059,7 +1023,7 @@ function HouseholdModal(props){
     ),
     h("div",null,
       h("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:700,letterSpacing:"0.05em",marginBottom:10}},"INVITE FAMILY MEMBERS"),
-      h("p",{style:{fontSize:13,color:"var(--text2)",margin:"0 0 10px"}},"Share this link — anyone who opens it and signs in will join your household."),
+      h("p",{style:{fontSize:13,color:"var(--text2)",margin:"0 0 10px"}},"Share this link — anyone who opens it and signs in will join your household automatically."),
       h("div",{style:{background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:8,padding:"8px 12px",fontSize:11,color:"var(--text3)",wordBreak:"break-all",marginBottom:12,fontFamily:"monospace"}},inviteUrl),
       h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
         h("button",{onClick:copy,style:{flex:1,padding:"10px",borderRadius:8,border:"1px solid var(--border)",background:copied?"var(--success)":"transparent",color:copied?"#fff":"var(--text)",cursor:"pointer",fontWeight:600,fontSize:13,transition:"all 0.2s"}},copied?"✓ Copied!":"📋 Copy Link"),
@@ -1139,11 +1103,49 @@ function App(){
     return function(){unsubAuth();};
   },[]);
 
-  // Household lookup — runs after auth resolves
+  // Household lookup — runs after auth resolves.
+  // If user has no household: auto-create one silently (or join via invite link).
   useEffect(function(){
     if(authLoading)return;
     if(!user){setHouseholdLoading(false);return;}
     var email=user.email.toLowerCase();
+
+    function autoCreate(){
+      // If invite link present, join that household instead of creating a new one
+      if(joinParam){
+        return db.collection("households").doc(joinParam).get().then(function(doc){
+          if(!doc.exists){doCreate();return;}
+          var data=doc.data();
+          var emails=data.allowedEmails||[];
+          if(emails.indexOf(email)>-1){_householdId=joinParam;setHouseholdId(joinParam);setHouseholdDoc(data);setHouseholdLoading(false);return;}
+          var newEmails=emails.concat([email]);
+          return db.collection("households").doc(joinParam).update({allowedEmails:newEmails}).then(function(){
+            var updated=Object.assign({},data,{allowedEmails:newEmails});
+            _householdId=joinParam;setHouseholdId(joinParam);setHouseholdDoc(updated);setHouseholdLoading(false);
+            // Remove ?join= from URL without reload
+            window.history.replaceState({},"",window.location.pathname);
+          });
+        }).catch(function(){doCreate();});
+      }
+      doCreate();
+    }
+
+    function doCreate(){
+      var id="hh_"+Date.now()+"_"+Math.random().toString(36).slice(2,9);
+      var displayName=(user.displayName||email.split("@")[0]);
+      var data={name:displayName+"'s Family",ownerEmail:email,allowedEmails:[email],createdAt:Date.now()};
+      db.collection("households").doc(id).set(data)
+        .then(function(){
+          // Migrate from old shared path if any data exists there
+          return db.collection("shared").doc("family_data").collection("data").doc("trips_index").get()
+            .then(function(oldDoc){
+              if(oldDoc.exists)return db.collection("households").doc(id).collection("data").doc("trips_index").set(oldDoc.data());
+            }).catch(function(){});
+        })
+        .then(function(){_householdId=id;setHouseholdId(id);setHouseholdDoc(data);setHouseholdLoading(false);})
+        .catch(function(e){console.warn("Household create failed:",e);setHouseholdLoading(false);});
+    }
+
     db.collection("households").where("allowedEmails","array-contains",email).limit(1).get()
       .then(function(snap){
         if(!snap.empty){
@@ -1151,8 +1153,10 @@ function App(){
           _householdId=doc.id;
           setHouseholdId(doc.id);
           setHouseholdDoc(doc.data());
+          setHouseholdLoading(false);
+        } else {
+          autoCreate();
         }
-        setHouseholdLoading(false);
       })
       .catch(function(e){console.warn("Household lookup failed:",e);setHouseholdLoading(false);});
   },[user,authLoading]);
@@ -1314,8 +1318,6 @@ function App(){
   );
 
   // Household setup — new user or joining via invite link
-  if(!householdId)return h(HouseholdSetupScreen,{user:user,joinId:joinParam,onCreated:function(id,doc){_householdId=id;setHouseholdId(id);setHouseholdDoc(doc);}});
-
   if(!loaded)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)",color:"var(--text2)",fontSize:16}},"Loading your trips...");
 
   return h("div",{style:{fontFamily:"Inter,sans-serif",background:"var(--bg)",minHeight:"100vh",color:"var(--text)"}},
@@ -1385,7 +1387,7 @@ function App(){
     imp===true&&h(ImportModal,{onClose:function(){setImp(false);},onImported:function(importedItem){var det=Object.keys(importedItem).filter(function(k){return importedItem[k]&&importedItem[k]!==false&&k!=="id"&&k!=="type";});setImp(false);setModal({isNew:true,item:importedItem,det:det});}}),
     imp==="backup"&&h(BackupModal,{trips:trips,onClose:function(){setImp(false);},onRestore:function(data){saveTrips(data.trips||trips);setImp(false);}}),
     modal&&h(EntryModal,{modal:modal,tab:tab,onSave:save,onDelete:del,onClose:function(){setModal(null);}}),
-    householdModal&&h(HouseholdModal,{householdId:householdId,householdDoc:householdDoc,user:user,onClose:function(){setHouseholdModal(false);}})
+    householdModal&&h(HouseholdModal,{householdId:householdId,householdDoc:householdDoc,user:user,onClose:function(){setHouseholdModal(false);},onRenamed:function(n){setHouseholdDoc(function(d){return Object.assign({},d,{name:n});});}})
   );
 }
 
