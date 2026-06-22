@@ -117,14 +117,15 @@ function newTrip(name){return{id:"trip_"+Date.now(),name:name||"New Trip",acc:[]
 function storeGet(k){
   try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}
 }
+var _householdId=null;
 function sharedRef(k){
-  // All authenticated users share one Firestore namespace so family members see the same data.
-  return db.collection("shared").doc("family_data").collection("data").doc(k);
+  return db.collection("households").doc(_householdId).collection("data").doc(k);
 }
 function storeSet(k,v){
   try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}
   try{
-    if(typeof db!=="undefined"&&typeof auth!=="undefined"&&auth.currentUser){
+    // Only sync trips_index to Firestore; other prefs stay local-only
+    if(k==="trips_index"&&_householdId&&typeof db!=="undefined"&&typeof auth!=="undefined"&&auth.currentUser){
       sharedRef(k).set({value:JSON.stringify(v),updated:Date.now()}).catch(function(e){console.warn("Firestore write failed:",e);});
     }
   }catch(e){console.warn("Firestore error:",e);}
@@ -972,6 +973,103 @@ function GanttView(props){
 }
 
 // ── App ──────────────────────────────────────────────────────────
+function HouseholdSetupScreen(props){
+  var user=props.user,onCreated=props.onCreated,joinId=props.joinId;
+  var t1=useState(""); var name=t1[0],setName=t1[1];
+  var t2=useState(false); var loading=t2[0],setLoading=t2[1];
+  var t3=useState(""); var err=t3[0],setErr=t3[1];
+
+  useEffect(function(){
+    if(!joinId||!user)return;
+    setLoading(true);
+    var email=user.email.toLowerCase();
+    db.collection("households").doc(joinId).get().then(function(doc){
+      if(!doc.exists){setErr("Invite link is invalid or expired.");setLoading(false);return;}
+      var data=doc.data();
+      var emails=data.allowedEmails||[];
+      if(emails.indexOf(email)>-1){_householdId=joinId;onCreated(joinId,data);return;}
+      return db.collection("households").doc(joinId).update({allowedEmails:emails.concat([email])}).then(function(){
+        _householdId=joinId;
+        onCreated(joinId,Object.assign({},data,{allowedEmails:emails.concat([email])}));
+      });
+    }).catch(function(e){setErr("Failed to join: "+e.message);setLoading(false);});
+  },[]);
+
+  function create(){
+    if(!name.trim()){setErr("Please enter a household name.");return;}
+    setLoading(true);
+    var id="hh_"+Date.now()+"_"+Math.random().toString(36).slice(2,9);
+    var email=user.email.toLowerCase();
+    var data={name:name.trim(),ownerEmail:email,allowedEmails:[email],createdAt:Date.now()};
+    db.collection("households").doc(id).set(data)
+      .then(function(){
+        // Migrate data from old shared path if it exists
+        return db.collection("shared").doc("family_data").collection("data").doc("trips_index").get()
+          .then(function(oldDoc){
+            if(oldDoc.exists)return db.collection("households").doc(id).collection("data").doc("trips_index").set(oldDoc.data());
+          }).catch(function(){});
+      })
+      .then(function(){_householdId=id;onCreated(id,data);})
+      .catch(function(e){setErr("Failed to create: "+e.message);setLoading(false);});
+  }
+
+  if(joinId&&loading)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)",color:"var(--text2)",fontSize:16}},"Joining household...");
+
+  return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)"}},
+    h("div",{style:{textAlign:"center",padding:"40px",background:"var(--surface)",borderRadius:16,border:"1px solid var(--border)",maxWidth:400,width:"100%",margin:"0 20px"}},
+      h("div",{style:{fontSize:56,marginBottom:16}},"🏡"),
+      h("h1",{style:{margin:"0 0 8px",fontSize:22,fontWeight:700,color:"var(--text)"}},"Set up your household"),
+      h("p",{style:{margin:"0 0 24px",fontSize:14,color:"var(--text3)"}},"A household lets your family share and edit trips together."),
+      err&&h("div",{style:{background:"#3b1a1a",border:"1px solid var(--danger)",borderRadius:8,padding:"10px 14px",color:"var(--danger)",fontSize:13,marginBottom:16}},err),
+      h("input",{type:"text",placeholder:"e.g. Smith Family",value:name,onChange:function(e){setName(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")create();},style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 14px",color:"var(--text)",fontSize:14,marginBottom:16,boxSizing:"border-box"}}),
+      h("button",{onClick:create,disabled:loading,style:{width:"100%",padding:"12px",borderRadius:10,border:"none",background:"var(--primary)",color:"#fff",fontSize:15,fontWeight:600,cursor:loading?"not-allowed":"pointer",opacity:loading?0.7:1}},loading?"Creating...":"Create Household"),
+      h("p",{style:{margin:"20px 0 0",fontSize:12,color:"var(--text4)"}},"Signed in as "+user.email+" · ",h("span",{style:{cursor:"pointer",color:"var(--text3)",textDecoration:"underline"},onClick:function(){auth.signOut();}},"Sign out"))
+    )
+  );
+}
+
+function HouseholdModal(props){
+  var householdId=props.householdId,householdDoc=props.householdDoc,onClose=props.onClose;
+  var t1=useState(false); var copied=t1[0],setCopied=t1[1];
+  var baseUrl=window.location.origin+window.location.pathname;
+  var inviteUrl=baseUrl+"?join="+householdId;
+
+  function copy(){
+    navigator.clipboard.writeText(inviteUrl).then(function(){setCopied(true);setTimeout(function(){setCopied(false);},2000);}).catch(function(){});
+  }
+  function shareWhatsApp(){window.open("https://wa.me/?text="+encodeURIComponent("Join our family trips on Family Trip Planner! "+inviteUrl));}
+  function shareEmail(){window.open("mailto:?subject="+encodeURIComponent("Join our Family Trip Planner")+"&body="+encodeURIComponent("Hi!\n\nJoin our family trip planner to see and edit our trips together.\n\nClick this link to join:\n"+inviteUrl+"\n\nSee you there!"));}
+
+  var members=(householdDoc&&householdDoc.allowedEmails)||[];
+  var ownerEmail=householdDoc&&householdDoc.ownerEmail;
+
+  return h(Overlay,{onClose:onClose},
+    h(MH,{title:"👥 "+(householdDoc&&householdDoc.name||"Household"),onClose:onClose}),
+    h("div",{style:{marginBottom:20}},
+      h("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:700,letterSpacing:"0.05em",marginBottom:8}},"MEMBERS"),
+      members.map(function(email){
+        return h("div",{key:email,style:{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"var(--surface2)",borderRadius:8,marginBottom:6}},
+          h("div",{style:{width:32,height:32,borderRadius:"50%",background:"var(--primary)",display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:13,fontWeight:700,flexShrink:0}},(email[0]||"?").toUpperCase()),
+          h("div",null,
+            h("div",{style:{fontSize:13,color:"var(--text)",fontWeight:500}},email),
+            email===ownerEmail&&h("div",{style:{fontSize:11,color:"var(--text3)"}},"Owner")
+          )
+        );
+      })
+    ),
+    h("div",null,
+      h("div",{style:{fontSize:12,color:"var(--text3)",fontWeight:700,letterSpacing:"0.05em",marginBottom:10}},"INVITE FAMILY MEMBERS"),
+      h("p",{style:{fontSize:13,color:"var(--text2)",margin:"0 0 10px"}},"Share this link — anyone who opens it and signs in will join your household."),
+      h("div",{style:{background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:8,padding:"8px 12px",fontSize:11,color:"var(--text3)",wordBreak:"break-all",marginBottom:12,fontFamily:"monospace"}},inviteUrl),
+      h("div",{style:{display:"flex",gap:8,flexWrap:"wrap"}},
+        h("button",{onClick:copy,style:{flex:1,padding:"10px",borderRadius:8,border:"1px solid var(--border)",background:copied?"var(--success)":"transparent",color:copied?"#fff":"var(--text)",cursor:"pointer",fontWeight:600,fontSize:13,transition:"all 0.2s"}},copied?"✓ Copied!":"📋 Copy Link"),
+        h("button",{onClick:shareWhatsApp,style:{flex:1,padding:"10px",borderRadius:8,border:"none",background:"#25D366",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:13}},"💬 WhatsApp"),
+        h("button",{onClick:shareEmail,style:{flex:1,padding:"10px",borderRadius:8,border:"none",background:"var(--primary)",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:13}},"✉️ Email")
+      )
+    )
+  );
+}
+
 function App(){
   var t1=useState([]); var trips=t1[0],setTripsRaw=t1[1];
   var t2=useState(null); var activeTripId=t2[0],setActiveTripIdRaw=t2[1];
@@ -991,6 +1089,11 @@ function App(){
   var t15=useState("USD"); var currency=t15[0],setCurrencyRaw=t15[1];
   var t16=useState({status:"loading",date:""}); var ratesInfo=t16[0],setRatesInfo=t16[1];
   var t14=useState(function(){return storeGet("dark_mode")!==false;}); var darkMode=t14[0],setDarkMode=t14[1];
+  var th1=useState(null); var householdId=th1[0],setHouseholdId=th1[1];
+  var th2=useState(null); var householdDoc=th2[0],setHouseholdDoc=th2[1];
+  var th3=useState(true); var householdLoading=th3[0],setHouseholdLoading=th3[1];
+  var th4=useState(false); var householdModal=th4[0],setHouseholdModal=th4[1];
+  var joinParam=useMemo(function(){return new URLSearchParams(window.location.search).get("join")||null;},[]);
 
   // Apply dark/light mode
   useEffect(function(){
@@ -1036,16 +1139,33 @@ function App(){
     return function(){unsubAuth();};
   },[]);
 
+  // Household lookup — runs after auth resolves
+  useEffect(function(){
+    if(authLoading)return;
+    if(!user){setHouseholdLoading(false);return;}
+    var email=user.email.toLowerCase();
+    db.collection("households").where("allowedEmails","array-contains",email).limit(1).get()
+      .then(function(snap){
+        if(!snap.empty){
+          var doc=snap.docs[0];
+          _householdId=doc.id;
+          setHouseholdId(doc.id);
+          setHouseholdDoc(doc.data());
+        }
+        setHouseholdLoading(false);
+      })
+      .catch(function(e){console.warn("Household lookup failed:",e);setHouseholdLoading(false);});
+  },[user,authLoading]);
+
   var unsubSnapshotRef=useRef(null);
   useEffect(function(){
-    // Don't run until auth has resolved
-    if(authLoading)return;
+    // Don't run until auth and household have resolved
+    if(authLoading||householdLoading)return;
     // Tear down any previous snapshot listener before setting up a new one
     if(unsubSnapshotRef.current){unsubSnapshotRef.current();unsubSnapshotRef.current=null;}
 
-    if(user&&typeof db!=="undefined"){
-      // Signed-in: Firestore shared path is source of truth. onSnapshot provides initial load + live updates.
-      var uid=user.uid;
+    if(user&&householdId&&typeof db!=="undefined"){
+      // Signed-in with household: Firestore is source of truth.
       var unsub=sharedRef("trips_index").onSnapshot(function(doc){
         if(doc.exists){
           var data=doc.data();
@@ -1057,47 +1177,28 @@ function App(){
             setActiveTripIdRaw(hasActive?savedActive:(remote[0]&&remote[0].id)||null);
           }
         } else {
-          // No shared cloud data yet — try to migrate from old per-user path, then localStorage
-          db.collection("users").doc(uid).collection("data").doc("trips_index").get().then(function(oldDoc){
-            var local=null;
-            if(oldDoc.exists){
-              var od=oldDoc.data();
-              if(od&&od.value){local=JSON.parse(od.value);}
-            }
-            if(!local){local=storeGet("trips_index");}
-            if(!local){
-              var leg=Object.assign(newTrip("My Trip"),{acc:storeGet("acc")||[],flt:storeGet("flt")||[],car:storeGet("car")||[],act:storeGet("act")||[]});
-              local=[leg];
-            }
-            storeSet("trips_index",local);
-            setTripsRaw(local);
-            var savedActive2=storeGet("active_trip_id");
-            var hasActive2=savedActive2&&local.filter(function(t){return t.id===savedActive2;}).length>0;
-            setActiveTripIdRaw(hasActive2?savedActive2:(local[0]&&local[0].id)||null);
-            setLoaded(true);
-          }).catch(function(){
-            var local=storeGet("trips_index")||[Object.assign(newTrip("My Trip"),{acc:[],flt:[],car:[],act:[]})];
-            setTripsRaw(local);
-            setActiveTripIdRaw((local[0]&&local[0].id)||null);
-            setLoaded(true);
-          });
-          return;
+          // No household data yet — seed from localStorage
+          var local=storeGet("trips_index");
+          if(!local){
+            var leg=Object.assign(newTrip("My Trip"),{acc:storeGet("acc")||[],flt:storeGet("flt")||[],car:storeGet("car")||[],act:storeGet("act")||[]});
+            local=[leg];
+          }
+          storeSet("trips_index",local);
+          setTripsRaw(local);
+          var savedActive2=storeGet("active_trip_id");
+          var hasActive2=savedActive2&&local.filter(function(t){return t.id===savedActive2;}).length>0;
+          setActiveTripIdRaw(hasActive2?savedActive2:(local[0]&&local[0].id)||null);
         }
         setLoaded(true);
       },function(err){
         console.error("Firestore onSnapshot error:",err);
-        // Show a visible error so the user knows this is a permissions/rules issue
-        var isPermission=err&&(err.code==="permission-denied"||err.message&&err.message.indexOf("permission")>-1);
-        if(isPermission){
-          alert("Could not load shared data from the cloud.\n\nFirebase rules need to be updated to allow family members.\n\nPlease set Firestore rules to:\nallow read, write: if request.auth != null;\n\nFalling back to local data for now.");
-        }
         var local=storeGet("trips_index")||[Object.assign(newTrip("My Trip"),{acc:[],flt:[],car:[],act:[]})];
         setTripsRaw(local);
         setActiveTripIdRaw((local[0]&&local[0].id)||null);
         setLoaded(true);
       });
       unsubSnapshotRef.current=unsub;
-    } else {
+    } else if(!user){
       // Not signed in — use localStorage only
       var local=storeGet("trips_index");
       if(!local){
@@ -1111,7 +1212,8 @@ function App(){
       setActiveTripIdRaw(hasActive?savedActive:(local[0]&&local[0].id)||null);
       setLoaded(true);
     }
-  },[user,authLoading]);
+    // if user && !householdId: waiting for household setup, don't set loaded
+  },[user,authLoading,householdId,householdLoading]);
 
   function setCurrency(c){_currSym=c==="EUR"?"€":c==="ILS"?"₪":"$";setCurrencyRaw(c);storeSet("currency_pref",c);}
   function saveTrips(updated){setTripsRaw(updated);storeSet("trips_index",updated);}
@@ -1192,8 +1294,8 @@ function App(){
 
   function TB(p){return h("button",{onClick:function(){setTab(p.k);},style:{padding:"7px 14px",borderRadius:7,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,background:tab===p.k?"var(--surface2)":"transparent",color:tab===p.k?"var(--text)":"var(--text2)"}},p.label);}
 
-  // Auth loading
-  if(authLoading)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)",color:"var(--text2)",fontSize:16}},"Loading...");
+  // Auth + household loading
+  if(authLoading||householdLoading)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)",color:"var(--text2)",fontSize:16}},"Loading...");
 
   // Login screen
   if(!user)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)"}},
@@ -1210,6 +1312,9 @@ function App(){
       )
     )
   );
+
+  // Household setup — new user or joining via invite link
+  if(!householdId)return h(HouseholdSetupScreen,{user:user,joinId:joinParam,onCreated:function(id,doc){_householdId=id;setHouseholdId(id);setHouseholdDoc(doc);}});
 
   if(!loaded)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)",color:"var(--text2)",fontSize:16}},"Loading your trips...");
 
@@ -1228,6 +1333,7 @@ function App(){
               },ratesInfo.status==="loading"?"⟳":ratesInfo.status==="ok"?"●":"≈"),
               h("select",{value:currency,onChange:function(e){setCurrency(e.target.value);},title:"Display currency — amounts stored in USD, converted for display",style:{background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:6,padding:"4px 6px",color:"var(--text2)",fontSize:12,cursor:"pointer"}},CURRENCIES.map(function(cur){return h("option",{key:cur.code,value:cur.code},cur.sym+" "+cur.code);})),
               h("button",{onClick:function(){setDarkMode(function(d){return !d;});},title:darkMode?"Switch to Light Mode":"Switch to Dark Mode",style:{padding:"5px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",cursor:"pointer",fontSize:15}},darkMode?"☀️":"🌙"),
+              h("button",{onClick:function(){setHouseholdModal(true);},title:"Manage household & invite members",style:{padding:"5px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text3)",cursor:"pointer",fontSize:12}},"👥 Members"),
               user&&h("button",{onClick:function(){auth.signOut();},title:"Sign out",style:{padding:"5px 10px",borderRadius:6,border:"1px solid var(--border)",background:"transparent",color:"var(--text3)",cursor:"pointer",fontSize:12,display:"flex",alignItems:"center",gap:6}},user.photoURL&&h("img",{src:user.photoURL,style:{width:20,height:20,borderRadius:"50%",flexShrink:0}}),"Sign out")
             )
           ),
@@ -1278,7 +1384,8 @@ function App(){
     ),
     imp===true&&h(ImportModal,{onClose:function(){setImp(false);},onImported:function(importedItem){var det=Object.keys(importedItem).filter(function(k){return importedItem[k]&&importedItem[k]!==false&&k!=="id"&&k!=="type";});setImp(false);setModal({isNew:true,item:importedItem,det:det});}}),
     imp==="backup"&&h(BackupModal,{trips:trips,onClose:function(){setImp(false);},onRestore:function(data){saveTrips(data.trips||trips);setImp(false);}}),
-    modal&&h(EntryModal,{modal:modal,tab:tab,onSave:save,onDelete:del,onClose:function(){setModal(null);}})
+    modal&&h(EntryModal,{modal:modal,tab:tab,onSave:save,onDelete:del,onClose:function(){setModal(null);}}),
+    householdModal&&h(HouseholdModal,{householdId:householdId,householdDoc:householdDoc,user:user,onClose:function(){setHouseholdModal(false);}})
   );
 }
 
