@@ -99,10 +99,10 @@ function validate(item){
   if(item.type==="car"&&item.pickupDate&&item.dropoffDate&&new Date(item.dropoffDate)<new Date(item.pickupDate))errors.dropoffDate="Drop-off before pickup";
   return errors;
 }
-function newAcc(){return{id:Date.now(),type:"accommodation",name:"",platform:"Airbnb",checkIn:"",checkOut:"",address:"",contact:"",url:"",parking:false,kitchen:false,breakfast:false,totalCost:"",costPerNight:"",confirmation:"",notes:""};}
-function newFlt(){return{id:Date.now(),type:"flight",airline:"",flightNo:"",from:"",to:"",depDate:"",depTime:"",arrDate:"",arrTime:"",cost:"",bookingRef:"",url:"",notes:""};}
-function newCar(){return{id:Date.now(),type:"car",company:"",carType:"SUV",pickupLocation:"",dropoffLocation:"",pickupDate:"",dropoffDate:"",cost:"",confirmation:"",url:"",notes:""};}
-function newAct(){return{id:Date.now(),type:"activity",name:"",category:"Nature",date:"",duration:"",location:"",cost:"",url:"",notes:""};}
+function newAcc(){return{id:Date.now(),type:"accommodation",name:"",platform:"Airbnb",checkIn:"",checkOut:"",address:"",contact:"",vendorPhone:"",vendorEmail:"",url:"",parking:false,kitchen:false,breakfast:false,totalCost:"",costPerNight:"",amountDue:"",paymentStatus:"paid",confirmation:"",notes:""};}
+function newFlt(){return{id:Date.now(),type:"flight",airline:"",flightNo:"",from:"",to:"",depDate:"",depTime:"",arrDate:"",arrTime:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",bookingRef:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
+function newCar(){return{id:Date.now(),type:"car",company:"",carType:"SUV",pickupLocation:"",dropoffLocation:"",pickupDate:"",dropoffDate:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
+function newAct(){return{id:Date.now(),type:"activity",name:"",category:"Nature",date:"",duration:"",location:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
 function newTrip(name){return{id:"trip_"+Date.now(),name:name||"New Trip",acc:[],flt:[],car:[],act:[]};}
 
 function storeGet(k){
@@ -150,7 +150,7 @@ function toB64(f){return new Promise(function(res,rej){var r=new FileReader();r.
 function toText(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=rej;r.readAsText(f);});}
 
 function claudeExtract(messages){
-  var sys="You are a travel booking data extractor. Return ONLY valid JSON, no markdown.\nDetect type: accommodation, flight, car, activity.\nShapes (YYYY-MM-DD dates):\naccommodation:{type,name,platform,checkIn,checkOut,address,contact,url,confirmation,totalCost,costPerNight,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,bookingRef,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,confirmation,url,notes}\nactivity:{type,name,category,date,duration,location,cost,url,notes}";
+  var sys="You are a travel booking data extractor. Return ONLY valid JSON, no markdown.\nDetect type: accommodation, flight, car, activity.\nShapes (YYYY-MM-DD dates, paymentStatus: paid/partially_paid/unpaid):\naccommodation:{type,name,platform,checkIn,checkOut,address,vendorPhone,vendorEmail,url,confirmation,totalCost,costPerNight,amountDue,paymentStatus,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,amountDue,paymentStatus,bookingPlatform,bookingRef,vendorPhone,vendorEmail,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\nactivity:{type,name,category,date,duration,location,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}";
   return fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:messages})})
     .then(function(r){return r.json();})
     .then(function(d){if(d.error)throw new Error(d.error.message||"API error");return d.content.map(function(c){return c.text||"";}).join("");});
@@ -359,7 +359,9 @@ function EntryModal(props){
   var nts=et==="accommodation"?nights(item.checkIn,item.checkOut):0;
 
   function onChange(k,v){
-    var ni=Object.assign({},item); ni[k]=v; setItem(ni);
+    var ni=Object.assign({},item); ni[k]=v;
+    if(k==="paymentStatus"&&v==="paid")ni.amountDue="";
+    setItem(ni);
     if(touched[k])setErrors(validate(ni));
   }
   function onBlur(k){
@@ -393,6 +395,18 @@ function EntryModal(props){
       h(FInput,Object.assign({label:"Address",k:"address"},fp)),
       h(R2,null,h(FInput,Object.assign({label:"Contact",k:"contact"},fp)),h(FInput,Object.assign({label:"Booking URL",k:"url",ph:"https://..."},fp))),
       h(FInput,Object.assign({label:"Confirmation",k:"confirmation"},fp)),
+      h(R2,null,
+      h("div",{style:{marginBottom:12}},
+        h("label",{style:{display:"block",fontSize:12,color:"var(--text2)",marginBottom:4}},"Payment Status"),
+        h("select",{value:item.paymentStatus||"paid",onChange:function(e){onChange("paymentStatus",e.target.value);},style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:6,padding:"8px 10px",color:"var(--text)",fontSize:13,appearance:"auto"}},
+          h("option",{value:"paid"},"✅ Paid"),
+          h("option",{value:"partially_paid"},"⏳ Partially Paid"),
+          h("option",{value:"unpaid"},"❌ Unpaid")
+        )
+      ),
+      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")?h(FInput,Object.assign({label:"Amount Due ($)",k:"amountDue",type:"number"},fp)):h("div",null)
+    ),
+    h(R2,null,h(FInput,Object.assign({label:"Vendor Phone",k:"vendorPhone",ph:"Optional"},fp)),h(FInput,Object.assign({label:"Vendor Email",k:"vendorEmail",ph:"Optional"},fp))),
       h("div",{style:{display:"flex",gap:20,flexWrap:"wrap",marginBottom:8}},h(FToggle,Object.assign({label:"Parking",k:"parking"},fp)),h(FToggle,Object.assign({label:"Kitchen",k:"kitchen"},fp)),h(FToggle,Object.assign({label:"Breakfast",k:"breakfast"},fp))),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
@@ -402,6 +416,18 @@ function EntryModal(props){
       h(R2,null,h(FInput,Object.assign({label:"Dep Date",k:"depDate",type:"date"},fp)),h(FInput,Object.assign({label:"Dep Time",k:"depTime",type:"time"},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Arr Date",k:"arrDate",type:"date"},fp)),h(FInput,Object.assign({label:"Arr Time",k:"arrTime",type:"time"},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Booking Ref",k:"bookingRef"},fp))),
+      h(R2,null,
+      h("div",{style:{marginBottom:12}},
+        h("label",{style:{display:"block",fontSize:12,color:"var(--text2)",marginBottom:4}},"Payment Status"),
+        h("select",{value:item.paymentStatus||"paid",onChange:function(e){onChange("paymentStatus",e.target.value);},style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:6,padding:"8px 10px",color:"var(--text)",fontSize:13,appearance:"auto"}},
+          h("option",{value:"paid"},"✅ Paid"),
+          h("option",{value:"partially_paid"},"⏳ Partially Paid"),
+          h("option",{value:"unpaid"},"❌ Unpaid")
+        )
+      ),
+      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")?h(FInput,Object.assign({label:"Amount Due ($)",k:"amountDue",type:"number"},fp)):h("div",null)
+    ),
+    h(R2,null,h(FInput,Object.assign({label:"Vendor Phone",k:"vendorPhone",ph:"Optional"},fp)),h(FInput,Object.assign({label:"Vendor Email",k:"vendorEmail",ph:"Optional"},fp))),
       h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp)),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
@@ -411,6 +437,18 @@ function EntryModal(props){
       h(FInput,Object.assign({label:"Dropoff Location",k:"dropoffLocation"},fp)),
       h(R2,null,h(FInput,Object.assign({label:"Pickup Date",k:"pickupDate",type:"date"},fp)),h(FInput,Object.assign({label:"Dropoff Date",k:"dropoffDate",type:"date"},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Confirmation",k:"confirmation"},fp))),
+      h(R2,null,
+      h("div",{style:{marginBottom:12}},
+        h("label",{style:{display:"block",fontSize:12,color:"var(--text2)",marginBottom:4}},"Payment Status"),
+        h("select",{value:item.paymentStatus||"paid",onChange:function(e){onChange("paymentStatus",e.target.value);},style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:6,padding:"8px 10px",color:"var(--text)",fontSize:13,appearance:"auto"}},
+          h("option",{value:"paid"},"✅ Paid"),
+          h("option",{value:"partially_paid"},"⏳ Partially Paid"),
+          h("option",{value:"unpaid"},"❌ Unpaid")
+        )
+      ),
+      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")?h(FInput,Object.assign({label:"Amount Due ($)",k:"amountDue",type:"number"},fp)):h("div",null)
+    ),
+    h(R2,null,h(FInput,Object.assign({label:"Vendor Phone",k:"vendorPhone",ph:"Optional"},fp)),h(FInput,Object.assign({label:"Vendor Email",k:"vendorEmail",ph:"Optional"},fp))),
       h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp)),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
@@ -419,6 +457,18 @@ function EntryModal(props){
       h(R2,null,h(FInput,Object.assign({label:"Date",k:"date",type:"date"},fp)),h(FInput,Object.assign({label:"Duration",k:"duration"},fp))),
       h(FInput,Object.assign({label:"Location",k:"location"},fp)),
       h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp))),
+      h(R2,null,
+      h("div",{style:{marginBottom:12}},
+        h("label",{style:{display:"block",fontSize:12,color:"var(--text2)",marginBottom:4}},"Payment Status"),
+        h("select",{value:item.paymentStatus||"paid",onChange:function(e){onChange("paymentStatus",e.target.value);},style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:6,padding:"8px 10px",color:"var(--text)",fontSize:13,appearance:"auto"}},
+          h("option",{value:"paid"},"✅ Paid"),
+          h("option",{value:"partially_paid"},"⏳ Partially Paid"),
+          h("option",{value:"unpaid"},"❌ Unpaid")
+        )
+      ),
+      (item.paymentStatus==="partially_paid"||item.paymentStatus==="unpaid")?h(FInput,Object.assign({label:"Amount Due ($)",k:"amountDue",type:"number"},fp)):h("div",null)
+    ),
+    h(R2,null,h(FInput,Object.assign({label:"Vendor Phone",k:"vendorPhone",ph:"Optional"},fp)),h(FInput,Object.assign({label:"Vendor Email",k:"vendorEmail",ph:"Optional"},fp))),
       h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp))
     ),
     hasErr&&h("div",{style:{background:"var(--danger-bg)",border:"1px solid var(--danger-dim)",borderRadius:8,padding:"10px 14px",marginBottom:8,fontSize:13,color:"var(--danger)"}},"Please fix errors above."),
@@ -596,6 +646,12 @@ function PDFPreviewModal(props){
   );
 }
 
+var TABLE_CDEFS={
+  accommodations:[{h:"Name",k:"name",f:null,sK:"name"},{h:"Platform",k:"platform"},{h:"Check-In",k:"checkIn",f:"date",sK:"date"},{h:"Check-Out",k:"checkOut",f:"date",sK:"endDate"},{h:"Nights",k:"_nts",f:"nts"},{h:"Cost/Night",k:"costPerNight",f:"$"},{h:"Cost",k:"totalCost",f:"$",sK:"cost"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Parking",k:"parking",f:"bool"},{h:"Kitchen",k:"kitchen",f:"bool"},{h:"Breakfast",k:"breakfast",f:"bool"},{h:"Address",k:"address",f:"addr"},{h:"City",k:"_city"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
+  flights:[{h:"Airline",k:"airline",sK:"name"},{h:"Flight#",k:"flightNo"},{h:"From",k:"from",f:"addr"},{h:"To",k:"to"},{h:"Dep Date",k:"depDate",f:"date",sK:"date"},{h:"Dep Time",k:"depTime"},{h:"Arr Date",k:"arrDate",f:"date",sK:"endDate"},{h:"Arr Time",k:"arrTime"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Ref",k:"bookingRef"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
+  cars:[{h:"Company",k:"company",sK:"name"},{h:"Type",k:"carType"},{h:"Pickup",k:"pickupLocation",f:"addr"},{h:"City",k:"_city"},{h:"Dropoff",k:"dropoffLocation",f:"addr"},{h:"Pickup Date",k:"pickupDate",f:"date",sK:"date"},{h:"Dropoff Date",k:"dropoffDate",f:"date",sK:"endDate"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"}],
+  activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"Booked Via",k:"bookingPlatform"},{h:"Pay",k:"paymentStatus",f:"pay"},{h:"Due",k:"amountDue",f:"$"},{h:"Phone",k:"vendorPhone"},{h:"Email",k:"vendorEmail"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
+};
 // ── Detail Card View ─────────────────────────────────────────────
 function DetailCard(props){
   var entry=props.entry,onEdit=props.onEdit,onBack=props.onBack,onDelete=props.onDelete;
@@ -653,6 +709,10 @@ function DetailCard(props){
       h(Row,{label:"Total Cost",v:e.totalCost?fmt$(e.totalCost):null}),
       h(Row,{label:"Confirmation",v:e.confirmation}),
       h(Row,{label:"Booking URL",v:e.url,url:true}),
+      h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
+      e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
+      h(Row,{label:"Vendor Phone",v:e.vendorPhone}),
+      h(Row,{label:"Vendor Email",v:e.vendorEmail}),
       h("div",{style:{display:"flex",gap:16,paddingTop:8}},
         e.parking&&h("span",{style:{fontSize:13,color:"var(--success)"}},"🅿️ Parking"),
         e.kitchen&&h("span",{style:{fontSize:13,color:"var(--success)"}},"🍳 Kitchen"),
@@ -665,6 +725,10 @@ function DetailCard(props){
       h(Row,{label:"Arrival",v:e.to+(e.arrDate?" — "+fmtD(e.arrDate)+(e.arrTime?" "+e.arrTime:""):"")}),
       h(Row,{label:"Cost",v:e.cost?fmt$(e.cost):null}),
       h(Row,{label:"Booking Ref",v:e.bookingRef}),
+      h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
+      e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
+      h(Row,{label:"Vendor Phone",v:e.vendorPhone}),
+      h(Row,{label:"Vendor Email",v:e.vendorEmail}),
       h(Row,{label:"Booking URL",v:e.url,url:true})
     ),
     car&&h(Section,{title:"Car Rental Details"},
@@ -672,11 +736,19 @@ function DetailCard(props){
       h(Row,{label:"Drop-off",v:e.dropoffLocation+(e.dropoffDate?" — "+fmtD(e.dropoffDate):"")}),
       h(Row,{label:"Cost",v:e.cost?fmt$(e.cost):null}),
       h(Row,{label:"Confirmation",v:e.confirmation}),
+      h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
+      e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
+      h(Row,{label:"Vendor Phone",v:e.vendorPhone}),
+      h(Row,{label:"Vendor Email",v:e.vendorEmail}),
       h(Row,{label:"Booking URL",v:e.url,url:true})
     ),
     act&&h(Section,{title:"Activity Details"},
       h(Row,{label:"Location",v:e.location}),
       h(Row,{label:"Cost",v:e.cost?fmt$(e.cost):null}),
+      h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
+      e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
+      h(Row,{label:"Vendor Phone",v:e.vendorPhone}),
+      h(Row,{label:"Vendor Email",v:e.vendorEmail}),
       h(Row,{label:"URL",v:e.url,url:true})
     ),
     e.notes&&h(Section,{title:"Notes"},
@@ -691,7 +763,7 @@ function TableView(props){
   var cS=useState(null); var confirmId=cS[0],setConfirmId=cS[1];
   var skS=useState("date"); var sk=skS[0],setSk=skS[1];
   var sdS=useState("asc"); var sd=sdS[0],setSd=sdS[1];
-  var colS=useState([{key:"name",label:"Name",sK:"name"},{key:"type",label:"Type",sK:"type"},{key:"date",label:"Start",sK:"date"},{key:"endDate",label:"End",sK:"endDate"},{key:"nights",label:"Nights",sK:null},{key:"cost",label:"Cost",sK:"cost"},{key:"address",label:"Address",sK:null},{key:"city",label:"City",sK:null},{key:"url",label:"URL",sK:null},{key:"actions",label:"Actions",sK:null}]);
+  var colS=useState([{key:"name",label:"Name",sK:"name"},{key:"type",label:"Type",sK:"type"},{key:"date",label:"Start",sK:"date"},{key:"endDate",label:"End",sK:"endDate"},{key:"nights",label:"Nights",sK:null},{key:"cost",label:"Cost",sK:"cost"},{key:"pay",label:"Pay",sK:null},{key:"due",label:"Due",sK:null},{key:"address",label:"Address",sK:null},{key:"city",label:"City",sK:null},{key:"url",label:"URL",sK:null},{key:"actions",label:"Actions",sK:null}]);
   var cols=colS[0],setCols=colS[1];
   var dragI=useRef(null),dragO=useRef(null);
   function ts(k){if(sk===k)setSd(function(d){return d==="asc"?"desc":"asc";});else{setSk(k);setSd("asc");}}
@@ -761,7 +833,9 @@ function TableView(props){
       case"cost":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--text)"}},row.cost);
       case"address":return h("td",{key:col.key,style:{padding:"9px 12px",maxWidth:160}},h(XC,{val:row.address}));
       case"city":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--text)",whiteSpace:"nowrap"}},row.city||"-");
-      case"url":return h("td",{key:col.key,style:{padding:"9px 12px"}},row.url?h("a",{href:row.url,target:"_blank",rel:"noreferrer",style:{color:"#6366f1",textDecoration:"none"}},"🔗"):"-");
+      case"pay":{var _pc=row.raw.paymentStatus==="paid"?"#16a34a":row.raw.paymentStatus==="partially_paid"?"#d97706":"#dc2626";var _pl=row.raw.paymentStatus==="paid"?"Paid":row.raw.paymentStatus==="partially_paid"?"Partial":"Unpaid";return h("td",{key:col.key,style:{padding:"9px 12px"}},row.raw.paymentStatus?h("span",{style:{background:_pc,color:"#fff",borderRadius:4,padding:"2px 8px",fontSize:11,fontWeight:600}},_pl):h("span",{style:{color:"var(--text4)"}},"-"));}
+      case"due":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--text)"}},row.raw.amountDue?fmt$(row.raw.amountDue):h("span",{style:{color:"var(--text4)"}},"-"));
+      case"url":return h("td",{key:col.key,style:{padding:"9px 12px"}},row.url?h("a",{href:row.url,target:"_blank",rel:"noreferrer",style:{color:"var(--primary)",textDecoration:"none"}},"🔗"):"-");
       case"actions":return h(AB,{key:col.key,id:row.id,raw:row.raw});
       default:return h("td",{key:col.key,style:{padding:"9px 12px",color:"#475569"}},"-");
     }
@@ -779,13 +853,7 @@ function TableView(props){
     )
   );
 
-  var cdefs={
-    accommodations:[{h:"Name",k:"name",f:null,sK:"name"},{h:"Platform",k:"platform"},{h:"Check-In",k:"checkIn",f:"date",sK:"date"},{h:"Check-Out",k:"checkOut",f:"date",sK:"endDate"},{h:"Nights",k:"_nts",f:"nts"},{h:"Cost/Night",k:"costPerNight",f:"$"},{h:"Cost",k:"totalCost",f:"$",sK:"cost"},{h:"Parking",k:"parking",f:"bool"},{h:"Kitchen",k:"kitchen",f:"bool"},{h:"Breakfast",k:"breakfast",f:"bool"},{h:"Address",k:"address",f:"addr"},{h:"City",k:"_city"},{h:"URL",k:"url",f:"link"}],
-    flights:[{h:"Airline",k:"airline",sK:"name"},{h:"Flight#",k:"flightNo"},{h:"From",k:"from",f:"addr"},{h:"To",k:"to"},{h:"Dep Date",k:"depDate",f:"date",sK:"date"},{h:"Dep Time",k:"depTime"},{h:"Arr Date",k:"arrDate",f:"date",sK:"endDate"},{h:"Arr Time",k:"arrTime"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Ref",k:"bookingRef"},{h:"URL",k:"url",f:"link"}],
-    cars:[{h:"Company",k:"company",sK:"name"},{h:"Type",k:"carType"},{h:"Pickup",k:"pickupLocation",f:"addr"},{h:"City",k:"_city"},{h:"Dropoff",k:"dropoffLocation",f:"addr"},{h:"Pickup Date",k:"pickupDate",f:"date",sK:"date"},{h:"Dropoff Date",k:"dropoffDate",f:"date",sK:"endDate"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"Confirmation",k:"confirmation"},{h:"URL",k:"url",f:"link"}],
-    activities:[{h:"Name",k:"name",sK:"name"},{h:"Category",k:"category"},{h:"Date",k:"date",f:"date",sK:"date"},{h:"Duration",k:"duration"},{h:"Location",k:"location",f:"addr"},{h:"City",k:"_city"},{h:"Cost",k:"cost",f:"$",sK:"cost"},{h:"URL",k:"url",f:"link"},{h:"Notes",k:"notes"}]
-  };
-  var c=cdefs[tab]||cdefs.accommodations;
+  var c=TABLE_CDEFS[tab]||TABLE_CDEFS.accommodations;
   return h("div",{style:{overflowX:"auto",borderRadius:10,border:"1px solid var(--border)"}},
     h("div",{style:{padding:"6px 12px",background:"var(--surface)",borderBottom:"1px solid var(--border)",fontSize:11,color:"var(--text3)"}},"Double-click to expand"+(search?" • "+rows.length+" of "+srcEntries.length+" entries":"")),
     h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
@@ -804,9 +872,10 @@ function TableView(props){
             var isD=col.k==="checkIn"||col.k==="depDate"||col.k==="pickupDate"||col.k==="date";
             var cell;
             if(col.f==="$")cell=h("span",null,fmt$(rv));
-            else if(col.f==="nts")cell=rv>0?h("span",{style:{color:"#a5b4fc"}},rv+"n"):h("span",{style:{color:"#475569"}},"-");
-            else if(col.f==="bool")cell=rv?h("span",{style:{color:"#10b981"}},"✓"):h("span",{style:{color:"#475569"}},"✗");
-            else if(col.f==="link")cell=rv?h("a",{href:rv,target:"_blank",rel:"noreferrer",style:{color:"#6366f1",textDecoration:"none"}},"🔗"):h("span",{style:{color:"#475569"}},"-");
+            else if(col.f==="nts")cell=rv>0?h("span",{style:{color:"var(--primary)"}},rv+"n"):h("span",{style:{color:"var(--text4)"}},"-");
+            else if(col.f==="bool")cell=rv?h("span",{style:{color:"var(--success)"}},"✓"):h("span",{style:{color:"var(--text4)"}},"✗");
+            else if(col.f==="pay"){var pc=rv==="paid"?"#16a34a":rv==="partially_paid"?"#d97706":"#dc2626";var pl=rv==="paid"?"Paid":rv==="partially_paid"?"Partial":"Unpaid";cell=h("span",{style:{background:pc,color:"#fff",borderRadius:4,padding:"2px 8px",fontSize:11,fontWeight:600}},pl);}
+            else if(col.f==="link")cell=rv?h("a",{href:rv,target:"_blank",rel:"noreferrer",style:{color:"var(--primary)",textDecoration:"none"}},"🔗"):h("span",{style:{color:"var(--text4)"}},"-");
             else if(col.f==="date")cell=h("span",null,fmtD(rv));
             else if(col.f==="addr")cell=h(XC,{val:rv||""});
             else cell=h("span",{style:{display:"block",maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},rv||"-");
