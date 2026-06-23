@@ -35,7 +35,19 @@ Trip {
   flt: Flight[]
   car: CarRental[]
   act: Activity[]
+  expenses: Expense[]
 }
+
+Expense {
+  id: number (timestamp)
+  date: string (YYYY-MM-DD)
+  category: "Fuel"|"Groceries"|"Restaurants"|"Shopping"|"Parking"|"Tickets"|"Other"
+  description: string
+  amount: number (stored in the currency field's currency)
+  currency: "USD"|"EUR"|"ILS"
+  notes: string
+}
+// Note: expToUSD() converts expense amounts to USD for totals/display
 ```
 
 Entry types: `accommodation`, `flight`, `car`, `activity`
@@ -58,6 +70,10 @@ Costs stored in **USD**; display currency converted client-side via live rates (
 | `BackupModal` | JSON export/import |
 | `TripManagerModal` | Create/rename/delete/switch trips |
 | `PDFPreviewModal` | iframe print preview |
+| `ExpenseModal` | Add/edit in-trip expense entries |
+| `ExpenseSummaryView` | Expenses tab: category table + SVG pie chart |
+| `PieChart` | SVG pie chart helper used in ExpenseSummaryView |
+| `AuthScreen` | Login/register screen (Google + email/password) |
 
 ---
 
@@ -89,6 +105,22 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 | `signInWithRedirect` fallback | Not implemented; only `signInWithPopup` present |
 | Household model | Never deployed — file uses per-user `users/{uid}/data/` path throughout |
 | Premium UI redesign | Never merged into main file |
+
+## Auth
+
+- **Google Sign-in**: `signInWithPopup` (primary, always)
+- **Email/Password**: `createUserWithEmailAndPassword` + `signInWithEmailAndPassword` via `AuthScreen` component
+- Both options shown on the login screen; email/password supports register + login toggle
+
+## In-Trip Expenses
+
+- Stored as `expenses: []` on each Trip object (added to `newTrip()`)
+- `expToUSD(exp)` converts amounts from entry's currency to USD for totals
+- `EXPENSE_CATS`: Fuel, Groceries, Restaurants, Shopping, Parking, Tickets, Other
+- `EXPENSE_COLORS` / `EXPENSE_CAT_ICONS`: maps categories to colors/emojis
+- Header shows "💳 In-Trip Expenses" box; clicking it navigates to expenses tab
+- "💳 Expenses" tab in the nav bar renders `ExpenseSummaryView`
+- "＋ Add" button creates an expense when expenses tab is active
 
 ---
 

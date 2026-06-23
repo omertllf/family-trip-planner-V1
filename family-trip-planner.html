@@ -67,6 +67,9 @@ var h=React_.createElement;
 var COLORS={accommodation:"#6366f1",flight:"#0ea5e9",car:"#f59e0b",activity:"#10b981"};
 var PLATFORMS=["Airbnb","Booking.com","VRBO","Direct","Hotels.com","Expedia","Other"];
 var ACTIVITY_CATS=["Nature","Adventure","Cultural","Food","Theme Park","Beach","Sightseeing","Shopping","Other"];
+var EXPENSE_CATS=["Fuel","Groceries","Restaurants","Shopping","Parking","Tickets","Other"];
+var EXPENSE_CAT_ICONS={"Fuel":"⛽","Groceries":"🛒","Restaurants":"🍽️","Shopping":"🛍️","Parking":"🅿️","Tickets":"🎫","Other":"💸"};
+var EXPENSE_COLORS={"Fuel":"#f59e0b","Groceries":"#10b981","Restaurants":"#ef4444","Shopping":"#8b5cf6","Parking":"#06b6d4","Tickets":"#ec4899","Other":"#64748b"};
 var CAR_TYPES=["Economy","Compact","SUV","Minivan","Truck","Luxury","Other"];
 var KNOWN_LABELS=[
   {id:"Label_3699931737615885849",name:"2026 trip to USA"},
@@ -112,7 +115,8 @@ function newAcc(){return{id:Date.now(),type:"accommodation",name:"",platform:"Ai
 function newFlt(){return{id:Date.now(),type:"flight",airline:"",flightNo:"",from:"",to:"",depDate:"",depTime:"",arrDate:"",arrTime:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",bookingRef:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
 function newCar(){return{id:Date.now(),type:"car",company:"",carType:"SUV",pickupLocation:"",dropoffLocation:"",pickupDate:"",dropoffDate:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
 function newAct(){return{id:Date.now(),type:"activity",name:"",category:"Nature",date:"",duration:"",location:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
-function newTrip(name){return{id:"trip_"+Date.now(),name:name||"New Trip",acc:[],flt:[],car:[],act:[]};}
+function newExp(){return{id:Date.now(),date:"",category:"Other",description:"",amount:"",currency:"USD",notes:""};}
+function newTrip(name){return{id:"trip_"+Date.now(),name:name||"New Trip",acc:[],flt:[],car:[],act:[],expenses:[]};}
 
 function storeGet(k){
   try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}
@@ -972,6 +976,201 @@ function GanttView(props){
   );
 }
 
+// ── Expense Modal ────────────────────────────────────────────────
+function ExpenseModal(props){
+  var modal=props.modal,onSave=props.onSave,onDelete=props.onDelete,onClose=props.onClose,tripCurrency=props.tripCurrency;
+  var iS=useState(Object.assign({},modal.item)); var item=iS[0],setItem=iS[1];
+  var eS=useState({}); var errors=eS[0],setErrors=eS[1];
+  function onChange(k,v){var ni=Object.assign({},item);ni[k]=v;setItem(ni);}
+  function validate(){var errs={};if(!item.description||!String(item.description).trim())errs.description="Description is required";if(!item.date)errs.date="Date is required";if(!item.amount||isNaN(parseFloat(item.amount))||parseFloat(item.amount)<=0)errs.amount="Amount must be > 0";return errs;}
+  function handleSave(){var errs=validate();setErrors(errs);if(Object.keys(errs).length>0)return;onSave(item);}
+  var fp={item:item,errors:errors,onChange:onChange,onBlur:function(){}};
+  return h(Overlay,{onClose:onClose},
+    h(MH,{title:(modal.isNew?"Add ":"Edit ")+"Expense",onClose:onClose}),
+    h(R2,null,
+      h("div",{style:{marginBottom:12}},
+        h("label",{style:{display:"block",fontSize:12,color:"var(--text2)",marginBottom:4}},"Category"),
+        h("select",{value:item.category||"Other",onChange:function(e){onChange("category",e.target.value);},style:Object.assign({},fldStyle(errors,"category"),{appearance:"auto"})},
+          EXPENSE_CATS.map(function(c){return h("option",{key:c,value:c},EXPENSE_CAT_ICONS[c]+" "+c);})
+        )
+      ),
+      h(FInput,Object.assign({label:"Date",k:"date",type:"date"},fp))
+    ),
+    h(FInput,Object.assign({label:"Description *",k:"description",ph:"e.g. Gas station, Dinner at restaurant..."},fp)),
+    h(R2,null,
+      h("div",{style:{marginBottom:12}},
+        h("label",{style:{display:"block",fontSize:12,color:"var(--text2)",marginBottom:4}},"Amount *"),
+        h("div",{style:{display:"flex",gap:6}},
+          h("input",{type:"number",value:item.amount||"",min:"0",step:"0.01",onChange:function(e){onChange("amount",e.target.value);},placeholder:"0.00",style:Object.assign({},fldStyle(errors,"amount"),{flex:1})}),
+          h("select",{value:item.currency||"USD",onChange:function(e){onChange("currency",e.target.value);},style:{background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:6,padding:"8px 6px",color:"var(--text)",fontSize:13,appearance:"auto"}},
+            CURRENCIES.map(function(c){return h("option",{key:c.code,value:c.code},c.sym+" "+c.code);})
+          )
+        ),
+        errors.amount&&h("div",{style:{fontSize:11,color:"#ef4444",marginTop:3}},errors.amount)
+      ),
+      h("div",null)
+    ),
+    h(FTextarea,Object.assign({label:"Notes",k:"notes"},fp)),
+    h("div",{style:{display:"flex",justifyContent:"space-between",gap:10,marginTop:8}},
+      !modal.isNew?h("button",{onClick:function(){onDelete(item.id);},style:{padding:"9px 18px",borderRadius:7,border:"1px solid var(--danger-dim)",background:"transparent",color:"var(--danger)",cursor:"pointer",fontSize:13,fontWeight:600}},"Delete"):h("div"),
+      h("div",{style:{display:"flex",gap:10}},
+        h("button",{onClick:onClose,style:{padding:"9px 18px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"Cancel"),
+        h("button",{onClick:handleSave,style:{padding:"9px 22px",borderRadius:7,border:"none",background:"var(--primary)",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}},"Save")
+      )
+    )
+  );
+}
+
+// ── Expense Summary View ─────────────────────────────────────────
+function PieChart(props){
+  var data=props.data;
+  var total=data.reduce(function(s,d){return s+d.value;},0);
+  if(!total)return h("div",{style:{textAlign:"center",padding:40,color:"var(--text3)"}},"No expenses yet");
+  var size=200,cx=100,cy=100,r=78;
+  var slices=[],cum=-Math.PI/2;
+  data.forEach(function(d){
+    if(!d.value)return;
+    var angle=(d.value/total)*2*Math.PI;
+    var x1=cx+r*Math.cos(cum),y1=cy+r*Math.sin(cum);
+    cum+=angle;
+    var x2=cx+r*Math.cos(cum),y2=cy+r*Math.sin(cum);
+    var large=angle>Math.PI?1:0;
+    slices.push({path:"M "+cx+" "+cy+" L "+x1.toFixed(2)+" "+y1.toFixed(2)+" A "+r+" "+r+" 0 "+large+" 1 "+x2.toFixed(2)+" "+y2.toFixed(2)+" Z",color:d.color,label:d.label,pct:((d.value/total)*100).toFixed(1)});
+  });
+  return h("svg",{width:size,height:size,viewBox:"0 0 "+size+" "+size,style:{display:"block",margin:"0 auto"}},
+    slices.map(function(s,i){return h("path",{key:i,d:s.path,fill:s.color,stroke:"var(--bg)",strokeWidth:2});})
+  );
+}
+function expToUSD(exp){
+  var amt=safeNum(exp.amount);
+  var cur=exp.currency||"USD";
+  if(cur==="EUR")return amt/EXCH.EUR;
+  if(cur==="ILS")return amt/EXCH.ILS;
+  return amt;
+}
+function ExpenseSummaryView(props){
+  var expenses=props.expenses,onAdd=props.onAdd,onEdit=props.onEdit;
+  if(!expenses||!expenses.length)return h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--text4)"}},
+    h("div",{style:{fontSize:48,marginBottom:12}},"💸"),
+    h("p",{style:{fontSize:15,marginBottom:20}},"No in-trip expenses yet"),
+    h("button",{onClick:onAdd,style:{padding:"10px 24px",borderRadius:8,border:"none",background:"var(--primary)",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:14}},"+ Add First Expense")
+  );
+  var byCategory={};
+  EXPENSE_CATS.forEach(function(c){byCategory[c]=0;});
+  expenses.forEach(function(e){byCategory[e.category||"Other"]=(byCategory[e.category||"Other"]||0)+expToUSD(e);});
+  var totalUSD=expenses.reduce(function(s,e){return s+expToUSD(e);},0);
+  var pieData=EXPENSE_CATS.map(function(c){return{label:c,value:byCategory[c]||0,color:EXPENSE_COLORS[c]};}).filter(function(d){return d.value>0;});
+  var sorted=expenses.slice().sort(function(a,b){return (b.date||"").localeCompare(a.date||"");});
+  return h("div",null,
+    h("div",{style:{display:"grid",gridTemplateColumns:"auto 1fr",gap:32,alignItems:"start",marginBottom:24,flexWrap:"wrap"}},
+      h("div",null,
+        h("div",{style:{fontSize:13,fontWeight:700,color:"var(--text2)",marginBottom:12,textAlign:"center"}},"Breakdown"),
+        h(PieChart,{data:pieData}),
+        h("div",{style:{fontSize:13,color:"var(--text3)",textAlign:"center",marginTop:8}},h("strong",{style:{color:"var(--text)",fontSize:16}},fmt$(totalUSD))," total")
+      ),
+      h("div",null,
+        h("div",{style:{fontSize:13,fontWeight:700,color:"var(--text2)",marginBottom:12}},"By Category"),
+        h("div",{style:{display:"flex",flexDirection:"column",gap:6}},
+          EXPENSE_CATS.filter(function(c){return byCategory[c]>0;}).sort(function(a,b){return byCategory[b]-byCategory[a];}).map(function(c){
+            var pct=totalUSD>0?(byCategory[c]/totalUSD*100):0;
+            return h("div",{key:c,style:{display:"flex",alignItems:"center",gap:8}},
+              h("span",{style:{fontSize:16,width:24,textAlign:"center"}},EXPENSE_CAT_ICONS[c]),
+              h("div",{style:{flex:1}},
+                h("div",{style:{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:2}},
+                  h("span",{style:{color:"var(--text)",fontWeight:600}},c),
+                  h("span",{style:{color:"var(--text2)"}},fmt$(byCategory[c])," (",pct.toFixed(0),"%)")
+                ),
+                h("div",{style:{height:6,borderRadius:3,background:"var(--surface2)",overflow:"hidden"}},
+                  h("div",{style:{height:"100%",width:pct+"%",background:EXPENSE_COLORS[c],borderRadius:3,transition:"width .3s"}})
+                )
+              )
+            );
+          })
+        )
+      )
+    ),
+    h("div",{style:{background:"var(--surface)",borderRadius:10,border:"1px solid var(--border)",overflow:"hidden"}},
+      h("div",{style:{padding:"10px 16px",borderBottom:"1px solid var(--border)",display:"flex",justifyContent:"space-between",alignItems:"center"}},
+        h("span",{style:{fontSize:13,fontWeight:700,color:"var(--text)"}},"All Expenses ("+expenses.length+")"),
+        h("button",{onClick:onAdd,style:{padding:"6px 14px",borderRadius:7,border:"none",background:"var(--primary)",color:"#fff",cursor:"pointer",fontSize:12,fontWeight:600}},"+ Add")
+      ),
+      h("table",{style:{width:"100%",borderCollapse:"collapse",fontSize:13}},
+        h("thead",null,h("tr",{style:{background:"var(--surface)"}},
+          ["Date","Category","Description","Amount","Notes",""].map(function(h_){return h("th",{key:h_,style:{padding:"8px 12px",textAlign:"left",color:"var(--text2)",fontWeight:600,borderBottom:"1px solid var(--border)"}},h_);})
+        )),
+        h("tbody",null,sorted.map(function(e,i){
+          var bg=i%2===0?"var(--row-odd)":"var(--row-even)";
+          return h("tr",{key:e.id,style:{background:bg,borderTop:"1px solid var(--border)",cursor:"pointer"},onClick:function(){onEdit(e);},onMouseEnter:function(ev){ev.currentTarget.style.filter="brightness(1.1)";},onMouseLeave:function(ev){ev.currentTarget.style.filter="";}},
+            h("td",{style:{padding:"9px 12px",color:"var(--text)",whiteSpace:"nowrap"}},fmtD(e.date)),
+            h("td",{style:{padding:"9px 12px"}},h("span",{style:{background:EXPENSE_COLORS[e.category||"Other"],color:"#fff",borderRadius:4,padding:"2px 8px",fontSize:11,fontWeight:600}},EXPENSE_CAT_ICONS[e.category||"Other"]+" "+(e.category||"Other"))),
+            h("td",{style:{padding:"9px 12px",color:"var(--text)",maxWidth:200,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},e.description||"-"),
+            h("td",{style:{padding:"9px 12px",color:"var(--text)",fontWeight:600}},fmt$(expToUSD(e))+(e.currency&&e.currency!=="USD"?" ("+e.currency+")":" ")),
+            h("td",{style:{padding:"9px 12px",color:"var(--text3)",maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},e.notes||"-"),
+            h("td",{style:{padding:"9px 12px",textAlign:"right"}},h("button",{onClick:function(ev){ev.stopPropagation();onEdit(e);},style:{background:"var(--surface2)",border:"none",borderRadius:5,color:"var(--text2)",padding:"4px 10px",cursor:"pointer",fontSize:12}},"Edit"))
+          );
+        }))
+      )
+    )
+  );
+}
+
+// ── Auth Screen ──────────────────────────────────────────────────
+function AuthScreen(){
+  var modeS=useState("login"); var mode=modeS[0],setMode=modeS[1];
+  var emailS=useState(""); var email=emailS[0],setEmail=emailS[1];
+  var passS=useState(""); var pass=passS[0],setPass=passS[1];
+  var pass2S=useState(""); var pass2=pass2S[0],setPass2=pass2S[1];
+  var errS=useState(""); var err=errS[0],setErr=errS[1];
+  var loadS=useState(false); var loading=loadS[0],setLoading=loadS[1];
+
+  function handleGoogle(){auth.signInWithPopup(googleProvider).catch(function(e){setErr(e.message||"Sign-in failed");});}
+  function handleSubmit(){
+    setErr("");
+    if(!email.trim()||!pass){setErr("Email and password are required.");return;}
+    if(mode==="register"&&pass!==pass2){setErr("Passwords do not match.");return;}
+    if(mode==="register"&&pass.length<6){setErr("Password must be at least 6 characters.");return;}
+    setLoading(true);
+    var p=mode==="register"?auth.createUserWithEmailAndPassword(email.trim(),pass):auth.signInWithEmailAndPassword(email.trim(),pass);
+    p.catch(function(e){
+      var msg=e.code==="auth/user-not-found"?"No account with that email."
+        :e.code==="auth/wrong-password"?"Incorrect password."
+        :e.code==="auth/email-already-in-use"?"Email already registered. Sign in instead."
+        :e.code==="auth/invalid-email"?"Invalid email address."
+        :e.message||"Authentication failed";
+      setErr(msg);
+      setLoading(false);
+    });
+  }
+  var inpStyle={width:"100%",padding:"10px 12px",borderRadius:8,border:"1px solid var(--border)",background:"var(--input-bg)",color:"var(--text)",fontSize:14,boxSizing:"border-box",marginBottom:10};
+  return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",minHeight:"100vh",background:"var(--bg)"}},
+    h("div",{style:{width:"100%",maxWidth:380,margin:"0 20px",background:"var(--surface)",borderRadius:16,border:"1px solid var(--border)",padding:"32px 28px"}},
+      h("div",{style:{textAlign:"center",marginBottom:24}},
+        h("div",{style:{fontSize:52,marginBottom:10}},"✈️"),
+        h("h1",{style:{margin:"0 0 4px",fontSize:22,fontWeight:700,color:"var(--text)"}},"Family Trip Planner"),
+        h("p",{style:{margin:0,fontSize:13,color:"var(--text3)"}},"All your travel details in one place")
+      ),
+      h("button",{onClick:handleGoogle,style:{width:"100%",padding:"11px 16px",borderRadius:10,border:"1px solid var(--border)",background:"var(--surface2)",color:"var(--text)",fontSize:14,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:16}},
+        h("img",{src:"https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg",style:{width:20,height:20}}),
+        "Continue with Google"
+      ),
+      h("div",{style:{display:"flex",alignItems:"center",gap:10,marginBottom:16}},
+        h("div",{style:{flex:1,height:1,background:"var(--border)"}}),
+        h("span",{style:{fontSize:12,color:"var(--text4)"}},"or"),
+        h("div",{style:{flex:1,height:1,background:"var(--border)"}})
+      ),
+      h("div",{style:{display:"flex",gap:4,background:"var(--bg)",borderRadius:8,padding:3,marginBottom:16}},
+        ["login","register"].map(function(m){return h("button",{key:m,onClick:function(){setMode(m);setErr("");},style:{flex:1,padding:"7px",borderRadius:6,border:"none",cursor:"pointer",fontSize:13,fontWeight:600,background:mode===m?"var(--surface)":"transparent",color:mode===m?"var(--text)":"var(--text3)"}},m==="login"?"Sign In":"Register");})
+      ),
+      h("input",{type:"email",value:email,onChange:function(e){setEmail(e.target.value);},placeholder:"Email",style:inpStyle}),
+      h("input",{type:"password",value:pass,onChange:function(e){setPass(e.target.value);},onKeyDown:function(e){if(e.key==="Enter"&&mode==="login")handleSubmit();},placeholder:"Password",style:inpStyle}),
+      mode==="register"&&h("input",{type:"password",value:pass2,onChange:function(e){setPass2(e.target.value);},onKeyDown:function(e){if(e.key==="Enter")handleSubmit();},placeholder:"Confirm Password",style:inpStyle}),
+      err&&h("div",{style:{background:"var(--danger-bg)",borderRadius:7,padding:"9px 12px",fontSize:13,color:"var(--danger)",marginBottom:10}},"⚠️ "+err),
+      h("button",{onClick:handleSubmit,disabled:loading,style:{width:"100%",padding:"11px",borderRadius:10,border:"none",background:loading?"var(--primary-dim)":"var(--primary)",color:"#fff",fontSize:14,fontWeight:700,cursor:loading?"not-allowed":"pointer"}},loading?"...":(mode==="login"?"Sign In":"Create Account")),
+      mode==="login"&&h("p",{style:{textAlign:"center",fontSize:12,color:"var(--text4)",marginTop:12,marginBottom:0}},"Don't have an account? ",h("span",{onClick:function(){setMode("register");setErr("");},style:{color:"var(--primary)",cursor:"pointer"}},"Register"))
+    )
+  );
+}
+
 // ── App ──────────────────────────────────────────────────────────
 function HouseholdModal(props){
   var householdId=props.householdId,householdDoc=props.householdDoc,onClose=props.onClose,onRenamed=props.onRenamed;
@@ -1051,6 +1250,7 @@ function App(){
   var t12=useState(false); var gmailModal=t12[0],setGmailModal=t12[1];
   var t13=useState(null); var detailEntry=t13[0],setDetailEntry=t13[1];
   var t15=useState("USD"); var currency=t15[0],setCurrencyRaw=t15[1];
+  var t17=useState(null); var expModal=t17[0],setExpModal=t17[1];
   var t16=useState({status:"loading",date:""}); var ratesInfo=t16[0],setRatesInfo=t16[1];
   var t14=useState(function(){return storeGet("dark_mode")!==false;}); var darkMode=t14[0],setDarkMode=t14[1];
   var th1=useState(null); var householdId=th1[0],setHouseholdId=th1[1];
@@ -1254,6 +1454,7 @@ function App(){
   var flt=activeTrip&&activeTrip.flt||[];
   var car=activeTrip&&activeTrip.car||[];
   var act=activeTrip&&activeTrip.act||[];
+  var exp=activeTrip&&activeTrip.expenses||[];
 
   function updateTrip(updater){
     var updated=trips.map(function(t){return t.id===activeTripId?updater(t):t;});
@@ -1263,6 +1464,7 @@ function App(){
   function setFlt(d){updateTrip(function(t){return Object.assign({},t,{flt:d});});}
   function setCar(d){updateTrip(function(t){return Object.assign({},t,{car:d});});}
   function setAct(d){updateTrip(function(t){return Object.assign({},t,{act:d});});}
+  function setExp(d){updateTrip(function(t){return Object.assign({},t,{expenses:d});});}
 
   function createTrip(name){var t=newTrip(name||"New Trip");var updated=trips.concat([t]);saveTrips(updated);setActiveTripId(t.id);setTripMgr(false);}
   function renameTrip(id,name){saveTrips(trips.map(function(t){return t.id===id?Object.assign({},t,{name:name}):t;}));}
@@ -1311,6 +1513,7 @@ function App(){
   var cCC=car.reduce(function(s,e){return s+safeNum(e.cost);},0);
   var acC=act.reduce(function(s,e){return s+safeNum(e.cost);},0);
   var tot=aCC+fCC+cCC+acC;
+  var expTotal=exp.reduce(function(s,e){return s+expToUSD(e);},0);
   var aDue=acc.reduce(function(s,e){return s+entryDue(e);},0);
   var fDue=flt.reduce(function(s,e){return s+entryDue(e);},0);
   var cDue=car.reduce(function(s,e){return s+entryDue(e);},0);
@@ -1329,20 +1532,7 @@ function App(){
   if(authLoading||householdLoading)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)",color:"var(--text2)",fontSize:16}},"Loading...");
 
   // Login screen
-  if(!user)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)"}},
-    h("div",{style:{textAlign:"center",padding:"40px",background:"var(--surface)",borderRadius:16,border:"1px solid var(--border)",maxWidth:360,width:"100%",margin:"0 20px"}},
-      h("div",{style:{fontSize:56,marginBottom:16}},"✈️"),
-      h("h1",{style:{margin:"0 0 8px",fontSize:24,fontWeight:700,color:"var(--text)"}},"Family Trip Planner"),
-      h("p",{style:{margin:"0 0 32px",fontSize:14,color:"var(--text3)"}},"Sign in to access your trips"),
-      h("button",{
-        onClick:function(){auth.signInWithPopup(googleProvider).catch(function(e){console.error("Sign in error:",e);});},
-        style:{width:"100%",padding:"12px 20px",borderRadius:10,border:"none",background:"#fff",color:"#1f2937",fontSize:15,fontWeight:600,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:12}
-      },
-        h("img",{src:"https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg",style:{width:20,height:20}}),
-        "Sign in with Google"
-      )
-    )
-  );
+  if(!user)return h(AuthScreen,null);
 
   // Household setup — new user or joining via invite link
   if(!loaded)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)",color:"var(--text2)",fontSize:16}},"Loading your trips...");
@@ -1368,7 +1558,8 @@ function App(){
           ),
           h("div",{style:{display:"flex",gap:10,flexWrap:"wrap"}},
             [["🏠 Stays",aCC,aDue,COLORS.accommodation],["✈️ Flights",fCC,fDue,COLORS.flight],["🚗 Cars",cCC,cDue,COLORS.car],["🎯 Activities",acC,acDue,COLORS.activity]].map(function(item){return h("div",{key:item[0],style:{background:"var(--surface)",borderRadius:8,padding:"6px 12px",borderLeft:"3px solid "+item[3]}},h("div",{style:{fontSize:11,color:"var(--text2)"}},item[0]),h("div",{style:{fontSize:15,fontWeight:700,color:item[3]}},fmt$(item[1])),item[2]>0&&h("div",{style:{fontSize:11,color:"#f59e0b",marginTop:1}},fmt$(item[2])+" due"));}),
-            h("div",{style:{background:"var(--surface)",borderRadius:8,padding:"6px 12px",borderLeft:"3px solid "+(totDue>0?"#f59e0b":"var(--text)")}},h("div",{style:{fontSize:11,color:"var(--text2)"}},"💰 Total"),h("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)"}},fmt$(tot)),totDue>0&&h("div",{style:{fontSize:11,color:"#f59e0b",marginTop:1}},fmt$(totDue)+" due"))
+            h("div",{style:{background:"var(--surface)",borderRadius:8,padding:"6px 12px",borderLeft:"3px solid "+(totDue>0?"#f59e0b":"var(--text)")}},h("div",{style:{fontSize:11,color:"var(--text2)"}},"💰 Total"),h("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)"}},fmt$(tot)),totDue>0&&h("div",{style:{fontSize:11,color:"#f59e0b",marginTop:1}},fmt$(totDue)+" due")),
+            h("div",{onClick:function(){setTab("expenses");},style:{background:"var(--surface)",borderRadius:8,padding:"6px 12px",borderLeft:"3px solid #ec4899",cursor:"pointer"},title:"View in-trip expenses"},h("div",{style:{fontSize:11,color:"var(--text2)"}},"💳 In-Trip Expenses"),h("div",{style:{fontSize:15,fontWeight:700,color:"#ec4899"}},fmt$(expTotal)),h("div",{style:{fontSize:11,color:"var(--text4)",marginTop:1}},exp.length+" item"+(exp.length!==1?"s":"")))
           )
         ),
         gaps.length>0&&h("div",{style:{marginTop:10,background:"var(--warning-bg)",borderRadius:6,padding:"8px 12px",fontSize:13,color:"var(--warning-text)"}},"⚠️ "+gaps.join(" • "))
@@ -1376,7 +1567,7 @@ function App(){
     ),
     h("div",{style:{maxWidth:1200,margin:"0 auto",padding:"16px 24px"}},
       h("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12,marginBottom:16}},
-        h("div",{style:{display:"flex",gap:6,background:"var(--surface)",borderRadius:10,padding:4}},h(TB,{k:"all",label:"🗂️ All"}),h(TB,{k:"accommodations",label:"🏠 Stays"}),h(TB,{k:"flights",label:"✈️ Flights"}),h(TB,{k:"cars",label:"🚗 Cars"}),h(TB,{k:"activities",label:"🎯 Activities"})),
+        h("div",{style:{display:"flex",gap:6,background:"var(--surface)",borderRadius:10,padding:4,flexWrap:"wrap"}},h(TB,{k:"all",label:"🗂️ All"}),h(TB,{k:"accommodations",label:"🏠 Stays"}),h(TB,{k:"flights",label:"✈️ Flights"}),h(TB,{k:"cars",label:"🚗 Cars"}),h(TB,{k:"activities",label:"🎯 Activities"}),h(TB,{k:"expenses",label:"💳 Expenses"})),
         h("div",{style:{display:"flex",gap:6,flexWrap:"wrap"}},
           h("div",{style:{display:"flex",gap:4,background:"var(--surface)",borderRadius:8,padding:3}},
             [["table","☰ Table"],["calendar","📅 Calendar"],["gantt","📊 Timeline"]].map(function(item){return h("button",{key:item[0],onClick:function(){setView(item[0]);},style:{padding:"6px 12px",borderRadius:6,border:"none",cursor:"pointer",fontSize:12,fontWeight:600,background:view===item[0]?"var(--surface2)":"transparent",color:view===item[0]?"var(--text)":"var(--text3)"}},item[1]);})
@@ -1385,18 +1576,19 @@ function App(){
           h("button",{onClick:function(){setImp("backup");},style:{padding:"7px 14px",borderRadius:8,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:600,fontSize:13}},"💾 Backup"),
           h("button",{onClick:function(){setImp(true);},style:{padding:"7px 14px",borderRadius:8,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:600,fontSize:13}},"⬆️ Import"),
           h("button",{onClick:function(){setGmailModal(true);},style:{padding:"7px 14px",borderRadius:8,border:"1px solid #1a4a3a",cursor:"pointer",background:"#0d2b22",color:"#34d399",fontWeight:600,fontSize:13}},"📧 Gmail"),
-          h("button",{onClick:function(){openNew();},style:{padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",background:"var(--primary)",color:"#fff",fontWeight:600,fontSize:13}},"+ Add")
+          h("button",{onClick:function(){if(tab==="expenses"){setExpModal({isNew:true,item:Object.assign(newExp(),{currency:currency})});}else{openNew();}},style:{padding:"7px 16px",borderRadius:8,border:"none",cursor:"pointer",background:"var(--primary)",color:"#fff",fontWeight:600,fontSize:13}},"+ Add")
         )
       ),
-      view==="table"&&!detailEntry&&h("div",{style:{marginBottom:14,position:"relative"}},
+      tab==="expenses"&&h(ExpenseSummaryView,{expenses:exp,onAdd:function(){setExpModal({isNew:true,item:Object.assign(newExp(),{currency:currency})});},onEdit:function(e){setExpModal({isNew:false,item:e});}}),
+      tab!=="expenses"&&view==="table"&&!detailEntry&&h("div",{style:{marginBottom:14,position:"relative"}},
         h("input",{type:"text",value:search,onChange:function(e){setSearch(e.target.value);},placeholder:"Search by name, location, airline, notes, confirmation...",style:{width:"100%",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:8,padding:"9px 14px 9px 38px",color:"var(--text)",fontSize:13,boxSizing:"border-box"}}),
         h("span",{style:{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:16,color:"var(--text4)"}},"🔍"),
         search&&h("button",{onClick:function(){setSearch("");},style:{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"var(--text3)",cursor:"pointer",fontSize:18}},"×")
       ),
-      view==="table"&&!detailEntry&&h(TableView,{tab:tab,acc:acc,flt:flt,car:car,act:act,search:search,onEdit:function(item){setModal({isNew:false,item:item,det:[]});},onDelete:del,onDetail:function(entry){setDetailEntry(entry);}}),
-      view==="table"&&detailEntry&&h(DetailCard,{entry:detailEntry,onBack:function(){setDetailEntry(null);},onEdit:function(item){setDetailEntry(null);setModal({isNew:false,item:item,det:[]});},onDelete:function(id){del(id);setDetailEntry(null);}}),
-      view==="calendar"&&h(CalendarView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}}),
-      view==="gantt"&&h(GanttView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}})
+      tab!=="expenses"&&view==="table"&&!detailEntry&&h(TableView,{tab:tab,acc:acc,flt:flt,car:car,act:act,search:search,onEdit:function(item){setModal({isNew:false,item:item,det:[]});},onDelete:del,onDetail:function(entry){setDetailEntry(entry);}}),
+      tab!=="expenses"&&view==="table"&&detailEntry&&h(DetailCard,{entry:detailEntry,onBack:function(){setDetailEntry(null);},onEdit:function(item){setDetailEntry(null);setModal({isNew:false,item:item,det:[]});},onDelete:function(id){del(id);setDetailEntry(null);}}),
+      tab!=="expenses"&&view==="calendar"&&h(CalendarView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}}),
+      tab!=="expenses"&&view==="gantt"&&h(GanttView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}})
     ),
     pdfPreview&&h(PDFPreviewModal,{html:buildPrintHTML(tab,acc,flt,car,act,activeTrip&&activeTrip.name),onClose:function(){setPdfPreview(false);}}),
     tripMgr&&h(TripManagerModal,{trips:trips,activeTripId:activeTripId,onClose:function(){setTripMgr(false);},onCreate:createTrip,onRename:renameTrip,onDelete:deleteTrip,onSwitch:function(id){setActiveTripId(id);setTripMgr(false);setSearch("");}}),
@@ -1414,6 +1606,7 @@ function App(){
     imp===true&&h(ImportModal,{onClose:function(){setImp(false);},onImported:function(importedItem){var det=Object.keys(importedItem).filter(function(k){return importedItem[k]&&importedItem[k]!==false&&k!=="id"&&k!=="type";});setImp(false);setModal({isNew:true,item:importedItem,det:det});}}),
     imp==="backup"&&h(BackupModal,{trips:trips,onClose:function(){setImp(false);},onRestore:function(data){saveTrips(data.trips||trips);setImp(false);}}),
     modal&&h(EntryModal,{modal:modal,tab:tab,onSave:save,onDelete:del,onClose:function(){setModal(null);}}),
+    expModal&&h(ExpenseModal,{modal:expModal,tripCurrency:currency,onClose:function(){setExpModal(null);},onDelete:function(id){setExp(exp.filter(function(e){return e.id!==id;}));setExpModal(null);},onSave:function(item){var next=exp.filter(function(e){return e.id===item.id;}).length>0?exp.map(function(e){return e.id===item.id?item:e;}):exp.concat([item]);setExp(next);setExpModal(null);}}),
     householdModal&&h(HouseholdModal,{householdId:householdId,householdDoc:householdDoc,user:user,onClose:function(){setHouseholdModal(false);},onRenamed:function(n){setHouseholdDoc(function(d){return Object.assign({},d,{name:n});});}})
   );
 }
