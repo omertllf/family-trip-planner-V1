@@ -16,8 +16,9 @@
 |-------|--------|
 | **React** | UMD build via CDN, `React.createElement` (no JSX), all in one `<script>` tag |
 | **State** | Firestore `onSnapshot` as source of truth when signed in; localStorage fallback |
-| **Auth** | Google Auth via `signInWithPopup` (primary); redirect only on `popup-blocked` |
-| **Data path** | `users/{uid}/data/{key}` — per-user, not household |
+| **Auth** | Google Auth via `signInWithPopup` (primary) + Email/Password via `AuthScreen` |
+| **Data path** | `households/{householdId}/data/trips_index` — shared per household |
+| **Household resolve** | On login: query `households WHERE allowedEmails array-contains email`, pick oldest. Create new only if none found. |
 | **Persistence** | `storeSet()` writes both localStorage and Firestore simultaneously |
 | **PWA** | `sw.js` + `manifest.json` + `icon-192.svg` (separate files, not inline) |
 
@@ -41,13 +42,14 @@ Trip {
 Expense {
   id: number (timestamp)
   date: string (YYYY-MM-DD)
-  category: "Fuel"|"Groceries"|"Restaurants"|"Shopping"|"Parking"|"Tickets"|"Other"
-  description: string
+  category: "Fuel"|"Groceries"|"Restaurants"|"Shopping"|"Parking"|"Tickets"|"Other"  ← mandatory
+  description: string  ← optional
+  addedBy: string      ← optional free text (who spent it)
   amount: number (stored in the currency field's currency)
   currency: "USD"|"EUR"|"ILS"
   notes: string
 }
-// Note: expToUSD() converts expense amounts to USD for totals/display
+// expToUSD() converts expense amounts to USD for totals/display
 ```
 
 Entry types: `accommodation`, `flight`, `car`, `activity`
@@ -60,20 +62,21 @@ Costs stored in **USD**; display currency converted client-side via live rates (
 | Component | Purpose |
 |-----------|---------|
 | `App` | Root; auth state, trip selection, layout |
+| `AuthScreen` | Login/register screen (Google + email/password) |
 | `TableView` | Main data view; sortable, drag-reorder columns, duplicate detection |
 | `DetailCard` | Single-entry detail view (click row → detail) |
 | `CalendarView` | Month grid view |
 | `GanttView` | Timeline/Gantt view |
 | `EntryModal` | Add/edit modal for all 4 entry types |
+| `ExpenseModal` | Add/edit in-trip expense entries |
+| `ExpenseSummaryView` | Expenses tab: category/person breakdown + SVG pie chart + full table |
+| `PieChart` | SVG pie chart helper used in ExpenseSummaryView |
 | `ImportModal` | AI extraction from PDF/image/text/ICS |
 | `GmailBridgeModal` | Paste-back Gmail import (no direct MCP from iframe) |
 | `BackupModal` | JSON export/import |
 | `TripManagerModal` | Create/rename/delete/switch trips |
 | `PDFPreviewModal` | iframe print preview |
-| `ExpenseModal` | Add/edit in-trip expense entries |
-| `ExpenseSummaryView` | Expenses tab: category table + SVG pie chart |
-| `PieChart` | SVG pie chart helper used in ExpenseSummaryView |
-| `AuthScreen` | Login/register screen (Google + email/password) |
+| `HouseholdModal` | View members, copy/share invite link |
 
 ---
 
@@ -93,8 +96,6 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 --input-bg: #0f172a
 ```
 
-> ⚠️ Memory references a "premium UI redesign" with warm palette (`--canvas`, `--coral`, `--sage`, `--horizon:#1E3A5F`, Plus Jakarta Sans). **This is NOT in the current file.** The file uses the original dark/light toggle theme.
-
 ---
 
 ## Known Issues / Pending Work
@@ -103,8 +104,8 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 |------|--------|
 | Residual dark hex values in Gmail/Backup/Import/PDF modals | Present — modals use hardcoded `#0f172a`, `#334155`, `#7c2d12` etc. instead of CSS vars |
 | `signInWithRedirect` fallback | Not implemented; only `signInWithPopup` present |
-| Household model | Active — `households/{id}/data/trips_index`; new devices query by email (`allowedEmails array-contains`) before creating a new household |
-| Premium UI redesign | Never merged into main file |
+
+---
 
 ## Auth
 
@@ -112,19 +113,30 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 - **Email/Password**: `createUserWithEmailAndPassword` + `signInWithEmailAndPassword` via `AuthScreen` component
 - Both options shown on the login screen; email/password supports register + login toggle
 
+---
+
+## Household Sync
+
+- Data path: `households/{householdId}/data/trips_index`
+- On every login, app queries: `households WHERE allowedEmails array-contains <email>` and picks the **oldest** household (lowest `createdAt`). Only creates a new household if none found.
+- This ensures all devices for the same user converge on the same household automatically.
+- Invite link `?join=householdId` still works and takes priority over the email query.
+- Falls back to localStorage-cached `household_id` only if Firestore is unreachable (offline).
+
+---
+
 ## In-Trip Expenses
 
 - Stored as `expenses: []` on each Trip object (added to `newTrip()`)
 - `expToUSD(exp)` converts amounts from entry's currency to USD for totals
 - `EXPENSE_CATS`: Fuel, Groceries, Restaurants, Shopping, Parking, Tickets, Other
 - `EXPENSE_COLORS` / `EXPENSE_CAT_ICONS`: maps categories to colors/emojis
+- Header "💰 Total" box includes in-trip expenses (`tot + expTotal`)
 - Header shows "💳 In-Trip Expenses" box; clicking it navigates to expenses tab
 - "💳 Expenses" tab in the nav bar renders `ExpenseSummaryView`
-- "＋ Add" button opens type picker (which includes Expense) or adds expense directly when on expenses tab
-- Global type picker (`typePicker`) now includes "💸 Expense" option
-- `Expense.category` is **mandatory**; `description` is optional free text
-- `Expense.addedBy` — optional free text to attribute who spent it
-- `ExpenseSummaryView` has **By Category / By Person** toggle; pie chart updates accordingly
+- "＋ Add" button opens type picker (which includes "💸 Expense") or adds expense directly when on expenses tab
+- `Expense.category` is **mandatory**; `description` and `addedBy` are optional
+- `ExpenseSummaryView` has **By Category / By Person** toggle; pie chart and bar chart update accordingly
 
 ---
 
@@ -134,17 +146,15 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 2. **`signInWithPopup` always primary** — `signInWithRedirect` fails on iOS Safari (ITP).
 3. **Costs always stored in USD** — conversion is display-only via `fmt$()`.
 4. **`claudeExtract()`** calls `claude-sonnet-4-20250514` — verify model string is current before using.
-5. **Validate with `node --check`** after every edit (extract inline script, prepend React/Firebase stubs).
+5. **Validate with `node --check`** after every edit (extract inline script, check with node).
 
 ---
 
 ## Deployment Workflow
 
-1. Edit file locally
-2. Copy into GitHub repo via GitHub Desktop
-3. Commit + push to main → Vercel auto-deploys immediately
-4. Also available on GitHub Pages (~60s delay)
-- Firebase authorized domains: both `familytripplanner.vercel.app` and `omertllf.github.io` must be listed
+1. Edit `family-trip-planner.html` (and optionally `CLAUDE.md`, `sw.js`)
+2. Commit + push to `main` → Vercel auto-deploys immediately; GitHub Pages deploys ~60s later
+3. Firebase authorized domains: both `familytripplanner.vercel.app` and `omertllf.github.io` must be listed
 
 ---
 
