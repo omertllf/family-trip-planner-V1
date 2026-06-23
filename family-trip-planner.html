@@ -1033,6 +1033,13 @@ function PieChart(props){
   var total=data.reduce(function(s,d){return s+d.value;},0);
   if(!total)return h("div",{style:{textAlign:"center",padding:40,color:"var(--text3)"}},"No expenses yet");
   var size=200,cx=100,cy=100,r=78;
+  // Single-slice special case: SVG arc from point to same point renders nothing
+  if(data.filter(function(d){return d.value>0;}).length===1){
+    var solo=data.filter(function(d){return d.value>0;})[0];
+    return h("svg",{width:size,height:size,viewBox:"0 0 "+size+" "+size,style:{display:"block",margin:"0 auto"}},
+      h("circle",{cx:cx,cy:cy,r:r,fill:solo.color})
+    );
+  }
   var slices=[],cum=-Math.PI/2;
   data.forEach(function(d){
     if(!d.value)return;
@@ -1041,10 +1048,10 @@ function PieChart(props){
     cum+=angle;
     var x2=cx+r*Math.cos(cum),y2=cy+r*Math.sin(cum);
     var large=angle>Math.PI?1:0;
-    slices.push({path:"M "+cx+" "+cy+" L "+x1.toFixed(2)+" "+y1.toFixed(2)+" A "+r+" "+r+" 0 "+large+" 1 "+x2.toFixed(2)+" "+y2.toFixed(2)+" Z",color:d.color,label:d.label,pct:((d.value/total)*100).toFixed(1)});
+    slices.push({path:"M "+cx+" "+cy+" L "+x1.toFixed(2)+" "+y1.toFixed(2)+" A "+r+" "+r+" 0 "+large+" 1 "+x2.toFixed(2)+" "+y2.toFixed(2)+" Z",color:d.color});
   });
   return h("svg",{width:size,height:size,viewBox:"0 0 "+size+" "+size,style:{display:"block",margin:"0 auto"}},
-    slices.map(function(s,i){return h("path",{key:i,d:s.path,fill:s.color,stroke:"var(--bg)",strokeWidth:2});})
+    slices.map(function(s,i){return h("path",{key:i,d:s.path,fill:s.color,stroke:"#fff",strokeWidth:1.5});})
   );
 }
 function expToUSD(exp){
