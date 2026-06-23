@@ -1343,8 +1343,9 @@ function App(){
   },[]);
 
   // Household lookup — runs after auth resolves.
-  // Uses a localStorage-cached household ID to avoid needing Firestore list permissions.
-  // Falls back to auto-create for new users; handles invite links (?join=id).
+  // Always queries Firestore for all households containing this email and picks
+  // the oldest one (lowest createdAt). Falls back to cached ID if Firestore is
+  // unreachable, or creates a new household if none found.
   useEffect(function(){
     if(authLoading)return;
     if(!user){setHouseholdLoading(false);return;}
@@ -1370,14 +1371,13 @@ function App(){
         .then(function(){resolveHousehold(id,data);})
         .catch(function(e){
           console.warn("Household create failed:",e);
-          // Firestore unavailable — work offline with localStorage
           setHouseholdLoading(false);
         });
     }
 
     function doJoin(joinId){
       db.collection("households").doc(joinId).get().then(function(doc){
-        if(!doc.exists){doCreate();return;}
+        if(!doc.exists){doFindOrCreate();return;}
         var data=doc.data();
         var emails=data.allowedEmails||[];
         if(emails.indexOf(email)>-1){resolveHousehold(joinId,data);window.history.replaceState({},"",window.location.pathname);return;}
@@ -1387,51 +1387,35 @@ function App(){
             resolveHousehold(joinId,Object.assign({},data,{allowedEmails:newEmails}));
             window.history.replaceState({},"",window.location.pathname);
           })
-          .catch(function(){doCreate();});
-      }).catch(function(){doCreate();});
-    }
-
-    // If invite link: always join/verify that household first
-    if(joinParam){doJoin(joinParam);return;}
-
-    // Check localStorage cache for known household ID
-    var cachedId=null;
-    try{cachedId=localStorage.getItem("household_id");}catch(e){}
-    if(cachedId){
-      db.collection("households").doc(cachedId).get()
-        .then(function(doc){
-          if(doc.exists){
-            var data=doc.data();
-            var emails=data.allowedEmails||[];
-            if(emails.indexOf(email)>-1){resolveHousehold(cachedId,data);return;}
-          }
-          // Cached ID invalid or user removed — search by email before creating
-          try{localStorage.removeItem("household_id");}catch(e){}
-          doFindOrCreate();
-        })
-        .catch(function(){
-          // Firestore unreachable — work offline
-          _householdId=cachedId;
-          setHouseholdId(cachedId);
-          setHouseholdLoading(false);
-        });
-    } else {
-      doFindOrCreate();
+          .catch(function(){doFindOrCreate();});
+      }).catch(function(){doFindOrCreate();});
     }
 
     function doFindOrCreate(){
-      // Query for any household where this email is already a member
-      db.collection("households").where("allowedEmails","array-contains",email).limit(1).get()
+      // Always query all households for this email; pick the oldest (createdAt)
+      db.collection("households").where("allowedEmails","array-contains",email).get()
         .then(function(snap){
-          if(!snap.empty){
-            var doc=snap.docs[0];
-            resolveHousehold(doc.id,doc.data());
-          } else {
-            doCreate();
-          }
+          if(snap.empty){doCreate();return;}
+          var best=null;
+          snap.docs.forEach(function(doc){
+            var d=doc.data();
+            if(!best||(d.createdAt||0)<(best.data.createdAt||Infinity)){best={id:doc.id,data:d};}
+          });
+          resolveHousehold(best.id,best.data);
         })
-        .catch(function(){doCreate();});
+        .catch(function(){
+          // Firestore unreachable — fall back to cached ID
+          var cachedId=null;
+          try{cachedId=localStorage.getItem("household_id");}catch(e){}
+          if(cachedId){_householdId=cachedId;setHouseholdId(cachedId);setHouseholdLoading(false);}
+          else{setHouseholdLoading(false);}
+        });
     }
+
+    // Invite link always takes priority
+    if(joinParam){doJoin(joinParam);return;}
+
+    doFindOrCreate();
   },[user,authLoading]);
 
   var unsubSnapshotRef=useRef(null);
