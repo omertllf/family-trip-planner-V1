@@ -1351,6 +1351,9 @@ function App(){
   useEffect(function(){
     if(authLoading)return;
     if(!user){setHouseholdLoading(false);return;}
+    // Reset householdLoading to true each time user resolves, so trips effect
+    // doesn't prematurely fall through to localStorage fallback.
+    setHouseholdLoading(true);
     var email=user.email.toLowerCase();
 
     function resolveHousehold(id,data){
@@ -1405,12 +1408,28 @@ function App(){
           });
           resolveHousehold(best.id,best.data);
         })
-        .catch(function(){
-          // Firestore unreachable — fall back to cached ID
+        .catch(function(queryErr){
+          console.warn("Household email query failed (missing index or network):",queryErr);
+          // Email query failed — try reading the cached household doc directly (point-read, no index needed)
           var cachedId=null;
           try{cachedId=localStorage.getItem("household_id");}catch(e){}
-          if(cachedId){_householdId=cachedId;setHouseholdId(cachedId);setHouseholdLoading(false);}
-          else{setHouseholdLoading(false);}
+          if(cachedId){
+            db.collection("households").doc(cachedId).get()
+              .then(function(doc){
+                if(doc.exists){
+                  resolveHousehold(cachedId,doc.data());
+                } else {
+                  // Cached ID is stale; create a new household
+                  doCreate();
+                }
+              })
+              .catch(function(){
+                // Firestore completely unreachable — use cached ID as-is
+                _householdId=cachedId;setHouseholdId(cachedId);setHouseholdLoading(false);
+              });
+          } else {
+            doCreate();
+          }
         });
     }
 
@@ -1440,13 +1459,16 @@ function App(){
             setActiveTripIdRaw(hasActive?savedActive:(remote[0]&&remote[0].id)||null);
           }
         } else {
-          // No household data yet — seed from localStorage
+          // No Firestore data yet for this household
           var local=storeGet("trips_index");
           if(!local){
             var leg=Object.assign(newTrip("My Trip"),{acc:storeGet("acc")||[],flt:storeGet("flt")||[],car:storeGet("car")||[],act:storeGet("act")||[]});
             local=[leg];
           }
-          storeSet("trips_index",local);
+          // Only seed Firestore if local data has actual entries (prevent clobbering
+          // another device's data with an empty/default local state)
+          var hasRealData=local.some(function(t){return(t.acc||[]).length+(t.flt||[]).length+(t.car||[]).length+(t.act||[]).length+(t.expenses||[]).length>0;});
+          if(hasRealData)storeSet("trips_index",local);
           setTripsRaw(local);
           var savedActive2=storeGet("active_trip_id");
           var hasActive2=savedActive2&&local.filter(function(t){return t.id===savedActive2;}).length>0;
@@ -1608,6 +1630,10 @@ function App(){
             )
           ),
           h("div",{style:{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}},
+            householdId&&h("span",{
+              title:"Household ID: "+householdId+"\nBoth devices must show the same ID for data to sync.",
+              style:{fontSize:10,cursor:"help",color:"var(--text4)",userSelect:"none",fontFamily:"monospace"}
+            },"#"+householdId.slice(-6)),
             h("span",{
               title:ratesInfo.status==="ok"?"Live rates as of "+ratesInfo.date+" (cached 1h)":ratesInfo.status==="err"?"Live rates unavailable — using approximate fallback":"Fetching live exchange rates...",
               style:{fontSize:10,cursor:"help",color:ratesInfo.status==="ok"?"#16A34A":ratesInfo.status==="err"?"#D97706":"var(--text4)",userSelect:"none"}
