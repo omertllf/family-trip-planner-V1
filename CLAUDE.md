@@ -103,7 +103,7 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 |------|--------|
 | Residual dark hex values in Gmail/Backup/Import/PDF modals | Present — modals use hardcoded `#0f172a`, `#334155`, `#7c2d12` etc. instead of CSS vars |
 | `signInWithRedirect` fallback | Not implemented; only `signInWithPopup` present |
-| Household model | Never deployed — file uses per-user `users/{uid}/data/` path throughout |
+| Household model | Active — `households/{id}/data/trips_index`; new devices query by email (`allowedEmails array-contains`) before creating a new household |
 | Premium UI redesign | Never merged into main file |
 
 ## Auth
