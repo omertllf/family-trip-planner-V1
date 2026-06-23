@@ -1405,9 +1405,9 @@ function App(){
             var emails=data.allowedEmails||[];
             if(emails.indexOf(email)>-1){resolveHousehold(cachedId,data);return;}
           }
-          // Cached ID invalid or user removed — create a new one
+          // Cached ID invalid or user removed — search by email before creating
           try{localStorage.removeItem("household_id");}catch(e){}
-          doCreate();
+          doFindOrCreate();
         })
         .catch(function(){
           // Firestore unreachable — work offline
@@ -1416,7 +1416,21 @@ function App(){
           setHouseholdLoading(false);
         });
     } else {
-      doCreate();
+      doFindOrCreate();
+    }
+
+    function doFindOrCreate(){
+      // Query for any household where this email is already a member
+      db.collection("households").where("allowedEmails","array-contains",email).limit(1).get()
+        .then(function(snap){
+          if(!snap.empty){
+            var doc=snap.docs[0];
+            resolveHousehold(doc.id,doc.data());
+          } else {
+            doCreate();
+          }
+        })
+        .catch(function(){doCreate();});
     }
   },[user,authLoading]);
 
