@@ -120,7 +120,11 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 - `EXPENSE_COLORS` / `EXPENSE_CAT_ICONS`: maps categories to colors/emojis
 - Header shows "💳 In-Trip Expenses" box; clicking it navigates to expenses tab
 - "💳 Expenses" tab in the nav bar renders `ExpenseSummaryView`
-- "＋ Add" button creates an expense when expenses tab is active
+- "＋ Add" button opens type picker (which includes Expense) or adds expense directly when on expenses tab
+- Global type picker (`typePicker`) now includes "💸 Expense" option
+- `Expense.category` is **mandatory**; `description` is optional free text
+- `Expense.addedBy` — optional free text to attribute who spent it
+- `ExpenseSummaryView` has **By Category / By Person** toggle; pie chart updates accordingly
 
 ---
 
