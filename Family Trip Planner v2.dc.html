@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { font-family: 'Helvetica Neue', Helvetica, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; -webkit-font-smoothing: antialiased; background: #F3EDE2; }
+    a { text-decoration: none; color: inherit; }
+    @keyframes modalIn { from { opacity:0; transform:translateY(12px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
+    @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-thumb { background:#C0B8AE; border-radius:3px; }
+  </style>
+</helmet>
+
+<div style="display:flex; min-height:100vh;">
+
+  <!-- ════ SIDEBAR ════ -->
+  <aside style="position:fixed; top:0; left:0; width:228px; height:100vh; background:#071829; display:flex; flex-direction:column; z-index:100; overflow-y:auto;">
+    <div style="padding:22px 18px 18px; border-bottom:1px solid rgba(255,255,255,0.07);">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div style="width:34px; height:34px; background:#0097A7; border-radius:8px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" fill="#fff" stroke="none"/>
+          </svg>
+        </div>
+        <div>
+          <div style="font-size:13.5px; font-weight:700; color:#EDE8DF; letter-spacing:-0.015em; line-height:1.15;">Family Trip</div>
+          <div style="font-size:10.5px; color:#3D566E; font-weight:500;">Planner</div>
+        </div>
+      </div>
+    </div>
+    <nav style="padding:14px 10px; flex:1; display:flex; flex-direction:column; gap:1px;">
+      <div style="font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#1E3850; padding:0 8px 6px;">Design System</div>
+      <a href="#tokens" style="display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:5px; color:#607D95; font-size:12.5px; font-weight:500;" style-hover="background:rgba(255,255,255,0.05);color:#B8D0DE;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        Colors &amp; Type
+      </a>
+      <a href="#icons-section" style="display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:5px; color:#607D95; font-size:12.5px; font-weight:500;" style-hover="background:rgba(255,255,255,0.05);color:#B8D0DE;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Icons
+      </a>
+      <div style="height:1px; background:rgba(255,255,255,0.06); margin:8px 0;"></div>
+      <div style="font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#1E3850; padding:0 8px 6px;">Components</div>
+      <a href="#comp-nav" style="display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:5px; color:#607D95; font-size:12.5px; font-weight:500;" style-hover="background:rgba(255,255,255,0.05);color:#B8D0DE;"><span style="font-size:9px; font-weight:700; color:#1E3850; width:16px; text-align:right; flex-shrink:0;">03</span>Navigation</a>
+      <a href="#comp-budget" style="display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:5px; color:#607D95; font-size:12.5px; font-weight:500;" style-hover="background:rgba(255,255,255,0.05);color:#B8D0DE;"><span style="font-size:9px; font-weight:700; color:#1E3850; width:16px; text-align:right; flex-shrink:0;">04</span>Budget Cards</a>
+      <a href="#comp-tabs" style="display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:5px; color:#607D95; font-size:12.5px; font-weight:500;" style-hover="background:rgba(255,255,255,0.05);color:#B8D0DE;"><span style="font-size:9px; font-weight:700; color:#1E3850; width:16px; text-align:right; flex-shrink:0;">05</span>Category Tabs</a>
+      <a href="#comp-table" style="display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:5px; color:#607D95; font-size:12.5px; font-weight:500;" style-hover="background:rgba(255,255,255,0.05);color:#B8D0DE;"><span style="font-size:9px; font-weight:700; color:#1E3850; width:16px; text-align:right; flex-shrink:0;">06</span>Data Table</a>
+      <a href="#comp-modals" style="display:flex; align-items:center; gap:8px; padding:7px 8px; border-radius:5px; color:#607D95; font-size:12.5px; font-weight:500;" style-hover="background:rgba(255,255,255,0.05);color:#B8D0DE;"><span style="font-size:9px; font-weight:700; color:#1E3850; width:16px; text-align:right; flex-shrink:0;">07</span>Modals &amp; Forms</a>
+      <div style="height:1px; background:rgba(255,255,255,0.06); margin:8px 0;"></div>
+      <div style="font-size:8.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#1E3850; padding:0 8px 6px;">Prototype</div>
+      <a href="#preview" style="display:flex; align-items:center; gap:0; padding:7px 8px 7px 5px; border-radius:5px; color:#00C4D8; font-size:12.5px; font-weight:600; background:rgba(0,151,167,0.12); border-left:3px solid #0097A7;"><span style="font-size:9px; font-weight:700; color:#0097A7; width:19px; text-align:right; flex-shrink:0; padding-right:3px;">08</span>Full Preview</a>
+    </nav>
+    <div style="padding:14px 18px; border-top:1px solid rgba(255,255,255,0.06);">
+      <div style="font-size:10.5px; color:#1E3850; font-weight:600;">v2 · June 2026</div>
+    </div>
+  </aside>
+
+  <!-- ════ MAIN ════ -->
+  <main style="margin-left:228px; flex:1; background:#F3EDE2;">
+
+    <!-- INTRO -->
+    <div style="padding:52px 60px 44px; background:#FDFBF7; border-bottom:1px solid #DDD7CD;">
+      <div style="max-width:900px;">
+        <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#9BAAB8; margin-bottom:10px;">UI Redesign Proposal — v2 · June 2026</div>
+        <h1 style="font-size:36px; font-weight:800; color:#0B2545; letter-spacing:-0.025em; line-height:1.05; margin:0 0 12px;">IMG-Inspired Redesign</h1>
+        <p style="font-size:15px; color:#5C6E82; max-width:520px; line-height:1.75; margin:0 0 26px;">Shifting from a cold dark theme to a professional deep-navy + teal palette inspired by imglobal.com. Warm sand surfaces, custom SVG category icons, and a trust-building enterprise aesthetic.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <span style="padding:4px 12px; border:1px solid #B8DDE2; background:#E0F5F7; border-radius:4px; font-size:12px; font-weight:600; color:#006A77;">Navy + Teal palette</span>
+          <span style="padding:4px 12px; border:1px solid #B8DDE2; background:#E0F5F7; border-radius:4px; font-size:12px; font-weight:600; color:#006A77;">Custom SVG icons</span>
+          <span style="padding:4px 12px; border:1px solid #B8DDE2; background:#E0F5F7; border-radius:4px; font-size:12px; font-weight:600; color:#006A77;">Warm sand surfaces</span>
+          <span style="padding:4px 12px; border:1px solid #B8DDE2; background:#E0F5F7; border-radius:4px; font-size:12px; font-weight:600; color:#006A77;">Navy table headers</span>
+          <span style="padding:4px 12px; border:1px solid #B8DDE2; background:#E0F5F7; border-radius:4px; font-size:12px; font-weight:600; color:#006A77;">Helvetica Neue type</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 01 TOKENS -->
+    <div id="tokens" style="padding:48px 60px; background:#F3EDE2; border-bottom:1px solid #DDD7CD;">
+      <div style="max-width:900px;">
+        <div style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#9BAAB8; margin-bottom:6px;">01 — Design System</div>
+        <h2 style="font-size:22px; font-weight:700; color:#0B2545; margin:0 0 4px; letter-spacing:-0.012em;">Colors &amp; Typography</h2>
+        <p style="font-size:14px; color:#5C6E82; margin:0 0 28px; line-height:1.65;">Navy primary, teal accent, warm sand background. Category colors harmonised to the same professional temperature — nothing neon or playful.</p>
+
+        <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:#5C6E82; margin-bottom:10px;">Primary — Navy</div>
+        <div style="display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap;">
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#071829; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Navy 950</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#071829</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#0B2545; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Navy 800</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#0B2545</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#1A4272; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Navy 600</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#1A4272</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#5C6E82; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Slate</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#5C6E82</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#9BAAB8; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Muted</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#9BAAB8</div></div>
+        </div>
+
+        <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:#5C6E82; margin-bottom:10px;">Accent — Teal</div>
+        <div style="display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap;">
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#E0F5F7; border:1px solid #B0DDE2; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Teal 100</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#E0F5F7</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#0097A7; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Teal 600</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#0097A7</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#006D7A; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Teal 800</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#006D7A</div></div>
+        </div>
+
+        <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:#5C6E82; margin-bottom:10px;">Surfaces</div>
+        <div style="display:flex; gap:8px; margin-bottom:22px; flex-wrap:wrap;">
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#FDFBF7; border:1px solid #DDD7CD; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Off-white</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#FDFBF7</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#F3EDE2; border:1px solid #DDD7CD; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Sand</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#F3EDE2</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#DDD7CD; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Border</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#DDD7CD</div></div>
+        </div>
+
+        <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:#5C6E82; margin-bottom:10px;">Categories</div>
+        <div style="display:flex; gap:8px; margin-bottom:30px; flex-wrap:wrap;">
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#0097A7; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Stay</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#0097A7</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#1A5DB5; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Flight</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#1A5DB5</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#B5732A; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Car</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#B5732A</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#2A7D5E; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Activity</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#2A7D5E</div></div>
+          <div style="width:96px;"><div style="height:46px; border-radius:6px; background:#8B3A6B; margin-bottom:6px;"></div><div style="font-size:11.5px; font-weight:600; color:#0B2545;">Expense</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace;">#8B3A6B</div></div>
+        </div>
+
+        <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:#5C6E82; margin-bottom:10px;">Type Scale — Helvetica Neue</div>
+        <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:22px 26px; display:flex; flex-direction:column; gap:14px;">
+          <div style="display:flex; align-items:baseline; gap:16px;"><div style="font-size:32px; font-weight:800; color:#0B2545; letter-spacing:-0.028em; line-height:1; flex:1;">Page Title</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace; white-space:nowrap;">32/800</div></div>
+          <div style="height:1px; background:#F3EDE2;"></div>
+          <div style="display:flex; align-items:baseline; gap:16px;"><div style="font-size:22px; font-weight:700; color:#0B2545; letter-spacing:-0.015em; flex:1;">Section Heading</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace; white-space:nowrap;">22/700</div></div>
+          <div style="height:1px; background:#F3EDE2;"></div>
+          <div style="display:flex; align-items:baseline; gap:16px;"><div style="font-size:16px; font-weight:600; color:#0B2545; flex:1;">Card / Modal Title</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace; white-space:nowrap;">16/600</div></div>
+          <div style="height:1px; background:#F3EDE2;"></div>
+          <div style="display:flex; align-items:baseline; gap:16px;"><div style="font-size:14px; color:#0B2545; flex:1;">Body — descriptions, notes, paragraph copy.</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace; white-space:nowrap;">14/400</div></div>
+          <div style="height:1px; background:#F3EDE2;"></div>
+          <div style="display:flex; align-items:baseline; gap:16px;"><div style="font-size:13px; color:#5C6E82; flex:1;">Table data, form fields, secondary labels</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace; white-space:nowrap;">13/400</div></div>
+          <div style="height:1px; background:#F3EDE2;"></div>
+          <div style="display:flex; align-items:baseline; gap:16px;"><div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; flex:1;">COLUMN HEADER / LABEL</div><div style="font-size:10px; color:#9BAAB8; font-family:monospace; white-space:nowrap;">11/700 caps</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 ICONS -->
+    <div id="icons-section" style="padding:48px 60px; background:#FDFBF7; border-bottom:1px solid #DDD7CD;">
+      <div style="max-width:900px;">
+        <div style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#9BAAB8; margin-bottom:6px;">02 — Icons</div>
+        <h2 style="font-size:22px; font-weight:700; color:#0B2545; margin:0 0 4px; letter-spacing:-0.012em;">Category &amp; UI Icons</h2>
+        <p style="font-size:14px; color:#5C6E82; margin:0 0 24px; line-height:1.65;">Stroke-based SVG on a 24×24 grid, 1.8pt weight. Category icons in their signature colored square — the same treatment used in budget cards and the type-picker modal.</p>
+
+        <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:#5C6E82; margin-bottom:12px;">Category Icons</div>
+        <div style="display:flex; gap:12px; flex-wrap:wrap; margin-bottom:28px;">
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:10px; padding:20px 16px; display:flex; flex-direction:column; align-items:center; gap:12px; min-width:96px;">
+            <div style="width:50px; height:50px; background:#0097A7; border-radius:11px; display:flex; align-items:center; justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5z"/><path d="M9 21V13h6v8"/></svg>
+            </div>
+            <div style="text-align:center;"><div style="font-size:13px; font-weight:600; color:#0B2545;">Stay</div><div style="font-size:10px; color:#9BAAB8; margin-top:2px;">House</div></div>
+          </div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:10px; padding:20px 16px; display:flex; flex-direction:column; align-items:center; gap:12px; min-width:96px;">
+            <div style="width:50px; height:50px; background:#1A5DB5; border-radius:11px; display:flex; align-items:center; justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg>
+            </div>
+            <div style="text-align:center;"><div style="font-size:13px; font-weight:600; color:#0B2545;">Flight</div><div style="font-size:10px; color:#9BAAB8; margin-top:2px;">Plane</div></div>
+          </div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:10px; padding:20px 16px; display:flex; flex-direction:column; align-items:center; gap:12px; min-width:96px;">
+            <div style="width:50px; height:50px; background:#B5732A; border-radius:11px; display:flex; align-items:center; justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2.5-5.5h13L21 12v5h-2"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M3 12h18"/></svg>
+            </div>
+            <div style="text-align:center;"><div style="font-size:13px; font-weight:600; color:#0B2545;">Car Rental</div><div style="font-size:10px; color:#9BAAB8; margin-top:2px;">Automobile</div></div>
+          </div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:10px; padding:20px 16px; display:flex; flex-direction:column; align-items:center; gap:12px; min-width:96px;">
+            <div style="width:50px; height:50px; background:#2A7D5E; border-radius:11px; display:flex; align-items:center; justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" fill="#fff" stroke="none"/></svg>
+            </div>
+            <div style="text-align:center;"><div style="font-size:13px; font-weight:600; color:#0B2545;">Activity</div><div style="font-size:10px; color:#9BAAB8; margin-top:2px;">Compass</div></div>
+          </div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:10px; padding:20px 16px; display:flex; flex-direction:column; align-items:center; gap:12px; min-width:96px;">
+            <div style="width:50px; height:50px; background:#8B3A6B; border-radius:11px; display:flex; align-items:center; justify-content:center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="13" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><circle cx="12" cy="15" r="1.5" fill="#fff" stroke="none"/></svg>
+            </div>
+            <div style="text-align:center;"><div style="font-size:13px; font-weight:600; color:#0B2545;">Expense</div><div style="font-size:10px; color:#9BAAB8; margin-top:2px;">Wallet</div></div>
+          </div>
+        </div>
+
+        <div style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:#5C6E82; margin-bottom:12px;">UI Icons — Navy on light · Teal for primary actions</div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:68px;"><div style="width:34px; height:34px; background:#E8EDF5; border-radius:7px; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B2545" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></div><div style="font-size:10px; color:#9BAAB8; font-weight:600;">Search</div></div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:68px;"><div style="width:34px; height:34px; background:#E8EDF5; border-radius:7px; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B2545" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div style="font-size:10px; color:#9BAAB8; font-weight:600;">Members</div></div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:68px;"><div style="width:34px; height:34px; background:#E8EDF5; border-radius:7px; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B2545" stroke-width="1.8" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div style="font-size:10px; color:#9BAAB8; font-weight:600;">Calendar</div></div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:68px;"><div style="width:34px; height:34px; background:#0097A7; border-radius:7px; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div><div style="font-size:10px; color:#9BAAB8; font-weight:600;">Add</div></div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:68px;"><div style="width:34px; height:34px; background:#E8EDF5; border-radius:7px; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B2545" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></div><div style="font-size:10px; color:#9BAAB8; font-weight:600;">Export</div></div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:68px;"><div style="width:34px; height:34px; background:#E8EDF5; border-radius:7px; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B2545" stroke-width="1.8" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div><div style="font-size:10px; color:#9BAAB8; font-weight:600;">Import</div></div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:68px;"><div style="width:34px; height:34px; background:#E8EDF5; border-radius:7px; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B2545" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div><div style="font-size:10px; color:#9BAAB8; font-weight:600;">Close</div></div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:12px 14px; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:68px;"><div style="width:34px; height:34px; background:#E8EDF5; border-radius:7px; display:flex; align-items:center; justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0B2545" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div><div style="font-size:10px; color:#9BAAB8; font-weight:600;">More</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 NAV HEADER -->
+    <div id="comp-nav" style="padding:48px 60px; background:#F3EDE2; border-bottom:1px solid #DDD7CD;">
+      <div style="max-width:900px;">
+        <div style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#9BAAB8; margin-bottom:6px;">03 — Navigation</div>
+        <h2 style="font-size:22px; font-weight:700; color:#0B2545; margin:0 0 4px; letter-spacing:-0.012em;">Navigation Header</h2>
+        <p style="font-size:14px; color:#5C6E82; margin:0 0 24px; line-height:1.65;">Compass in teal square, navy wordmark. Trip selector as compact sand-toned pill. Ghost controls grouped right with warm dividers.</p>
+        <div style="border:1px solid #DDD7CD; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <div style="background:#fff; height:60px; display:flex; align-items:center; padding:0 18px; gap:12px;">
+            <div style="display:flex; align-items:center; gap:9px; margin-right:8px;">
+              <div style="width:32px; height:32px; background:#0097A7; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" fill="#fff" stroke="none"/></svg>
+              </div>
+              <span style="font-size:15px; font-weight:700; color:#0B2545; letter-spacing:-0.02em;">Family Trip Planner</span>
+            </div>
+            <div style="width:1px; height:22px; background:#DDD7CD;"></div>
+            <div style="display:flex; align-items:center; gap:6px; padding:5px 11px; background:#F3EDE2; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer;">
+              <span style="font-size:11px; font-weight:500; color:#9BAAB8;">Trip</span>
+              <span style="font-size:13px; font-weight:600; color:#0B2545;">Test123</span>
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9BAAB8" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <div style="display:flex; align-items:center; gap:6px; padding:5px 10px; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer;">
+                <span style="width:7px; height:7px; border-radius:50%; background:#2A7D5E; flex-shrink:0;"></span>
+                <span style="font-size:13px; font-weight:500; color:#0B2545;">USD</span>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9BAAB8" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div style="width:1px; height:22px; background:#DDD7CD;"></div>
+              <button style="display:flex; align-items:center; gap:6px; padding:5px 12px; border:1px solid #DDD7CD; border-radius:6px; background:#fff; cursor:pointer; font-size:13px; font-weight:500; color:#0B2545;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                Members
+              </button>
+              <div style="display:flex; align-items:center; gap:7px; padding:4px 10px 4px 5px; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer;">
+                <div style="width:26px; height:26px; border-radius:50%; background:#E0F5F7; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#006D7A;">O</div>
+                <span style="font-size:13px; color:#5C6E82;">Sign out</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:14px;">
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Teal compass square</span>
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Sand trip selector</span>
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Ghost controls, warm borders</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04 BUDGET CARDS -->
+    <div id="comp-budget" style="padding:48px 60px; background:#FDFBF7; border-bottom:1px solid #DDD7CD;">
+      <div style="max-width:900px;">
+        <div style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#9BAAB8; margin-bottom:6px;">04 — Budget Cards</div>
+        <h2 style="font-size:22px; font-weight:700; color:#0B2545; margin:0 0 4px; letter-spacing:-0.012em;">Budget Summary Strip</h2>
+        <p style="font-size:14px; color:#5C6E82; margin:0 0 24px; line-height:1.65;">Category icon in a small colored square. 3px top-border accent in category color. Navy bold amount. Amber "due" callout. Total card is inverted navy.</p>
+        <div style="border:1px solid #DDD7CD; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <div style="background:#F3EDE2; padding:14px 16px; display:flex; gap:10px; overflow-x:auto;">
+            <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:14px 15px; min-width:130px; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.05); border-top:3px solid #0097A7;">
+              <div style="display:flex; align-items:center; gap:7px; margin-bottom:9px;"><div style="width:22px; height:22px; background:#0097A7; border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5z"/><path d="M9 21V13h6v8"/></svg></div><span style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9BAAB8;">Stays</span></div>
+              <div style="font-size:20px; font-weight:800; color:#0B2545; line-height:1; letter-spacing:-0.02em;">$5,118</div>
+              <div style="font-size:11px; color:#B5732A; margin-top:4px; font-weight:600;">$982 due</div>
+            </div>
+            <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:14px 15px; min-width:130px; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.05); border-top:3px solid #1A5DB5;">
+              <div style="display:flex; align-items:center; gap:7px; margin-bottom:9px;"><div style="width:22px; height:22px; background:#1A5DB5; border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg></div><span style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9BAAB8;">Flights</span></div>
+              <div style="font-size:20px; font-weight:800; color:#0B2545; line-height:1; letter-spacing:-0.02em;">$7,575</div>
+            </div>
+            <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:14px 15px; min-width:130px; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.05); border-top:3px solid #B5732A;">
+              <div style="display:flex; align-items:center; gap:7px; margin-bottom:9px;"><div style="width:22px; height:22px; background:#B5732A; border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2.5-5.5h13L21 12v5h-2"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/><path d="M3 12h18"/></svg></div><span style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9BAAB8;">Cars</span></div>
+              <div style="font-size:20px; font-weight:800; color:#0B2545; line-height:1; letter-spacing:-0.02em;">$1,652</div>
+            </div>
+            <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:14px 15px; min-width:130px; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.05); border-top:3px solid #2A7D5E;">
+              <div style="display:flex; align-items:center; gap:7px; margin-bottom:9px;"><div style="width:22px; height:22px; background:#2A7D5E; border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" fill="#fff" stroke="none"/></svg></div><span style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9BAAB8;">Activities</span></div>
+              <div style="font-size:20px; font-weight:800; color:#0B2545; line-height:1; letter-spacing:-0.02em;">$3,942</div>
+              <div style="font-size:11px; color:#B5732A; margin-top:4px; font-weight:600;">$216 due</div>
+            </div>
+            <div style="background:#0B2545; border:1px solid #0B2545; border-radius:8px; padding:14px 15px; min-width:130px; flex-shrink:0; border-top:3px solid #0097A7;">
+              <div style="display:flex; align-items:center; gap:7px; margin-bottom:9px;"><div style="width:22px; height:22px; background:rgba(255,255,255,0.12); border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:rgba(255,255,255,0.45);">Total</span></div>
+              <div style="font-size:20px; font-weight:800; color:#fff; line-height:1; letter-spacing:-0.02em;">$18,487</div>
+              <div style="font-size:11px; color:#7ABACF; margin-top:4px; font-weight:600;">$1,198 due</div>
+            </div>
+            <div style="background:#fff; border:1px solid #DDD7CD; border-radius:8px; padding:14px 15px; min-width:130px; flex-shrink:0; box-shadow:0 1px 3px rgba(0,0,0,0.05); border-top:3px solid #8B3A6B;">
+              <div style="display:flex; align-items:center; gap:7px; margin-bottom:9px;"><div style="width:22px; height:22px; background:#8B3A6B; border-radius:5px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="13" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><span style="font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9BAAB8;">In-Trip</span></div>
+              <div style="font-size:20px; font-weight:800; color:#0B2545; line-height:1; letter-spacing:-0.02em;">$200</div>
+              <div style="font-size:11px; color:#9BAAB8; margin-top:4px; font-weight:600;">4 items</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:14px;">
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ 3px category top border</span>
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ SVG icon in colored square</span>
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Navy Total card inverted</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 05 CATEGORY TABS -->
+    <div id="comp-tabs" style="padding:48px 60px; background:#F3EDE2; border-bottom:1px solid #DDD7CD;">
+      <div style="max-width:900px;">
+        <div style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#9BAAB8; margin-bottom:6px;">05 — Category Tabs</div>
+        <h2 style="font-size:22px; font-weight:700; color:#0B2545; margin:0 0 4px; letter-spacing:-0.012em;">Category Navigation</h2>
+        <p style="font-size:14px; color:#5C6E82; margin:0 0 24px; line-height:1.65;">Segmented pill on warm sand track. Navy active pill — teal is reserved solely for primary CTAs so the hierarchy is unambiguous. <strong style="color:#0B2545;">Click to interact.</strong></p>
+        <div style="border:1px solid #DDD7CD; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <div style="background:#fff; padding:14px 18px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div style="display:flex; gap:2px; padding:3px; background:#EDE7DC; border-radius:8px;">
+              <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="6">
+                <button onClick="{{ tab.onClick }}" style="padding:6px 14px; border-radius:6px; background:{{ tab.bg }}; border:none; font-size:13px; font-weight:{{ tab.weight }}; color:{{ tab.color }}; box-shadow:{{ tab.shadow }}; cursor:pointer; white-space:nowrap; transition:all 0.12s;">{{ tab.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:14px;">
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Navy active (teal = CTA only)</span>
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Warm sand track</span>
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Segmented pill control</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06 DATA TABLE -->
+    <div id="comp-table" style="padding:48px 60px; background:#FDFBF7; border-bottom:1px solid #DDD7CD;">
+      <div style="max-width:900px;">
+        <div style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#9BAAB8; margin-bottom:6px;">06 — Data Table</div>
+        <h2 style="font-size:22px; font-weight:700; color:#0B2545; margin:0 0 4px; letter-spacing:-0.012em;">Data Table</h2>
+        <p style="font-size:14px; color:#5C6E82; margin:0 0 24px; line-height:1.65;">Deep navy header with white uppercase labels. Warm 1px row separators. Teal row hover. Type chip carries a tiny category icon alongside the label.</p>
+        <div style="border:1px solid #DDD7CD; border-radius:10px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+          <div style="background:#fff; overflow-x:auto;">
+            <div style="display:grid; grid-template-columns:190px 92px 70px 70px 44px 78px 90px 66px 90px; background:#0B2545; min-width:700px;">
+              <div style="padding:10px 16px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Name</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Type</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Start</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">End</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Nts</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Cost</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Status</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Due</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">City</div>
+            </div>
+            <sc-for list="{{ tableRows }}" as="row" hint-placeholder-count="5">
+              <div style="display:grid; grid-template-columns:190px 92px 70px 70px 44px 78px 90px 66px 90px; border-bottom:1px solid #F0ECE6; min-width:700px;" style-hover="background:#E0F5F7;">
+                <div style="padding:11px 16px; font-size:13px; color:#0B2545; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ row.name }}</div>
+                <div style="padding:11px 8px; display:flex; align-items:center;">{{ row.chip }}</div>
+                <div style="padding:11px 8px; font-size:12px; color:#5C6E82; font-variant-numeric:tabular-nums;">{{ row.start }}</div>
+                <div style="padding:11px 8px; font-size:12px; color:#5C6E82; font-variant-numeric:tabular-nums;">{{ row.end }}</div>
+                <div style="padding:11px 8px; font-size:12px; color:#0097A7; font-weight:600;">{{ row.nights }}</div>
+                <div style="padding:11px 8px; font-size:13px; color:#0B2545; font-weight:600; font-variant-numeric:tabular-nums;">{{ row.cost }}</div>
+                <div style="padding:11px 8px; display:flex; align-items:center;"><span style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:20px; font-size:11px; font-weight:600; background:{{ row.sBg }}; color:{{ row.sColor }};"><span style="width:4px; height:4px; border-radius:50%; background:{{ row.sColor }}; flex-shrink:0;"></span>{{ row.status }}</span></div>
+                <div style="padding:11px 8px; font-size:12px; color:#9B2040; font-weight:600; font-variant-numeric:tabular-nums;">{{ row.due }}</div>
+                <div style="padding:11px 8px; font-size:12px; color:#5C6E82;">{{ row.city }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:14px;">
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Navy header, white caps</span>
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Type chip with SVG icon</span>
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Teal row hover</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 07 MODALS -->
+    <div id="comp-modals" style="padding:48px 60px; background:#F3EDE2; border-bottom:1px solid #DDD7CD;">
+      <div style="max-width:900px;">
+        <div style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#9BAAB8; margin-bottom:6px;">07 — Modals &amp; Forms</div>
+        <h2 style="font-size:22px; font-weight:700; color:#0B2545; margin:0 0 4px; letter-spacing:-0.012em;">Modals &amp; Forms</h2>
+        <p style="font-size:14px; color:#5C6E82; margin:0 0 24px; line-height:1.65;">Navy icon squares throughout the type picker — uniform, trustworthy, not rainbow-colored. Teal primary button. Sand-tinted modal footer.</p>
+        <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start;">
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.1); width:300px; flex-shrink:0; overflow:hidden;">
+            <div style="padding:18px 20px 14px; border-bottom:1px solid #EDE7DC; display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-size:15px; font-weight:700; color:#0B2545;">What would you like to add?</span>
+              <button style="width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:none; background:#F3EDE2; border-radius:6px; cursor:pointer; color:#5C6E82;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <div style="padding:14px; display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div style="background:#FDFBF7; border:1.5px solid #DDD7CD; border-radius:9px; padding:16px 10px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:10px;" style-hover="background:#E0F5F7;border-color:#0097A7;"><div style="width:44px; height:44px; border-radius:9px; background:#0B2545; display:flex; align-items:center; justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5z"/><path d="M9 21V13h6v8"/></svg></div><span style="font-size:13px; font-weight:600; color:#0B2545;">Stay</span></div>
+              <div style="background:#FDFBF7; border:1.5px solid #DDD7CD; border-radius:9px; padding:16px 10px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:10px;" style-hover="background:#E0F5F7;border-color:#0097A7;"><div style="width:44px; height:44px; border-radius:9px; background:#0B2545; display:flex; align-items:center; justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg></div><span style="font-size:13px; font-weight:600; color:#0B2545;">Flight</span></div>
+              <div style="background:#FDFBF7; border:1.5px solid #DDD7CD; border-radius:9px; padding:16px 10px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:10px;" style-hover="background:#E0F5F7;border-color:#0097A7;"><div style="width:44px; height:44px; border-radius:9px; background:#0B2545; display:flex; align-items:center; justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2.5-5.5h13L21 12v5h-2"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M3 12h18"/></svg></div><span style="font-size:13px; font-weight:600; color:#0B2545;">Car Rental</span></div>
+              <div style="background:#FDFBF7; border:1.5px solid #DDD7CD; border-radius:9px; padding:16px 10px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:10px;" style-hover="background:#E0F5F7;border-color:#0097A7;"><div style="width:44px; height:44px; border-radius:9px; background:#0B2545; display:flex; align-items:center; justify-content:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" fill="#fff" stroke="none"/></svg></div><span style="font-size:13px; font-weight:600; color:#0B2545;">Activity</span></div>
+              <div style="background:#FDFBF7; border:1.5px solid #DDD7CD; border-radius:9px; padding:12px 14px; cursor:pointer; display:flex; align-items:center; gap:12px; grid-column:span 2;" style-hover="background:#E0F5F7;border-color:#0097A7;"><div style="width:40px; height:40px; border-radius:9px; background:#0B2545; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="13" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><span style="font-size:13px; font-weight:600; color:#0B2545;">Expense</span></div>
+            </div>
+          </div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.1); flex:1; min-width:300px; overflow:hidden;">
+            <div style="padding:16px 20px 14px; border-bottom:1px solid #EDE7DC; display:flex; align-items:center; gap:10px;">
+              <div style="width:30px; height:30px; border-radius:7px; background:#0B2545; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5z"/><path d="M9 21V13h6v8"/></svg></div>
+              <span style="font-size:15px; font-weight:700; color:#0B2545;">Add Stay</span>
+              <div style="flex:1;"></div>
+              <button style="width:28px; height:28px; display:flex; align-items:center; justify-content:center; border:none; background:#F3EDE2; border-radius:6px; cursor:pointer; color:#5C6E82;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+            </div>
+            <div style="padding:18px 20px; display:flex; flex-direction:column; gap:14px;">
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Name / Property *</label><input type="text" placeholder="e.g. Marriott Downtown" style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;" /></div>
+                <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Platform</label><select style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;"><option>Airbnb</option><option>Booking.com</option><option>Direct</option></select></div>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Check-In *</label><input type="date" style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;" /></div>
+                <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Check-Out *</label><input type="date" style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;" /></div>
+              </div>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Payment Status</label><select style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;"><option>Paid</option><option>Unpaid</option><option>Partial</option></select></div>
+                <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Total Cost ($)</label><input type="number" placeholder="Auto" style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;" /></div>
+              </div>
+              <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:8px;">Amenities</label><div style="display:flex; gap:6px; flex-wrap:wrap;"><label style="display:flex; align-items:center; gap:6px; padding:5px 11px; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer; font-size:13px; color:#0B2545; user-select:none;"><input type="checkbox" style="accent-color:#0097A7; width:13px; height:13px;" />Parking</label><label style="display:flex; align-items:center; gap:6px; padding:5px 11px; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer; font-size:13px; color:#0B2545; user-select:none;"><input type="checkbox" style="accent-color:#0097A7; width:13px; height:13px;" />Kitchen</label><label style="display:flex; align-items:center; gap:6px; padding:5px 11px; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer; font-size:13px; color:#0B2545; user-select:none;"><input type="checkbox" style="accent-color:#0097A7; width:13px; height:13px;" />Breakfast</label></div></div>
+            </div>
+            <div style="padding:12px 20px; border-top:1px solid #EDE7DC; display:flex; justify-content:flex-end; gap:8px; background:#F3EDE2;">
+              <button style="padding:7px 16px; font-size:13px; font-weight:500; border:1px solid #DDD7CD; border-radius:6px; background:#fff; color:#0B2545; cursor:pointer;">Cancel</button>
+              <button style="padding:7px 22px; font-size:13px; font-weight:600; border:none; border-radius:6px; background:#0097A7; color:#fff; cursor:pointer;">Save Stay</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:18px;">
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Uniform navy icon squares</span>
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Teal hover state on tiles</span>
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Teal primary CTA</span>
+          <span style="font-size:12px; color:#2A7D5E; background:#E2F3EC; border:1px solid #A8D5BE; padding:3px 10px; border-radius:4px; font-weight:600;">✓ Sand footer strip</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 08 FULL PREVIEW -->
+    <div id="preview" style="padding:48px 60px; background:#071829;">
+      <div style="max-width:900px; margin-bottom:22px;">
+        <div style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.14em; color:#2A4A62; margin-bottom:6px;">08 — Prototype</div>
+        <h2 style="font-size:22px; font-weight:700; color:#EDE8DF; margin:0 0 4px; letter-spacing:-0.012em;">Full Interactive Preview</h2>
+        <p style="font-size:14px; color:#4A6580; line-height:1.65;">All components assembled. Switch tabs and views, click <strong style="color:#7A9AB5;">+ Add</strong> to open the type picker, then click <strong style="color:#7A9AB5;">Stay</strong> to open the form.</p>
+      </div>
+
+      <div style="border:1px solid #0D2A40; border-radius:12px; overflow:hidden; box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+
+        <!-- Nav -->
+        <div style="background:#fff; height:60px; display:flex; align-items:center; padding:0 18px; gap:12px; border-bottom:1px solid #EDE7DC;">
+          <div style="display:flex; align-items:center; gap:9px; margin-right:8px;">
+            <div style="width:32px; height:32px; background:#0097A7; border-radius:7px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" fill="#fff" stroke="none"/></svg></div>
+            <span style="font-size:14.5px; font-weight:700; color:#0B2545; letter-spacing:-0.02em;">Family Trip Planner</span>
+          </div>
+          <div style="width:1px; height:22px; background:#DDD7CD;"></div>
+          <div style="display:flex; align-items:center; gap:6px; padding:5px 11px; background:#F3EDE2; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer;"><span style="font-size:11px; font-weight:500; color:#9BAAB8;">Trip</span><span style="font-size:13px; font-weight:600; color:#0B2545;">Test123</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9BAAB8" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div style="flex:1;"></div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <div style="display:flex; align-items:center; gap:5px; padding:5px 10px; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer;"><span style="width:6px; height:6px; border-radius:50%; background:#2A7D5E; flex-shrink:0;"></span><span style="font-size:13px; font-weight:500; color:#0B2545;">USD</span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9BAAB8" stroke-width="2.5" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+            <div style="width:1px; height:22px; background:#DDD7CD;"></div>
+            <button style="display:flex; align-items:center; gap:5px; padding:5px 12px; border:1px solid #DDD7CD; border-radius:6px; background:#fff; cursor:pointer; font-size:13px; font-weight:500; color:#0B2545;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Members</button>
+            <div style="display:flex; align-items:center; gap:6px; padding:4px 10px 4px 5px; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer;"><div style="width:26px; height:26px; border-radius:50%; background:#E0F5F7; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#006D7A;">O</div><span style="font-size:13px; color:#5C6E82;">Sign out</span></div>
+          </div>
+        </div>
+
+        <!-- Budget strip -->
+        <div style="background:#F3EDE2; padding:12px 16px; display:flex; gap:9px; overflow-x:auto; border-bottom:1px solid #DDD7CD;">
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:7px; padding:11px 13px; min-width:108px; flex-shrink:0; border-top:3px solid #0097A7;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:7px;"><div style="width:18px; height:18px; background:#0097A7; border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5z"/><path d="M9 21V13h6v8"/></svg></div><span style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9BAAB8;">Stays</span></div><div style="font-size:17px; font-weight:800; color:#0B2545; line-height:1; letter-spacing:-0.02em;">$5,118</div><div style="font-size:10px; color:#B5732A; margin-top:3px; font-weight:600;">$982 due</div></div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:7px; padding:11px 13px; min-width:108px; flex-shrink:0; border-top:3px solid #1A5DB5;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:7px;"><div style="width:18px; height:18px; background:#1A5DB5; border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg></div><span style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9BAAB8;">Flights</span></div><div style="font-size:17px; font-weight:800; color:#0B2545; line-height:1; letter-spacing:-0.02em;">$7,575</div></div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:7px; padding:11px 13px; min-width:108px; flex-shrink:0; border-top:3px solid #B5732A;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:7px;"><div style="width:18px; height:18px; background:#B5732A; border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2.5-5.5h13L21 12v5h-2"/><circle cx="7.5" cy="17" r="1.5"/><circle cx="16.5" cy="17" r="1.5"/><path d="M3 12h18"/></svg></div><span style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9BAAB8;">Cars</span></div><div style="font-size:17px; font-weight:800; color:#0B2545; line-height:1; letter-spacing:-0.02em;">$1,652</div></div>
+          <div style="background:#fff; border:1px solid #DDD7CD; border-radius:7px; padding:11px 13px; min-width:108px; flex-shrink:0; border-top:3px solid #2A7D5E;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:7px;"><div style="width:18px; height:18px; background:#2A7D5E; border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" fill="#fff" stroke="none"/></svg></div><span style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:#9BAAB8;">Activities</span></div><div style="font-size:17px; font-weight:800; color:#0B2545; line-height:1; letter-spacing:-0.02em;">$3,942</div><div style="font-size:10px; color:#B5732A; margin-top:3px; font-weight:600;">$216 due</div></div>
+          <div style="background:#0B2545; border:1px solid #0B2545; border-radius:7px; padding:11px 13px; min-width:108px; flex-shrink:0; border-top:3px solid #0097A7;"><div style="display:flex; align-items:center; gap:6px; margin-bottom:7px;"><div style="width:18px; height:18px; background:rgba(255,255,255,0.12); border-radius:4px; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span style="font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:rgba(255,255,255,0.4);">Total</span></div><div style="font-size:17px; font-weight:800; color:#fff; line-height:1; letter-spacing:-0.02em;">$18,487</div><div style="font-size:10px; color:#7ABACF; margin-top:3px; font-weight:600;">$1,198 due</div></div>
+        </div>
+
+        <!-- Tabs + Action bar -->
+        <div style="background:#fff; border-bottom:1px solid #EDE7DC;">
+          <div style="padding:10px 16px 0; display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div style="display:flex; gap:2px; padding:3px; background:#EDE7DC; border-radius:8px;">
+              <sc-for list="{{ tabs }}" as="tab" hint-placeholder-count="6">
+                <button onClick="{{ tab.onClick }}" style="padding:5px 12px; border-radius:6px; background:{{ tab.bg }}; border:none; font-size:12.5px; font-weight:{{ tab.weight }}; color:{{ tab.color }}; box-shadow:{{ tab.shadow }}; cursor:pointer; white-space:nowrap; transition:all 0.1s;">{{ tab.label }}</button>
+              </sc-for>
+            </div>
+            <div style="flex:1;"></div>
+            <div style="display:flex; gap:1px; background:#F0ECE6; border-radius:6px; overflow:hidden; border:1px solid #DDD7CD;">
+              <sc-for list="{{ views }}" as="view" hint-placeholder-count="3">
+                <button onClick="{{ view.onClick }}" style="padding:5px 12px; font-size:12.5px; font-weight:{{ view.weight }}; background:{{ view.bg }}; border:none; color:{{ view.color }}; cursor:pointer; box-shadow:{{ view.shadow }}; white-space:nowrap; transition:all 0.1s;">{{ view.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="padding:8px 16px 10px; display:flex; align-items:center; justify-content:flex-end; gap:5px;">
+            <button style="padding:5px 10px; font-size:12.5px; border:1px solid #DDD7CD; border-radius:6px; background:#fff; color:#0B2545; cursor:pointer; font-weight:500;">PDF</button>
+            <button style="padding:5px 10px; font-size:12.5px; border:1px solid #DDD7CD; border-radius:6px; background:#fff; color:#0B2545; cursor:pointer; font-weight:500;">Backup</button>
+            <button style="padding:5px 10px; font-size:12.5px; border:1px solid #DDD7CD; border-radius:6px; background:#fff; color:#0B2545; cursor:pointer; font-weight:500;">Import</button>
+            <div style="width:1px; height:18px; background:#DDD7CD; margin:0 2px;"></div>
+            <button onClick="{{ openAddModal }}" style="display:flex; align-items:center; gap:5px; padding:5px 14px; font-size:12.5px; font-weight:600; border:none; border-radius:6px; background:#0097A7; color:#fff; cursor:pointer;" style-hover="background:#006D7A;">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add
+            </button>
+          </div>
+        </div>
+
+        <!-- Search -->
+        <div style="background:#F3EDE2; padding:10px 16px; border-bottom:1px solid #DDD7CD;">
+          <div style="display:flex; align-items:center; gap:8px; background:#fff; border:1px solid #DDD7CD; border-radius:6px; padding:7px 12px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9BAAB8" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" placeholder="Search by name, location, airline, notes..." style="flex:1; border:none; font-size:13px; color:#0B2545; background:transparent; outline:none;" />
+          </div>
+        </div>
+
+        <!-- Table -->
+        <sc-if value="{{ isTableView }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#fff; overflow-x:auto;">
+            <div style="display:grid; grid-template-columns:190px 92px 70px 70px 44px 78px 90px 66px 90px; background:#0B2545; min-width:690px;">
+              <div style="padding:10px 16px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Name</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Type</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Start</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">End</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Nts</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Cost</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Status</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">Due</div>
+              <div style="padding:10px 8px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:rgba(255,255,255,0.55);">City</div>
+            </div>
+            <sc-for list="{{ tableRows }}" as="row" hint-placeholder-count="5">
+              <div style="display:grid; grid-template-columns:190px 92px 70px 70px 44px 78px 90px 66px 90px; border-bottom:1px solid #F0ECE6; min-width:690px;" style-hover="background:#E0F5F7;">
+                <div style="padding:11px 16px; font-size:13px; color:#0B2545; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ row.name }}</div>
+                <div style="padding:11px 8px; display:flex; align-items:center;">{{ row.chip }}</div>
+                <div style="padding:11px 8px; font-size:12px; color:#5C6E82; font-variant-numeric:tabular-nums;">{{ row.start }}</div>
+                <div style="padding:11px 8px; font-size:12px; color:#5C6E82; font-variant-numeric:tabular-nums;">{{ row.end }}</div>
+                <div style="padding:11px 8px; font-size:12px; color:#0097A7; font-weight:600;">{{ row.nights }}</div>
+                <div style="padding:11px 8px; font-size:13px; color:#0B2545; font-weight:600; font-variant-numeric:tabular-nums;">{{ row.cost }}</div>
+                <div style="padding:11px 8px; display:flex; align-items:center;"><span style="display:inline-flex; align-items:center; gap:4px; padding:3px 8px; border-radius:20px; font-size:11px; font-weight:600; background:{{ row.sBg }}; color:{{ row.sColor }};"><span style="width:4px; height:4px; border-radius:50%; background:{{ row.sColor }}; flex-shrink:0;"></span>{{ row.status }}</span></div>
+                <div style="padding:11px 8px; font-size:12px; color:#9B2040; font-weight:600; font-variant-numeric:tabular-nums;">{{ row.due }}</div>
+                <div style="padding:11px 8px; font-size:12px; color:#5C6E82;">{{ row.city }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isCalView }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff; padding:52px; display:flex; flex-direction:column; align-items:center; min-height:180px; gap:10px; justify-content:center;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DDD7CD" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span style="font-size:14px; color:#9BAAB8; font-weight:500;">Calendar view — July 2026</span>
+            <span style="font-size:12px; color:#DDD7CD;">Event bars use the new category palette</span>
+          </div>
+        </sc-if>
+        <sc-if value="{{ isTimeView }}" hint-placeholder-val="{{ false }}">
+          <div style="background:#fff; padding:52px; display:flex; flex-direction:column; align-items:center; min-height:180px; gap:10px; justify-content:center;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#DDD7CD" stroke-width="1.5" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <span style="font-size:14px; color:#9BAAB8; font-weight:500;">Timeline / Gantt view</span>
+            <span style="font-size:12px; color:#DDD7CD;">Bars inherit category color from the new palette</span>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="padding-top:36px;">
+        <div style="font-size:11px; color:#1E3850; font-weight:600;">Family Trip Planner — v2 UI Proposal · IMG-inspired · June 2026</div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ════ MODAL OVERLAY ════ -->
+<sc-if value="{{ isModalOpen }}" hint-placeholder-val="{{ false }}">
+  <div style="position:fixed; inset:0; background:rgba(7,24,41,0.65); z-index:200; display:flex; align-items:center; justify-content:center; padding:24px; animation:fadeIn 0.15s ease;" onClick="{{ closeModal }}">
+
+    <sc-if value="{{ isAddType }}" hint-placeholder-val="{{ true }}">
+      <div style="background:#fff; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.3); width:360px; overflow:hidden; animation:modalIn 0.2s ease;" onClick="{{ stopProp }}">
+        <div style="padding:20px 22px 16px; border-bottom:1px solid #EDE7DC; display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-size:16px; font-weight:700; color:#0B2545;">What would you like to add?</span>
+          <button onClick="{{ closeModal }}" style="width:30px; height:30px; display:flex; align-items:center; justify-content:center; border:none; background:#F3EDE2; border-radius:6px; cursor:pointer; color:#5C6E82;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div style="padding:16px 18px; display:grid; grid-template-columns:1fr 1fr; gap:9px;">
+          <div onClick="{{ openStayModal }}" style="background:#FDFBF7; border:1.5px solid #DDD7CD; border-radius:10px; padding:18px 12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:10px;" style-hover="background:#E0F5F7;border-color:#0097A7;"><div style="width:46px; height:46px; border-radius:10px; background:#0B2545; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5z"/><path d="M9 21V13h6v8"/></svg></div><span style="font-size:13px; font-weight:600; color:#0B2545;">Stay</span></div>
+          <div style="background:#FDFBF7; border:1.5px solid #DDD7CD; border-radius:10px; padding:18px 12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:10px;" style-hover="background:#E0F5F7;border-color:#0097A7;"><div style="width:46px; height:46px; border-radius:10px; background:#0B2545; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2L15 22 11 13 2 9l20-7z"/></svg></div><span style="font-size:13px; font-weight:600; color:#0B2545;">Flight</span></div>
+          <div style="background:#FDFBF7; border:1.5px solid #DDD7CD; border-radius:10px; padding:18px 12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:10px;" style-hover="background:#E0F5F7;border-color:#0097A7;"><div style="width:46px; height:46px; border-radius:10px; background:#0B2545; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 17H3v-5l2.5-5.5h13L21 12v5h-2"/><circle cx="7.5" cy="17" r="2"/><circle cx="16.5" cy="17" r="2"/><path d="M3 12h18"/></svg></div><span style="font-size:13px; font-weight:600; color:#0B2545;">Car Rental</span></div>
+          <div style="background:#FDFBF7; border:1.5px solid #DDD7CD; border-radius:10px; padding:18px 12px; cursor:pointer; display:flex; flex-direction:column; align-items:center; gap:10px;" style-hover="background:#E0F5F7;border-color:#0097A7;"><div style="width:46px; height:46px; border-radius:10px; background:#0B2545; display:flex; align-items:center; justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z" fill="#fff" stroke="none"/></svg></div><span style="font-size:13px; font-weight:600; color:#0B2545;">Activity</span></div>
+          <div style="background:#FDFBF7; border:1.5px solid #DDD7CD; border-radius:10px; padding:12px 14px; cursor:pointer; display:flex; align-items:center; gap:12px; grid-column:span 2;" style-hover="background:#E0F5F7;border-color:#0097A7;"><div style="width:40px; height:40px; border-radius:9px; background:#0B2545; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="8" width="20" height="13" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg></div><span style="font-size:13px; font-weight:600; color:#0B2545;">Expense</span></div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isAddStay }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#fff; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.3); width:520px; overflow:hidden; animation:modalIn 0.2s ease;" onClick="{{ stopProp }}">
+        <div style="padding:18px 22px 14px; border-bottom:1px solid #EDE7DC; display:flex; align-items:center; gap:10px;">
+          <div style="width:30px; height:30px; border-radius:7px; background:#0B2545; display:flex; align-items:center; justify-content:center; flex-shrink:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5z"/><path d="M9 21V13h6v8"/></svg></div>
+          <span style="font-size:15px; font-weight:700; color:#0B2545;">Add Stay</span>
+          <div style="flex:1;"></div>
+          <button onClick="{{ closeModal }}" style="width:30px; height:30px; display:flex; align-items:center; justify-content:center; border:none; background:#F3EDE2; border-radius:6px; cursor:pointer; color:#5C6E82;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+        </div>
+        <div style="padding:20px 22px; display:flex; flex-direction:column; gap:14px;">
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Name / Property *</label><input type="text" placeholder="e.g. Marriott Downtown" style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;" /></div>
+            <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Platform</label><select style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;"><option>Airbnb</option><option>Booking.com</option><option>Direct</option></select></div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Check-In *</label><input type="date" style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;" /></div>
+            <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Check-Out *</label><input type="date" style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;" /></div>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+            <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Payment Status</label><select style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;"><option>Paid</option><option>Unpaid</option><option>Partial</option></select></div>
+            <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:5px;">Total Cost ($)</label><input type="number" placeholder="Auto-calculated" style="width:100%; padding:8px 10px; border:1px solid #DDD7CD; border-radius:6px; font-size:13px; color:#0B2545; background:#fff; outline:none;" /></div>
+          </div>
+          <div><label style="display:block; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:#9BAAB8; margin-bottom:8px;">Amenities</label><div style="display:flex; gap:6px; flex-wrap:wrap;"><label style="display:flex; align-items:center; gap:6px; padding:5px 11px; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer; font-size:13px; color:#0B2545; user-select:none;"><input type="checkbox" style="accent-color:#0097A7; width:13px; height:13px;" />Parking</label><label style="display:flex; align-items:center; gap:6px; padding:5px 11px; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer; font-size:13px; color:#0B2545; user-select:none;"><input type="checkbox" style="accent-color:#0097A7; width:13px; height:13px;" />Kitchen</label><label style="display:flex; align-items:center; gap:6px; padding:5px 11px; border:1px solid #DDD7CD; border-radius:6px; cursor:pointer; font-size:13px; color:#0B2545; user-select:none;"><input type="checkbox" style="accent-color:#0097A7; width:13px; height:13px;" />Breakfast</label></div></div>
+        </div>
+        <div style="padding:14px 22px; border-top:1px solid #EDE7DC; display:flex; justify-content:flex-end; gap:8px; background:#F3EDE2;">
+          <button onClick="{{ closeModal }}" style="padding:7px 16px; font-size:13px; font-weight:500; border:1px solid #DDD7CD; border-radius:6px; background:#fff; color:#0B2545; cursor:pointer;">Cancel</button>
+          <button style="padding:7px 22px; font-size:13px; font-weight:600; border:none; border-radius:6px; background:#0097A7; color:#fff; cursor:pointer;">Save Stay</button>
+        </div>
+      </div>
+    </sc-if>
+
+  </div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { previewTab: 'All', previewView: 'Table', modal: null };
+
+  renderVals() {
+    const st = this.state;
+    const ALL_TABS  = ['All', 'Stays', 'Flights', 'Cars', 'Activities', 'Expenses'];
+    const ALL_VIEWS = ['Table', 'Calendar', 'Timeline'];
+
+    const mkIcon = (type, sz) => {
+      const p = { width: sz, height: sz, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 1.8, strokeLinecap: 'round', strokeLinejoin: 'round', style: { display: 'block', flexShrink: 0 } };
+      if (type === 'Stay') return React.createElement('svg', p,
+        React.createElement('path', { d: 'M3 10.5L12 3l9 7.5V20a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-9.5z' }),
+        React.createElement('path', { d: 'M9 21V13h6v8' })
+      );
+      if (type === 'Flight') return React.createElement('svg', p,
+        React.createElement('path', { d: 'M22 2L11 13' }),
+        React.createElement('path', { d: 'M22 2L15 22 11 13 2 9l20-7z' })
+      );
+      if (type === 'Car') return React.createElement('svg', p,
+        React.createElement('path', { d: 'M5 17H3v-5l2.5-5.5h13L21 12v5h-2' }),
+        React.createElement('circle', { cx: 7.5, cy: 17, r: 1.5 }),
+        React.createElement('circle', { cx: 16.5, cy: 17, r: 1.5 }),
+        React.createElement('line', { x1: 3, y1: 12, x2: 21, y2: 12 })
+      );
+      if (type === 'Activity') return React.createElement('svg', p,
+        React.createElement('circle', { cx: 12, cy: 12, r: 9 }),
+        React.createElement('path', { d: 'M16.24 7.76l-2.12 6.36-6.36 2.12 2.12-6.36 6.36-2.12z', fill: 'currentColor', stroke: 'none' })
+      );
+      return React.createElement('svg', p,
+        React.createElement('rect', { x: 2, y: 8, width: 20, height: 13, rx: 2 }),
+        React.createElement('path', { d: 'M16 8V6a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2' }),
+        React.createElement('circle', { cx: 12, cy: 15, r: 1.5, fill: 'currentColor', stroke: 'none' })
+      );
+    };
+
+    const chip = (type, bg, color) => React.createElement('span', {
+      style: { display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 7px', borderRadius: 4, fontSize: 11, fontWeight: 600, background: bg, color }
+    }, mkIcon(type, 9), type);
+
+    const tableRows = [
+      { name: 'EMVI Apartments near Airport', chip: chip('Stay',     '#D4F0F4', '#005F6B'), start: '07.22', end: '07.24', nights: '2n', cost: '$319',   status: 'Unpaid',  sBg: '#FAE8EC', sColor: '#9B2040', due: '$319',  city: 'Attica'     },
+      { name: 'El Al LY543',                  chip: chip('Flight',   '#E2EEFA', '#1040A0'), start: '07.22', end: '07.22', nights: '–',  cost: '$500',   status: 'Paid',    sBg: '#E0F4EB', sColor: '#1B6040', due: '–',     city: 'ATH'        },
+      { name: 'Dollar (via Trip.com)',         chip: chip('Car',      '#F5EADC', '#7A4008'), start: '07.24', end: '08.07', nights: '–',  cost: '$1,652', status: 'Partial', sBg: '#FAF0DC', sColor: '#8A4E10', due: '$800',  city: '–'          },
+      { name: 'Greatwolf Lodge',               chip: chip('Stay',     '#D4F0F4', '#005F6B'), start: '07.29', end: '07.30', nights: '1n', cost: '$456',   status: 'Partial', sBg: '#FAF0DC', sColor: '#8A4E10', due: '$125',  city: 'Anaheim'    },
+      { name: 'Slot Canyon Tour',              chip: chip('Activity', '#DDEEE8', '#195042'), start: '07.27', end: '07.27', nights: '–',  cost: '$1,351', status: 'Paid',    sBg: '#E0F4EB', sColor: '#1B6040', due: '–',     city: 'Springdale' },
+    ];
+
+    return {
+      isModalOpen: st.modal !== null,
+      isAddType:   st.modal === 'add-type',
+      isAddStay:   st.modal === 'add-stay',
+      isTableView: st.previewView === 'Table',
+      isCalView:   st.previewView === 'Calendar',
+      isTimeView:  st.previewView === 'Timeline',
+
+      openAddModal:  () => this.setState({ modal: 'add-type' }),
+      openStayModal: () => this.setState({ modal: 'add-stay' }),
+      closeModal:    () => this.setState({ modal: null }),
+      stopProp:      (e) => e.stopPropagation(),
+
+      tabs: ALL_TABS.map(t => ({
+        label:  t,
+        onClick: () => this.setState({ previewTab: t }),
+        bg:     st.previewTab === t ? '#0B2545'                     : 'transparent',
+        color:  st.previewTab === t ? '#fff'                        : '#5C6E82',
+        weight: st.previewTab === t ? '600'                         : '400',
+        shadow: st.previewTab === t ? '0 1px 3px rgba(0,0,0,0.18)' : 'none',
+      })),
+
+      views: ALL_VIEWS.map(v => ({
+        label:  v,
+        onClick: () => this.setState({ previewView: v }),
+        bg:     st.previewView === v ? '#fff'                       : 'transparent',
+        color:  st.previewView === v ? '#0B2545'                    : '#5C6E82',
+        weight: st.previewView === v ? '600'                        : '400',
+        shadow: st.previewView === v ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
+      })),
+
+      tableRows,
+    };
+  }
+}
+</script>
+</body>
+</html>
