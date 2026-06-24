@@ -15,8 +15,8 @@
 <meta name="twitter:title" content="Family Trip Planner">
 <meta name="twitter:description" content="Organize flights, hotels, cars, activities and expenses for your family trips.">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Family Trip Planner","url":"https://familytripplanner.vercel.app/family-trip-planner.html","description":"Plan and organize family trips — track accommodations, flights, car rentals, activities, and expenses with real-time sync.","applicationCategory":"TravelApplication","operatingSystem":"Any"}</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="vendor/react.production.min.js" integrity="sha384-tMH8h3BGESGckSAVGZ82T9n90ztNXxvdwvdM6UoR56cYcf+0iGXBliJ29D+wZ/x8" crossorigin="anonymous"></script>
+<script src="vendor/react-dom.production.min.js" integrity="sha384-bm7MnzvK++ykSwVJ2tynSE5TRdN+xL418osEVF2DE/L/gfWHj91J2Sphe582B1Bh" crossorigin="anonymous"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -51,9 +51,9 @@ body{font-family:'Helvetica Neue',Helvetica,-apple-system,BlinkMacSystemFont,'Se
 <meta name='apple-mobile-web-app-title' content='Trip Planner'>
 <link rel='apple-touch-icon' href='icon-192.svg'>
 <meta name='theme-color' content='#0097A7'>
-<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.14.0/firebase-auth-compat.js"></script>
+<script src="vendor/firebase-app-compat.js" integrity="sha384-UfdNSRKK1r6H6IkqEZFSf4spBkv9ajYfRV/wS+w6j6fdRlkETjDrU6r/xC9V50qx" crossorigin="anonymous"></script>
+<script src="vendor/firebase-firestore-compat.js" integrity="sha384-hTbLpgCWxgvJYHoWYZGfLTRosY0cQEkfmTUWWoNIcKy1spZckfgha1TIZloAnWdu" crossorigin="anonymous"></script>
+<script src="vendor/firebase-auth-compat.js" integrity="sha384-MvkMBBov3qtKnYpc+5YpnVvl5AFXw1Dig9fQGW44Ex4IghgeuEEJUEqVVkxlWq23" crossorigin="anonymous"></script>
 
 <script>
 var firebaseConfig={
