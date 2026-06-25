@@ -181,14 +181,21 @@ function icsToEntry(ev,type){
 function toB64(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(",")[1]);};r.onerror=rej;r.readAsDataURL(f);});}
 function toText(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=rej;r.readAsText(f);});}
 
-function getAnthropicKey(){return localStorage.getItem("anthropic_api_key")||"";}
-function claudeExtract(messages){
-  var key=getAnthropicKey();
-  if(!key)return Promise.reject(new Error("No Anthropic API key set. Open ⚙️ Settings to add your key."));
-  var sys="You are a travel booking data extractor. Return ONLY valid JSON, no markdown.\nDetect type: accommodation, flight, car, activity.\nShapes (YYYY-MM-DD dates, paymentStatus: paid/partially_paid/unpaid):\naccommodation:{type,name,platform,checkIn,checkOut,address,vendorPhone,vendorEmail,url,confirmation,totalCost,costPerNight,amountDue,paymentStatus,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,amountDue,paymentStatus,bookingPlatform,bookingRef,vendorPhone,vendorEmail,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\nactivity:{type,name,category,date,duration,location,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}";
-  return fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-allow-browser":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:messages})})
+function getGeminiKey(){return localStorage.getItem("gemini_api_key")||"";}
+
+var EXTRACT_SYS="You are a travel booking data extractor. Return ONLY valid JSON, no markdown, no explanation.\nDetect type: accommodation, flight, car, activity.\nShapes (YYYY-MM-DD dates, costs in USD numbers, paymentStatus: paid/partially_paid/unpaid):\naccommodation:{type,name,platform,checkIn,checkOut,address,vendorPhone,vendorEmail,url,confirmation,totalCost,costPerNight,amountDue,paymentStatus,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,amountDue,paymentStatus,bookingPlatform,bookingRef,vendorPhone,vendorEmail,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\nactivity:{type,name,category,date,duration,location,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}";
+
+function geminiExtract(parts){
+  var key=getGeminiKey();
+  if(!key)return Promise.reject(new Error("NO_KEY"));
+  var body={contents:[{parts:parts}],systemInstruction:{parts:[{text:EXTRACT_SYS}]},generationConfig:{temperature:0,maxOutputTokens:1200}};
+  return fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key="+key,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
     .then(function(r){return r.json();})
-    .then(function(d){if(d.error)throw new Error(d.error.message||"API error");return d.content.map(function(c){return c.text||"";}).join("");});
+    .then(function(d){
+      if(d.error)throw new Error(d.error.message||"Gemini API error");
+      var txt=(d.candidates&&d.candidates[0]&&d.candidates[0].content&&d.candidates[0].content.parts&&d.candidates[0].content.parts[0]&&d.candidates[0].content.parts[0].text)||"";
+      return txt.replace(/```json|```/g,"").trim();
+    });
 }
 
 function buildPrintHTML(tab,acc,flt,car,act,tripName){
@@ -529,52 +536,117 @@ function EntryModal(props){
 // ── Settings Modal ───────────────────────────────────────────────
 function SettingsModal(props){
   var onClose=props.onClose;
-  var kS=useState(function(){return localStorage.getItem("anthropic_api_key")||"";});
+  var kS=useState(function(){return localStorage.getItem("gemini_api_key")||"";});
   var key=kS[0],setKey=kS[1];
   var saved=useState(false); var showSaved=saved[0],setShowSaved=saved[1];
-  function save(){localStorage.setItem("anthropic_api_key",key.trim());setShowSaved(true);setTimeout(function(){setShowSaved(false);},2000);}
-  function clear(){localStorage.removeItem("anthropic_api_key");setKey("");setShowSaved(false);}
+  var testS=useState(""); var testMsg=testS[0],setTestMsg=testS[1];
+  function save(){localStorage.setItem("gemini_api_key",key.trim());setShowSaved(true);setTimeout(function(){setShowSaved(false);},2000);}
+  function clear(){localStorage.removeItem("gemini_api_key");setKey("");setShowSaved(false);setTestMsg("");}
+  function test(){
+    if(!key.trim()){setTestMsg("⚠️ Enter a key first.");return;}
+    setTestMsg("🔍 Testing...");
+    var saved_key=localStorage.getItem("gemini_api_key");
+    localStorage.setItem("gemini_api_key",key.trim());
+    geminiExtract([{text:"Say exactly: {\"type\":\"activity\",\"name\":\"Test\"}"}])
+      .then(function(){setTestMsg("✅ Key works!");})
+      .catch(function(e){setTestMsg("⚠️ "+e.message);})
+      .then(function(){if(!saved_key)localStorage.removeItem("gemini_api_key");else localStorage.setItem("gemini_api_key",saved_key);});
+  }
   return h(Overlay,{onClose:onClose},
     h(MH,{title:"⚙️ Settings",onClose:onClose}),
     h("div",{style:{display:"flex",flexDirection:"column",gap:16}},
       h("div",{style:{background:"var(--input-bg)",borderRadius:10,padding:16,border:"1px solid var(--border)"}},
-        h("div",{style:{fontWeight:700,fontSize:14,color:"var(--text)",marginBottom:6}},"🤖 Anthropic API Key"),
-        h("div",{style:{fontSize:12,color:"var(--text3)",marginBottom:10}},"Required for PDF, image, and text import. Your key is stored locally in your browser and never sent anywhere except the Anthropic API."),
-        h("input",{type:"password",value:key,onChange:function(e){setKey(e.target.value);},placeholder:"sk-ant-...",style:{width:"100%",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:6,padding:"8px 12px",color:"var(--text)",fontSize:13,boxSizing:"border-box",marginBottom:10,fontFamily:"monospace"}}),
-        h("div",{style:{display:"flex",gap:8}},
+        h("div",{style:{fontWeight:700,fontSize:14,color:"var(--text)",marginBottom:4}},"🤖 Google Gemini API Key"),
+        h("div",{style:{fontSize:12,color:"var(--text3)",marginBottom:4,lineHeight:1.6}},"Free to use — no credit card required. Powers PDF, image, and text import."),
+        h("ol",{style:{fontSize:12,color:"var(--text3)",marginBottom:10,paddingLeft:18,lineHeight:1.8}},
+          h("li",null,"Go to ",h("a",{href:"https://aistudio.google.com/app/apikey",target:"_blank",rel:"noopener noreferrer",style:{color:"var(--primary)"}},"aistudio.google.com/app/apikey")),
+          h("li",null,'Click "Create API key"'),
+          h("li",null,"Copy and paste it below")
+        ),
+        h("input",{type:"password",value:key,onChange:function(e){setKey(e.target.value);setTestMsg("");},placeholder:"AIza...",style:{width:"100%",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:6,padding:"8px 12px",color:"var(--text)",fontSize:13,boxSizing:"border-box",marginBottom:10,fontFamily:"monospace"}}),
+        h("div",{style:{display:"flex",gap:8,marginBottom:testMsg?8:0}},
           h("button",{onClick:save,style:{flex:1,padding:"8px 0",borderRadius:7,border:"none",background:"var(--primary)",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:13}},showSaved?"✅ Saved!":"Save Key"),
+          h("button",{onClick:test,style:{padding:"8px 14px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"Test"),
           key&&h("button",{onClick:clear,style:{padding:"8px 14px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--danger)",cursor:"pointer",fontSize:13}},"Clear")
-        )
+        ),
+        testMsg&&h("div",{style:{fontSize:12,padding:"6px 10px",borderRadius:6,background:"var(--surface2)",color:"var(--text2)"}},testMsg)
       ),
-      h("div",{style:{fontSize:12,color:"var(--text3)",padding:"0 4px"}},
-        "Get your API key at ",h("a",{href:"https://console.anthropic.com/settings/keys",target:"_blank",rel:"noopener noreferrer",style:{color:"var(--primary)"}},"console.anthropic.com"),"."
+      h("div",{style:{background:"var(--surface2)",borderRadius:10,padding:14,border:"1px solid var(--border)"}},
+        h("div",{style:{fontWeight:600,fontSize:13,color:"var(--text)",marginBottom:4}},"💡 No key? Use paste-back instead"),
+        h("div",{style:{fontSize:12,color:"var(--text3)",lineHeight:1.6}},"In the Import modal, choose any file type and click \"Use Claude.ai (free)\" to open a pre-built prompt in Claude.ai, then paste the response back.")
       )
     )
   );
 }
 
 // ── Import Modal ─────────────────────────────────────────────────
+var PASTE_BACK_SYS="You are a travel booking data extractor. Extract the booking details from the content I provide and return ONLY valid JSON (no markdown, no explanation).\nDetect type: accommodation, flight, car, activity.\nShapes (YYYY-MM-DD dates, costs in USD numbers, paymentStatus: paid/partially_paid/unpaid):\naccommodation:{type,name,platform,checkIn,checkOut,address,vendorPhone,vendorEmail,url,confirmation,totalCost,costPerNight,amountDue,paymentStatus,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,amountDue,paymentStatus,bookingPlatform,bookingRef,vendorPhone,vendorEmail,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\nactivity:{type,name,category,date,duration,location,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}";
+
 function ImportModal(props){
   var onClose=props.onClose,onImported=props.onImported;
   var mS=useState(null); var method=mS[0],setMethod=mS[1];
   var lS=useState(false); var loading=lS[0],setLoading=lS[1];
   var eS=useState(""); var error=eS[0],setError=eS[1];
   var tS=useState(""); var text=tS[0],setText=tS[1];
+  var pbS=useState(false); var pasteBack=pbS[0],setPasteBack=pbS[1];
+  var pbTxtS=useState(""); var pbText=pbTxtS[0],setPbText=pbTxtS[1];
+  var pbErrS=useState(""); var pbErr=pbErrS[0],setPbErr=pbErrS[1];
   var iS=useState(null); var icsEvts=iS[0],setIcsEvts=iS[1];
+  var pendingPromptS=useState(""); var pendingPrompt=pendingPromptS[0],setPendingPrompt=pendingPromptS[1];
   var fileRef=useRef();
-  function extract(msgs){
+  var hasKey=!!getGeminiKey();
+
+  function parseAndImport(raw){
+    var parsed=JSON.parse(raw.replace(/```json|```/g,"").trim());
+    parsed.id=Date.now();
+    if(!parsed.type)throw new Error("Could not detect entry type.");
+    onImported(parsed);
+  }
+
+  function extract(parts,claudePrompt){
+    if(!hasKey){
+      // No key — open paste-back bridge
+      setPendingPrompt(claudePrompt||"");
+      window.open("https://claude.ai/new?q="+encodeURIComponent((claudePrompt||"")+(claudePrompt?"\n\n":"")+PASTE_BACK_SYS),"_blank");
+      setPasteBack(true);
+      return;
+    }
     setLoading(true);setError("");
-    return claudeExtract(msgs)
-      .then(function(raw){var parsed=JSON.parse(raw.replace(/```json|```/g,"").trim());parsed.id=Date.now();if(!parsed.type)throw new Error("Could not detect type.");onImported(parsed);})
-      .catch(function(e){setError("Extraction failed: "+e.message);})
+    geminiExtract(parts)
+      .then(function(raw){parseAndImport(raw);})
+      .catch(function(e){
+        if(e.message==="NO_KEY"){setPasteBack(true);}
+        else{setError("Extraction failed: "+e.message);}
+      })
       .then(function(){setLoading(false);});
   }
+
+  function handlePasteBack(){
+    setPbErr("");
+    try{parseAndImport(pbText);}
+    catch(e){setPbErr("Could not parse response: "+e.message);}
+  }
+
   function onFile(e){
     var f=e.target.files&&e.target.files[0];if(!f)return;setError("");
     var name=f.name.toLowerCase();
     if(name.endsWith(".ics")){toText(f).then(function(t){var ev=parseICS(t);if(!ev.length){setError("No events found.");return;}setIcsEvts(ev);});return;}
-    if(f.type==="application/pdf"){toB64(f).then(function(b){extract([{role:"user",content:[{type:"document",source:{type:"base64",media_type:"application/pdf",data:b}},{type:"text",text:"Extract all travel booking details."}]}]);});return;}
-    if(f.type.indexOf("image/")===0){toB64(f).then(function(b){extract([{role:"user",content:[{type:"image",source:{type:"base64",media_type:f.type,data:b}},{type:"text",text:"Extract all travel booking details."}]}]);});return;}
+    if(f.type==="application/pdf"){
+      toB64(f).then(function(b){
+        extract(
+          [{inline_data:{mime_type:"application/pdf",data:b}},{text:"Extract all travel booking details."}],
+          "Extract all travel booking details from this PDF booking confirmation and return ONLY JSON."
+        );
+      });return;
+    }
+    if(f.type.indexOf("image/")===0){
+      toB64(f).then(function(b){
+        extract(
+          [{inline_data:{mime_type:f.type,data:b}},{text:"Extract all travel booking details."}],
+          "Extract all travel booking details from this booking screenshot and return ONLY JSON."
+        );
+      });return;
+    }
     if(name.endsWith(".xlsx")||name.endsWith(".xls")||name.endsWith(".ods")||name.endsWith(".csv")){
       var reader=new FileReader();
       reader.onload=function(ev){
@@ -583,42 +655,62 @@ function ImportModal(props){
           var lines=[];
           wb.SheetNames.forEach(function(sn){var csv=XLSX.utils.sheet_to_csv(wb.Sheets[sn]);if(csv.trim())lines.push("Sheet: "+sn+"\n"+csv);});
           var txt=lines.join("\n\n");
-          extract([{role:"user",content:"Extract all travel booking details from this spreadsheet:\n\n"+txt}]);
+          extract([{text:"Extract all travel booking details from this spreadsheet:\n\n"+txt}],"Extract all travel booking details from this spreadsheet and return ONLY JSON:\n\n"+txt);
         }catch(err){setError("Could not read spreadsheet: "+err.message);}
       };
-      reader.readAsArrayBuffer(f);
-      return;
+      reader.readAsArrayBuffer(f);return;
     }
     if(name.endsWith(".docx")){
       var reader2=new FileReader();
       reader2.onload=function(ev){
         mammoth.extractRawText({arrayBuffer:ev.target.result}).then(function(result){
-          extract([{role:"user",content:"Extract all travel booking details from this document:\n\n"+result.value}]);
+          extract([{text:"Extract all travel booking details from this document:\n\n"+result.value}],"Extract all travel booking details from this document and return ONLY JSON:\n\n"+result.value);
         }).catch(function(err){setError("Could not read Word file: "+err.message);});
       };
-      reader2.readAsArrayBuffer(f);
-      return;
+      reader2.readAsArrayBuffer(f);return;
     }
     setError("Unsupported file type. Supported: PDF, image, .ics, .xlsx, .xls, .csv, .docx");
   }
+
   var methods=[{key:"photo",icon:"📷",label:"Photo / Screenshot",desc:"JPG, PNG of a booking"},{key:"pdf",icon:"📄",label:"PDF Confirmation",desc:"Airline, hotel, or rental PDF"},{key:"xls",icon:"📊",label:"Excel / CSV",desc:".xlsx, .xls, .ods, .csv"},{key:"word",icon:"📝",label:"Word Document",desc:".docx file"},{key:"ics",icon:"📅",label:".ics Calendar File",desc:"Google Calendar, Outlook, Apple"},{key:"text",icon:"📋",label:"Paste Text / Email",desc:"Copy-paste any confirmation"}];
+
   if(icsEvts) return h(Overlay,{onClose:onClose},h(MH,{title:"📅 Select Events",onClose:onClose}),h("p",{style:{fontSize:13,color:"var(--text2)",marginBottom:16}},"Found "+icsEvts.length+" event(s):"),icsEvts.map(function(ev,i){return h(ICSRow,{key:i,ev:ev,onImport:function(t){onImported(Object.assign(icsToEntry(ev,t),{id:Date.now()+i}));}});}));
+
+  if(pasteBack) return h(Overlay,{onClose:onClose},
+    h(MH,{title:"📋 Paste Claude Response",onClose:onClose}),
+    h("div",{style:{fontSize:13,color:"var(--text2)",marginBottom:10,lineHeight:1.6}},
+      "A new Claude.ai tab has opened with the extraction prompt. Copy Claude's JSON response and paste it below."
+    ),
+    !hasKey&&h("div",{style:{background:"var(--warning-bg)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"var(--warning-text)",marginBottom:12}},"💡 Add a free Gemini API key in ⚙️ Settings to skip this step next time."),
+    h("textarea",{value:pbText,onChange:function(e){setPbText(e.target.value);setPbErr("");},placeholder:'Paste Claude\'s JSON response here...\n{"type":"flight","airline":"..."}',rows:10,style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 12px",color:"var(--text)",fontSize:13,resize:"vertical",boxSizing:"border-box",marginBottom:8,fontFamily:"monospace"}}),
+    pbErr&&h("div",{style:{marginBottom:8,fontSize:12,color:"var(--danger)"}},"⚠️ "+pbErr),
+    h("div",{style:{display:"flex",gap:8}},
+      h("button",{onClick:function(){setPasteBack(false);setPbText("");setPbErr("");},style:{padding:"9px 16px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"← Back"),
+      h("button",{onClick:handlePasteBack,disabled:!pbText.trim(),style:{flex:1,padding:"9px 0",borderRadius:7,border:"none",background:pbText.trim()?"var(--primary)":"var(--border)",color:"#fff",fontWeight:700,cursor:pbText.trim()?"pointer":"not-allowed",fontSize:13}},"Import & Review →")
+    )
+  );
+
   return h(Overlay,{onClose:onClose},
     h(MH,{title:"⬆️ Import Booking",onClose:onClose}),
+    !hasKey&&h("div",{style:{background:"var(--warning-bg)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"var(--warning-text)",marginBottom:12}},"💡 No Gemini key set — imports will open Claude.ai for you and use paste-back. Add a free key in ⚙️ Settings for one-click imports."),
     !method?h("div",{style:{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}},methods.map(function(m){
       return h("button",{key:m.key,onClick:function(){setMethod(m.key);if(m.key!=="text")setTimeout(function(){fileRef.current&&fileRef.current.click();},100);},style:{background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:10,padding:"18px 14px",cursor:"pointer",textAlign:"left",color:"var(--text)"}},
-        h("div",{style:{fontSize:28,marginBottom:8}},m.icon),h("div",{style:{fontWeight:700,fontSize:14,marginBottom:4}},m.label),h("div",{style:{fontSize:12,color:"var(--text3)"}},m.desc)
+        h("div",{style:{fontSize:28,marginBottom:8}},m.icon),
+        h("div",{style:{fontWeight:700,fontSize:14,marginBottom:4}},m.label),
+        h("div",{style:{fontSize:12,color:"var(--text3)"}},m.desc)
       );
     })):
     h("div",null,
-      h("button",{onClick:function(){setMethod(null);setError("");setText("");},style:{background:"none",border:"none",color:"var(--primary)",cursor:"pointer",fontSize:13,marginBottom:16,padding:0}},"← Back"),
+      h("button",{onClick:function(){setMethod(null);setError("");setText("");setPasteBack(false);},style:{background:"none",border:"none",color:"var(--primary)",cursor:"pointer",fontSize:13,marginBottom:16,padding:0}},"← Back"),
       (method==="photo"||method==="pdf"||method==="ics"||method==="xls"||method==="word")&&h("div",{style:{textAlign:"center",padding:"30px 0"}},
         h("input",{ref:fileRef,type:"file",accept:method==="photo"?"image/*":method==="pdf"?".pdf":method==="ics"?".ics":method==="xls"?".xlsx,.xls,.ods,.csv":".docx",onChange:onFile,style:{display:"none"}}),
         h("button",{onClick:function(){fileRef.current&&fileRef.current.click();},style:{padding:"12px 28px",borderRadius:8,border:"2px dashed var(--border)",background:"var(--input-bg)",color:"var(--text2)",cursor:"pointer",fontSize:14}},loading?"🔍 Analyzing...":"Click to upload "+(method==="photo"?"image":method==="pdf"?"PDF":method==="ics"?".ics":method==="xls"?"spreadsheet":".docx"))
       ),
       method==="text"&&h("div",null,
-        h("textarea",{value:text,onChange:function(e){setText(e.target.value);},placeholder:"Paste confirmation email here...",rows:10,style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 12px",color:"var(--text)",fontSize:13,resize:"vertical",boxSizing:"border-box",marginBottom:12}}),
-        h("button",{onClick:function(){extract([{role:"user",content:"Extract travel booking details:\n\n"+text}]);},disabled:loading||!text.trim(),style:{width:"100%",padding:10,borderRadius:8,border:"none",background:loading||!text.trim()?"var(--border)":"var(--primary)",color:"#fff",fontWeight:700,cursor:loading||!text.trim()?"not-allowed":"pointer",fontSize:14}},loading?"🔍 Extracting...":"Extract & Review")
+        h("textarea",{value:text,onChange:function(e){setText(e.target.value);},placeholder:"Paste confirmation email here...",rows:8,style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 12px",color:"var(--text)",fontSize:13,resize:"vertical",boxSizing:"border-box",marginBottom:8}}),
+        h("div",{style:{display:"flex",gap:8}},
+          h("button",{onClick:function(){extract([{text:"Extract travel booking details:\n\n"+text}],"Extract travel booking details from the text below and return ONLY JSON:\n\n"+text);},disabled:loading||!text.trim(),style:{flex:1,padding:10,borderRadius:8,border:"none",background:loading||!text.trim()?"var(--border)":"var(--primary)",color:"#fff",fontWeight:700,cursor:loading||!text.trim()?"not-allowed":"pointer",fontSize:14}},loading?"🔍 Extracting...":hasKey?"Extract & Review":"Use Claude.ai (free) →")
+        )
       ),
       error&&h("div",{style:{marginTop:12,background:"var(--danger-bg)",borderRadius:6,padding:"10px 12px",fontSize:13,color:"var(--danger)"}},"⚠️ "+error)
     ),
