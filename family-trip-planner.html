@@ -17,6 +17,8 @@
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Family Trip Planner","url":"https://familytripplanner.vercel.app/family-trip-planner.html","description":"Plan and organize family trips — track accommodations, flights, car rentals, activities, and expenses with real-time sync.","applicationCategory":"TravelApplication","operatingSystem":"Any"}</script>
 <script src="vendor/react.production.min.js" integrity="sha384-tMH8h3BGESGckSAVGZ82T9n90ztNXxvdwvdM6UoR56cYcf+0iGXBliJ29D+wZ/x8" crossorigin="anonymous"></script>
 <script src="vendor/react-dom.production.min.js" integrity="sha384-bm7MnzvK++ykSwVJ2tynSE5TRdN+xL418osEVF2DE/L/gfWHj91J2Sphe582B1Bh" crossorigin="anonymous"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -179,9 +181,12 @@ function icsToEntry(ev,type){
 function toB64(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result.split(",")[1]);};r.onerror=rej;r.readAsDataURL(f);});}
 function toText(f){return new Promise(function(res,rej){var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=rej;r.readAsText(f);});}
 
+function getAnthropicKey(){return localStorage.getItem("anthropic_api_key")||"";}
 function claudeExtract(messages){
+  var key=getAnthropicKey();
+  if(!key)return Promise.reject(new Error("No Anthropic API key set. Open ⚙️ Settings to add your key."));
   var sys="You are a travel booking data extractor. Return ONLY valid JSON, no markdown.\nDetect type: accommodation, flight, car, activity.\nShapes (YYYY-MM-DD dates, paymentStatus: paid/partially_paid/unpaid):\naccommodation:{type,name,platform,checkIn,checkOut,address,vendorPhone,vendorEmail,url,confirmation,totalCost,costPerNight,amountDue,paymentStatus,parking,kitchen,breakfast,notes}\nflight:{type,airline,flightNo,from,to,depDate,depTime,arrDate,arrTime,cost,amountDue,paymentStatus,bookingPlatform,bookingRef,vendorPhone,vendorEmail,url,notes}\ncar:{type,company,carType,pickupLocation,dropoffLocation,pickupDate,dropoffDate,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}\nactivity:{type,name,category,date,duration,location,cost,amountDue,paymentStatus,bookingPlatform,confirmation,vendorPhone,vendorEmail,url,notes}";
-  return fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:messages})})
+  return fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":key,"anthropic-version":"2023-06-01","anthropic-dangerous-allow-browser":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,system:sys,messages:messages})})
     .then(function(r){return r.json();})
     .then(function(d){if(d.error)throw new Error(d.error.message||"API error");return d.content.map(function(c){return c.text||"";}).join("");});
 }
@@ -521,6 +526,33 @@ function EntryModal(props){
   );
 }
 
+// ── Settings Modal ───────────────────────────────────────────────
+function SettingsModal(props){
+  var onClose=props.onClose;
+  var kS=useState(function(){return localStorage.getItem("anthropic_api_key")||"";});
+  var key=kS[0],setKey=kS[1];
+  var saved=useState(false); var showSaved=saved[0],setShowSaved=saved[1];
+  function save(){localStorage.setItem("anthropic_api_key",key.trim());setShowSaved(true);setTimeout(function(){setShowSaved(false);},2000);}
+  function clear(){localStorage.removeItem("anthropic_api_key");setKey("");setShowSaved(false);}
+  return h(Overlay,{onClose:onClose},
+    h(MH,{title:"⚙️ Settings",onClose:onClose}),
+    h("div",{style:{display:"flex",flexDirection:"column",gap:16}},
+      h("div",{style:{background:"var(--input-bg)",borderRadius:10,padding:16,border:"1px solid var(--border)"}},
+        h("div",{style:{fontWeight:700,fontSize:14,color:"var(--text)",marginBottom:6}},"🤖 Anthropic API Key"),
+        h("div",{style:{fontSize:12,color:"var(--text3)",marginBottom:10}},"Required for PDF, image, and text import. Your key is stored locally in your browser and never sent anywhere except the Anthropic API."),
+        h("input",{type:"password",value:key,onChange:function(e){setKey(e.target.value);},placeholder:"sk-ant-...",style:{width:"100%",background:"var(--surface)",border:"1px solid var(--border)",borderRadius:6,padding:"8px 12px",color:"var(--text)",fontSize:13,boxSizing:"border-box",marginBottom:10,fontFamily:"monospace"}}),
+        h("div",{style:{display:"flex",gap:8}},
+          h("button",{onClick:save,style:{flex:1,padding:"8px 0",borderRadius:7,border:"none",background:"var(--primary)",color:"#fff",fontWeight:700,cursor:"pointer",fontSize:13}},showSaved?"✅ Saved!":"Save Key"),
+          key&&h("button",{onClick:clear,style:{padding:"8px 14px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--danger)",cursor:"pointer",fontSize:13}},"Clear")
+        )
+      ),
+      h("div",{style:{fontSize:12,color:"var(--text3)",padding:"0 4px"}},
+        "Get your API key at ",h("a",{href:"https://console.anthropic.com/settings/keys",target:"_blank",rel:"noopener noreferrer",style:{color:"var(--primary)"}},"console.anthropic.com"),"."
+      )
+    )
+  );
+}
+
 // ── Import Modal ─────────────────────────────────────────────────
 function ImportModal(props){
   var onClose=props.onClose,onImported=props.onImported;
@@ -539,12 +571,37 @@ function ImportModal(props){
   }
   function onFile(e){
     var f=e.target.files&&e.target.files[0];if(!f)return;setError("");
-    if(f.name.slice(-4)===".ics"){toText(f).then(function(t){var ev=parseICS(t);if(!ev.length){setError("No events found.");return;}setIcsEvts(ev);});return;}
+    var name=f.name.toLowerCase();
+    if(name.endsWith(".ics")){toText(f).then(function(t){var ev=parseICS(t);if(!ev.length){setError("No events found.");return;}setIcsEvts(ev);});return;}
     if(f.type==="application/pdf"){toB64(f).then(function(b){extract([{role:"user",content:[{type:"document",source:{type:"base64",media_type:"application/pdf",data:b}},{type:"text",text:"Extract all travel booking details."}]}]);});return;}
     if(f.type.indexOf("image/")===0){toB64(f).then(function(b){extract([{role:"user",content:[{type:"image",source:{type:"base64",media_type:f.type,data:b}},{type:"text",text:"Extract all travel booking details."}]}]);});return;}
-    setError("Unsupported file type.");
+    if(name.endsWith(".xlsx")||name.endsWith(".xls")||name.endsWith(".ods")||name.endsWith(".csv")){
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        try{
+          var wb=XLSX.read(ev.target.result,{type:"array"});
+          var lines=[];
+          wb.SheetNames.forEach(function(sn){var csv=XLSX.utils.sheet_to_csv(wb.Sheets[sn]);if(csv.trim())lines.push("Sheet: "+sn+"\n"+csv);});
+          var txt=lines.join("\n\n");
+          extract([{role:"user",content:"Extract all travel booking details from this spreadsheet:\n\n"+txt}]);
+        }catch(err){setError("Could not read spreadsheet: "+err.message);}
+      };
+      reader.readAsArrayBuffer(f);
+      return;
+    }
+    if(name.endsWith(".docx")){
+      var reader2=new FileReader();
+      reader2.onload=function(ev){
+        mammoth.extractRawText({arrayBuffer:ev.target.result}).then(function(result){
+          extract([{role:"user",content:"Extract all travel booking details from this document:\n\n"+result.value}]);
+        }).catch(function(err){setError("Could not read Word file: "+err.message);});
+      };
+      reader2.readAsArrayBuffer(f);
+      return;
+    }
+    setError("Unsupported file type. Supported: PDF, image, .ics, .xlsx, .xls, .csv, .docx");
   }
-  var methods=[{key:"photo",icon:"📷",label:"Photo / Screenshot",desc:"JPG, PNG of a booking"},{key:"pdf",icon:"📄",label:"PDF Confirmation",desc:"Airline, hotel, or rental PDF"},{key:"ics",icon:"📅",label:".ics Calendar File",desc:"Google Calendar, Outlook, Apple"},{key:"text",icon:"📋",label:"Paste Text / Email",desc:"Copy-paste any confirmation"}];
+  var methods=[{key:"photo",icon:"📷",label:"Photo / Screenshot",desc:"JPG, PNG of a booking"},{key:"pdf",icon:"📄",label:"PDF Confirmation",desc:"Airline, hotel, or rental PDF"},{key:"xls",icon:"📊",label:"Excel / CSV",desc:".xlsx, .xls, .ods, .csv"},{key:"word",icon:"📝",label:"Word Document",desc:".docx file"},{key:"ics",icon:"📅",label:".ics Calendar File",desc:"Google Calendar, Outlook, Apple"},{key:"text",icon:"📋",label:"Paste Text / Email",desc:"Copy-paste any confirmation"}];
   if(icsEvts) return h(Overlay,{onClose:onClose},h(MH,{title:"📅 Select Events",onClose:onClose}),h("p",{style:{fontSize:13,color:"var(--text2)",marginBottom:16}},"Found "+icsEvts.length+" event(s):"),icsEvts.map(function(ev,i){return h(ICSRow,{key:i,ev:ev,onImport:function(t){onImported(Object.assign(icsToEntry(ev,t),{id:Date.now()+i}));}});}));
   return h(Overlay,{onClose:onClose},
     h(MH,{title:"⬆️ Import Booking",onClose:onClose}),
@@ -555,9 +612,9 @@ function ImportModal(props){
     })):
     h("div",null,
       h("button",{onClick:function(){setMethod(null);setError("");setText("");},style:{background:"none",border:"none",color:"var(--primary)",cursor:"pointer",fontSize:13,marginBottom:16,padding:0}},"← Back"),
-      (method==="photo"||method==="pdf"||method==="ics")&&h("div",{style:{textAlign:"center",padding:"30px 0"}},
-        h("input",{ref:fileRef,type:"file",accept:method==="photo"?"image/*":method==="pdf"?".pdf":".ics",onChange:onFile,style:{display:"none"}}),
-        h("button",{onClick:function(){fileRef.current&&fileRef.current.click();},style:{padding:"12px 28px",borderRadius:8,border:"2px dashed var(--border)",background:"var(--input-bg)",color:"var(--text2)",cursor:"pointer",fontSize:14}},loading?"🔍 Analyzing...":"Click to upload "+(method==="photo"?"image":method==="pdf"?"PDF":".ics"))
+      (method==="photo"||method==="pdf"||method==="ics"||method==="xls"||method==="word")&&h("div",{style:{textAlign:"center",padding:"30px 0"}},
+        h("input",{ref:fileRef,type:"file",accept:method==="photo"?"image/*":method==="pdf"?".pdf":method==="ics"?".ics":method==="xls"?".xlsx,.xls,.ods,.csv":".docx",onChange:onFile,style:{display:"none"}}),
+        h("button",{onClick:function(){fileRef.current&&fileRef.current.click();},style:{padding:"12px 28px",borderRadius:8,border:"2px dashed var(--border)",background:"var(--input-bg)",color:"var(--text2)",cursor:"pointer",fontSize:14}},loading?"🔍 Analyzing...":"Click to upload "+(method==="photo"?"image":method==="pdf"?"PDF":method==="ics"?".ics":method==="xls"?"spreadsheet":".docx"))
       ),
       method==="text"&&h("div",null,
         h("textarea",{value:text,onChange:function(e){setText(e.target.value);},placeholder:"Paste confirmation email here...",rows:10,style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 12px",color:"var(--text)",fontSize:13,resize:"vertical",boxSizing:"border-box",marginBottom:12}}),
@@ -1312,6 +1369,7 @@ function App(){
   var t10=useState(false); var tripMgr=t10[0],setTripMgr=t10[1];
   var t11=useState(""); var search=t11[0],setSearch=t11[1];
   var t12=useState(false); var gmailModal=t12[0],setGmailModal=t12[1];
+  var tSett=useState(false); var settingsModal=tSett[0],setSettingsModal=tSett[1];
   var t13=useState(null); var detailEntry=t13[0],setDetailEntry=t13[1];
   var t15=useState("USD"); var currency=t15[0],setCurrencyRaw=t15[1];
   var t17=useState(null); var expModal=t17[0],setExpModal=t17[1];
@@ -1700,6 +1758,7 @@ function App(){
           h("button",{onClick:function(){setImp("backup");},style:{padding:"6px 13px",borderRadius:7,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:500,fontSize:13}},"Backup"),
           h("button",{onClick:function(){setImp(true);},style:{padding:"6px 13px",borderRadius:7,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:500,fontSize:13}},"Import"),
           h("button",{onClick:function(){setGmailModal(true);},style:{padding:"6px 13px",borderRadius:7,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:500,fontSize:13}},"Gmail"),
+          h("button",{onClick:function(){setSettingsModal(true);},title:"Settings",style:{padding:"6px 10px",borderRadius:7,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:500,fontSize:14}},"⚙️"),
           h("button",{onClick:function(){if(tab==="expenses"){setExpModal({isNew:true,item:Object.assign(newExp(),{currency:currency})});}else{openNew();}},style:{display:"flex",alignItems:"center",gap:5,padding:"5px 14px",borderRadius:6,border:"none",cursor:"pointer",background:"#0097A7",color:"#fff",fontWeight:600,fontSize:12.5}},
             h("svg",{width:11,height:11,viewBox:"0 0 24 24",fill:"none",stroke:"#fff",strokeWidth:2.5,strokeLinecap:"round"},h("line",{x1:12,y1:5,x2:12,y2:19}),h("line",{x1:5,y1:12,x2:19,y2:12})),
             "Add")
@@ -1739,7 +1798,8 @@ function App(){
     imp==="backup"&&h(BackupModal,{trips:trips,onClose:function(){setImp(false);},onRestore:function(data){saveTrips(data.trips||trips);setImp(false);}}),
     modal&&h(EntryModal,{modal:modal,tab:tab,onSave:save,onDelete:del,onClose:function(){setModal(null);}}),
     expModal&&h(ExpenseModal,{modal:expModal,tripCurrency:currency,onClose:function(){setExpModal(null);},onDelete:function(id){setExp(exp.filter(function(e){return e.id!==id;}));setExpModal(null);},onSave:function(item){var next=exp.filter(function(e){return e.id===item.id;}).length>0?exp.map(function(e){return e.id===item.id?item:e;}):exp.concat([item]);setExp(next);setExpModal(null);}}),
-    householdModal&&h(HouseholdModal,{householdId:householdId,householdDoc:householdDoc,user:user,onClose:function(){setHouseholdModal(false);},onRenamed:function(n){setHouseholdDoc(function(d){return Object.assign({},d,{name:n});});}})
+    householdModal&&h(HouseholdModal,{householdId:householdId,householdDoc:householdDoc,user:user,onClose:function(){setHouseholdModal(false);},onRenamed:function(n){setHouseholdDoc(function(d){return Object.assign({},d,{name:n});});}}),
+    settingsModal&&h(SettingsModal,{onClose:function(){setSettingsModal(false);}})
   );
 }
 
