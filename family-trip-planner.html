@@ -591,6 +591,7 @@ function ImportModal(props){
   var pbS=useState(false); var pasteBack=pbS[0],setPasteBack=pbS[1];
   var pbTxtS=useState(""); var pbText=pbTxtS[0],setPbText=pbTxtS[1];
   var pbErrS=useState(""); var pbErr=pbErrS[0],setPbErr=pbErrS[1];
+  var needsFileS=useState(false); var needsFile=needsFileS[0],setNeedsFile=needsFileS[1];
   var iS=useState(null); var icsEvts=iS[0],setIcsEvts=iS[1];
   var pendingPromptS=useState(""); var pendingPrompt=pendingPromptS[0],setPendingPrompt=pendingPromptS[1];
   var fileRef=useRef();
@@ -603,11 +604,15 @@ function ImportModal(props){
     onImported(parsed);
   }
 
-  function extract(parts,claudePrompt){
+  function extract(parts,claudePrompt,fileAttachNeeded){
     if(!hasKey){
       // No key — open paste-back bridge
       setPendingPrompt(claudePrompt||"");
-      window.open("https://claude.ai/new?q="+encodeURIComponent((claudePrompt||"")+(claudePrompt?"\n\n":"")+PASTE_BACK_SYS),"_blank");
+      setNeedsFile(!!fileAttachNeeded);
+      var q=fileAttachNeeded
+        ?"Extract all travel booking details from the attached file and return ONLY valid JSON.\n\n"+PASTE_BACK_SYS
+        :(claudePrompt||"")+"\n\n"+PASTE_BACK_SYS;
+      window.open("https://claude.ai/new?q="+encodeURIComponent(q),"_blank");
       setPasteBack(true);
       return;
     }
@@ -635,7 +640,8 @@ function ImportModal(props){
       toB64(f).then(function(b){
         extract(
           [{inline_data:{mime_type:"application/pdf",data:b}},{text:"Extract all travel booking details."}],
-          "Extract all travel booking details from this PDF booking confirmation and return ONLY JSON."
+          "Extract all travel booking details from this PDF booking confirmation and return ONLY JSON.",
+          true
         );
       });return;
     }
@@ -643,7 +649,8 @@ function ImportModal(props){
       toB64(f).then(function(b){
         extract(
           [{inline_data:{mime_type:f.type,data:b}},{text:"Extract all travel booking details."}],
-          "Extract all travel booking details from this booking screenshot and return ONLY JSON."
+          "Extract all travel booking details from this booking screenshot and return ONLY JSON.",
+          true
         );
       });return;
     }
@@ -678,14 +685,22 @@ function ImportModal(props){
 
   if(pasteBack) return h(Overlay,{onClose:onClose},
     h(MH,{title:"📋 Paste Claude Response",onClose:onClose}),
-    h("div",{style:{fontSize:13,color:"var(--text2)",marginBottom:10,lineHeight:1.6}},
-      "A new Claude.ai tab has opened with the extraction prompt. Copy Claude's JSON response and paste it below."
-    ),
-    !hasKey&&h("div",{style:{background:"var(--warning-bg)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"var(--warning-text)",marginBottom:12}},"💡 Add a free Gemini API key in ⚙️ Settings to skip this step next time."),
+    needsFile
+      ?h("div",{style:{background:"var(--warning-bg)",borderRadius:8,padding:"12px 14px",fontSize:13,color:"var(--warning-text)",marginBottom:12,lineHeight:1.7}},
+          h("strong",null,"📎 You need to attach your file manually:"),h("br",null),
+          "1. Switch to the Claude.ai tab that just opened",h("br",null),
+          "2. Attach your PDF or image using the 📎 button",h("br",null),
+          "3. Send the message, then copy the JSON response",h("br",null),
+          "4. Paste it below and click Import"
+        )
+      :h("div",{style:{fontSize:13,color:"var(--text2)",marginBottom:10,lineHeight:1.6}},
+          "A new Claude.ai tab has opened with your content. Copy Claude's JSON response and paste it below."
+        ),
+    !hasKey&&h("div",{style:{background:"var(--surface2)",borderRadius:8,padding:"10px 12px",fontSize:12,color:"var(--text3)",marginBottom:12}},"💡 Add a free Gemini API key in ⚙️ Settings to skip this manual step next time."),
     h("textarea",{value:pbText,onChange:function(e){setPbText(e.target.value);setPbErr("");},placeholder:'Paste Claude\'s JSON response here...\n{"type":"flight","airline":"..."}',rows:10,style:{width:"100%",background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:8,padding:"10px 12px",color:"var(--text)",fontSize:13,resize:"vertical",boxSizing:"border-box",marginBottom:8,fontFamily:"monospace"}}),
     pbErr&&h("div",{style:{marginBottom:8,fontSize:12,color:"var(--danger)"}},"⚠️ "+pbErr),
     h("div",{style:{display:"flex",gap:8}},
-      h("button",{onClick:function(){setPasteBack(false);setPbText("");setPbErr("");},style:{padding:"9px 16px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"← Back"),
+      h("button",{onClick:function(){setPasteBack(false);setPbText("");setPbErr("");setNeedsFile(false);},style:{padding:"9px 16px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:13}},"← Back"),
       h("button",{onClick:handlePasteBack,disabled:!pbText.trim(),style:{flex:1,padding:"9px 0",borderRadius:7,border:"none",background:pbText.trim()?"var(--primary)":"var(--border)",color:"#fff",fontWeight:700,cursor:pbText.trim()?"pointer":"not-allowed",fontSize:13}},"Import & Review →")
     )
   );
