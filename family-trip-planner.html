@@ -111,6 +111,12 @@ function fmt$(v){
 }
 function nights(a,b){if(!a||!b)return 0;var d=(new Date(b)-new Date(a))/86400000;return d>0?d:0;}
 function fmtD(v){if(!v||v==="-")return"-";var p=v.split("-");return p.length===3?p[1]+"."+p[2]+"."+p[0].slice(2):v;}
+function parseTimeMin(s){var p=(s||"").split(":");if(p.length<2)return null;var h=parseInt(p[0]),m=parseInt(p[1]);return(isNaN(h)||isNaN(m))?null:h*60+m;}
+function fmtTimeStr(min){if(min===null||min===undefined)return"";min=((min%1440)+1440)%1440;return String(Math.floor(min/60)).padStart(2,"0")+":"+String(min%60).padStart(2,"0");}
+function fmtDurDisp(s){var m=parseTimeMin(s);if(m===null||m===0)return s||"";var h=Math.floor(m/60),mn=m%60;return(h?h+"h":"")+(h&&mn?" ":"")+(mn?mn+"m":"");}
+function calcTimeEnd(start,dur){var sm=parseTimeMin(start),dm=parseTimeMin(dur);if(sm===null||dm===null)return"";return fmtTimeStr(sm+dm);}
+function calcDuration(start,end){var sm=parseTimeMin(start),em=parseTimeMin(end);if(sm===null||em===null)return"";var diff=em-sm;if(diff<0)diff+=1440;return fmtTimeStr(diff);}
+function flightDuration(dd,dt,ad,at){if(!dd||!dt||!ad||!at)return"";var dep=new Date(dd+"T"+dt),arr=new Date(ad+"T"+at);var diff=Math.round((arr-dep)/60000);if(diff<=0)return"";return fmtTimeStr(diff);}
 function cityOf(addr){if(!addr)return"";var p=addr.split(",").map(function(s){return s.trim();}).filter(Boolean);return p.length>=2?p[p.length-2]:p[0]||"";}
 function typeIcon(t){return t==="accommodation"?"🏠":t==="flight"?"✈️":t==="car"?"🚗":"🎯";}
 function typeLabel(t){return t==="accommodation"?"Stay":t==="flight"?"Flight":t==="car"?"Car":"Activity";}
@@ -127,10 +133,10 @@ function validate(item){
   if(item.type==="car"&&item.pickupDate&&item.dropoffDate&&new Date(item.dropoffDate)<new Date(item.pickupDate))errors.dropoffDate="Drop-off before pickup";
   return errors;
 }
-function newAcc(){return{id:Date.now(),type:"accommodation",name:"",platform:"Airbnb",checkIn:"",checkOut:"",address:"",contact:"",vendorPhone:"",vendorEmail:"",url:"",parking:false,kitchen:false,breakfast:false,totalCost:"",costPerNight:"",amountDue:"",paymentStatus:"paid",confirmation:"",notes:""};}
-function newFlt(){return{id:Date.now(),type:"flight",airline:"",flightNo:"",from:"",to:"",depDate:"",depTime:"",arrDate:"",arrTime:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",bookingRef:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
-function newCar(){return{id:Date.now(),type:"car",company:"",carType:"SUV",pickupLocation:"",dropoffLocation:"",pickupDate:"",dropoffDate:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
-function newAct(){return{id:Date.now(),type:"activity",name:"",category:"Nature",date:"",duration:"",location:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
+function newAcc(){return{id:Date.now(),type:"accommodation",name:"",platform:"Airbnb",checkIn:"",checkOut:"",address:"",contact:"",vendorPhone:"",vendorEmail:"",url:"",parking:false,kitchen:false,breakfast:false,totalCost:"",costPerNight:"",amountDue:"",paymentStatus:"paid",confirmation:"",timeStart:"",timeEnd:"",duration:"",notes:""};}
+function newFlt(){return{id:Date.now(),type:"flight",airline:"",flightNo:"",from:"",to:"",depDate:"",depTime:"",arrDate:"",arrTime:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",bookingRef:"",confirmation:"",duration:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
+function newCar(){return{id:Date.now(),type:"car",company:"",carType:"SUV",pickupLocation:"",dropoffLocation:"",pickupDate:"",dropoffDate:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",timeStart:"",timeEnd:"",duration:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
+function newAct(){return{id:Date.now(),type:"activity",name:"",category:"Nature",date:"",timeStart:"",timeEnd:"",duration:"",location:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
 function newExp(){return{id:Date.now(),date:"",category:"Other",description:"",addedBy:"",amount:"",currency:"USD",notes:""};}
 function newTrip(name){return{id:"trip_"+Date.now(),name:name||"New Trip",acc:[],flt:[],car:[],act:[],expenses:[]};}
 
@@ -412,6 +418,15 @@ function EntryModal(props){
   function onChange(k,v){
     var ni=Object.assign({},item); ni[k]=v;
     if(k==="paymentStatus"&&v==="paid")ni.amountDue="";
+    if(k==="timeStart"||k==="timeEnd"||k==="duration"){
+      if(k==="timeStart"&&ni.duration)ni.timeEnd=calcTimeEnd(ni.timeStart,ni.duration);
+      else if(k==="timeStart"&&ni.timeEnd)ni.duration=calcDuration(ni.timeStart,ni.timeEnd);
+      else if(k==="timeEnd"&&ni.timeStart)ni.duration=calcDuration(ni.timeStart,ni.timeEnd);
+      else if(k==="duration"&&ni.timeStart)ni.timeEnd=calcTimeEnd(ni.timeStart,ni.duration);
+    }
+    if(et==="flight"&&(k==="depDate"||k==="depTime"||k==="arrDate"||k==="arrTime")){
+      ni.duration=flightDuration(ni.depDate,ni.depTime,ni.arrDate,ni.arrTime);
+    }
     setItem(ni);
     if(touched[k])setErrors(validate(ni));
   }
@@ -442,10 +457,11 @@ function EntryModal(props){
       h(R2,null,h(FInput,Object.assign({label:"Name / Property",k:"name"},fp)),h(FSelect,Object.assign({label:"Platform",k:"platform",opts:PLATFORMS},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Check-In",k:"checkIn",type:"date"},fp)),h(FInput,Object.assign({label:"Check-Out",k:"checkOut",type:"date"},fp))),
       nts>0&&h("div",{style:{fontSize:13,color:"var(--text2)",marginBottom:12}},"📅 "+nts+" night"+(nts!==1?"s":"")),
+      h(R2,null,h(FInput,Object.assign({label:"Check-In Time",k:"timeStart",type:"time"},fp)),h(FInput,Object.assign({label:"Check-Out Time",k:"timeEnd",type:"time"},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Cost/Night ($)",k:"costPerNight",type:"number",ph:"auto"},fp)),h(FInput,Object.assign({label:"Total Cost ($)",k:"totalCost",type:"number",ph:"auto"},fp))),
       h(FInput,Object.assign({label:"Address",k:"address"},fp)),
       h(R2,null,h(FInput,Object.assign({label:"Contact",k:"contact"},fp)),h(FInput,Object.assign({label:"Booking URL",k:"url",ph:"https://..."},fp))),
-      h(FInput,Object.assign({label:"Confirmation",k:"confirmation"},fp)),
+      h(FInput,Object.assign({label:"Confirmation / Order #",k:"confirmation",ph:"Optional"},fp)),
       h(R2,null,
       h("div",{style:{marginBottom:12}},
         h("label",{style:{display:"block",fontSize:12,color:"var(--text2)",marginBottom:4}},"Payment Status"),
@@ -466,6 +482,13 @@ function EntryModal(props){
       h(R2,null,h(FInput,Object.assign({label:"Departure Airport",k:"from"},fp)),h(FInput,Object.assign({label:"Arrival Airport",k:"to"},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Dep Date",k:"depDate",type:"date"},fp)),h(FInput,Object.assign({label:"Dep Time",k:"depTime",type:"time"},fp))),
       h(R2,null,h(FInput,Object.assign({label:"Arr Date",k:"arrDate",type:"date"},fp)),h(FInput,Object.assign({label:"Arr Time",k:"arrTime",type:"time"},fp))),
+      h(R2,null,
+        h(FInput,Object.assign({label:"Confirmation / Order #",k:"confirmation",ph:"Optional"},fp)),
+        h("div",{style:{marginBottom:12}},
+          h("label",{style:{display:"block",fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:.5,color:"var(--text3)",marginBottom:4}},"Flight Duration"),
+          h("div",{style:{padding:"9px 10px",background:"var(--surface2)",borderRadius:6,border:"1px solid var(--border)",fontSize:13,color:item.duration?"var(--text)":"var(--text4)",minHeight:36}},item.duration?fmtDurDisp(item.duration):"Auto-calculated from times")
+        )
+      ),
       h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Booking Ref",k:"bookingRef"},fp))),
       h(R2,null,
       h("div",{style:{marginBottom:12}},
@@ -487,7 +510,9 @@ function EntryModal(props){
       h(FInput,Object.assign({label:"Pickup Location",k:"pickupLocation"},fp)),
       h(FInput,Object.assign({label:"Dropoff Location",k:"dropoffLocation"},fp)),
       h(R2,null,h(FInput,Object.assign({label:"Pickup Date",k:"pickupDate",type:"date"},fp)),h(FInput,Object.assign({label:"Dropoff Date",k:"dropoffDate",type:"date"},fp))),
-      h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Confirmation",k:"confirmation"},fp))),
+      h(R2,null,h(FInput,Object.assign({label:"Pickup Time",k:"timeStart",type:"time"},fp)),h(FInput,Object.assign({label:"Dropoff Time",k:"timeEnd",type:"time"},fp))),
+      (item.timeStart||item.timeEnd)&&h("div",{style:{fontSize:13,color:"var(--text2)",marginBottom:12}},item.duration?"⏱ Duration: "+fmtDurDisp(item.duration):""),
+      h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Confirmation / Order #",k:"confirmation",ph:"Optional"},fp))),
       h(R2,null,
       h("div",{style:{marginBottom:12}},
         h("label",{style:{display:"block",fontSize:12,color:"var(--text2)",marginBottom:4}},"Payment Status"),
@@ -505,9 +530,18 @@ function EntryModal(props){
     ),
     et==="activity"&&h(React_.Fragment,null,
       h(R2,null,h(FInput,Object.assign({label:"Activity Name",k:"name"},fp)),h(FSelect,Object.assign({label:"Category",k:"category",opts:ACTIVITY_CATS},fp))),
-      h(R2,null,h(FInput,Object.assign({label:"Date",k:"date",type:"date"},fp)),h(FInput,Object.assign({label:"Duration",k:"duration"},fp))),
+      h(R2,null,h(FInput,Object.assign({label:"Date",k:"date",type:"date"},fp)),h(FInput,Object.assign({label:"Start Time",k:"timeStart",type:"time"},fp))),
+      h(R2,null,
+        h(FInput,Object.assign({label:"End Time",k:"timeEnd",type:"time"},fp)),
+        h("div",{style:{marginBottom:12}},
+          h("label",{style:{display:"block",fontSize:11,fontWeight:600,textTransform:"uppercase",letterSpacing:.5,color:"var(--text3)",marginBottom:4}},"Duration (HH:MM)"),
+          h("input",{type:"time",value:item.duration||"",onChange:function(e){onChange("duration",e.target.value);},placeholder:"--:--",style:fldStyle({},"duration")}),
+          (item.duration)&&h("div",{style:{fontSize:11,color:"var(--primary)",marginTop:3}},fmtDurDisp(item.duration))
+        )
+      ),
       h(FInput,Object.assign({label:"Location",k:"location"},fp)),
-      h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp))),
+      h(R2,null,h(FInput,Object.assign({label:"Cost ($)",k:"cost",type:"number"},fp)),h(FInput,Object.assign({label:"Confirmation / Order #",k:"confirmation",ph:"Optional"},fp))),
+      h(FInput,Object.assign({label:"URL",k:"url",ph:"https://..."},fp)),
       h(R2,null,
       h("div",{style:{marginBottom:12}},
         h("label",{style:{display:"block",fontSize:12,color:"var(--text2)",marginBottom:4}},"Payment Status"),
@@ -908,9 +942,10 @@ function DetailCard(props){
     acc&&h(Section,{title:"Stay Details"},
       h(Row,{label:"Address",v:e.address}),
       h(Row,{label:"Contact",v:e.contact}),
+      (e.timeStart||e.timeEnd)&&h(Row,{label:"Check-in / out Time",v:(e.timeStart||"—")+(e.timeEnd?" → "+e.timeEnd:"")}),
       h(Row,{label:"Cost/Night",v:e.costPerNight?fmt$(e.costPerNight):null}),
       h(Row,{label:"Total Cost",v:e.totalCost?fmt$(e.totalCost):null}),
-      h(Row,{label:"Confirmation",v:e.confirmation}),
+      h(Row,{label:"Confirmation #",v:e.confirmation}),
       h(Row,{label:"Booking URL",v:e.url,url:true}),
       h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
       e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
@@ -926,8 +961,10 @@ function DetailCard(props){
       h(Row,{label:"Flight #",v:e.flightNo}),
       h(Row,{label:"Departure",v:e.from+(e.depDate?" — "+fmtD(e.depDate)+(e.depTime?" "+e.depTime:""):"")}),
       h(Row,{label:"Arrival",v:e.to+(e.arrDate?" — "+fmtD(e.arrDate)+(e.arrTime?" "+e.arrTime:""):"")}),
+      e.duration&&h(Row,{label:"Duration",v:fmtDurDisp(e.duration)}),
       h(Row,{label:"Cost",v:e.cost?fmt$(e.cost):null}),
       h(Row,{label:"Booking Ref",v:e.bookingRef}),
+      h(Row,{label:"Confirmation #",v:e.confirmation}),
       h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
       e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
       h(Row,{label:"Vendor Phone",v:e.vendorPhone}),
@@ -935,10 +972,11 @@ function DetailCard(props){
       h(Row,{label:"Booking URL",v:e.url,url:true})
     ),
     car&&h(Section,{title:"Car Rental Details"},
-      h(Row,{label:"Pickup",v:e.pickupLocation+(e.pickupDate?" — "+fmtD(e.pickupDate):"")}),
-      h(Row,{label:"Drop-off",v:e.dropoffLocation+(e.dropoffDate?" — "+fmtD(e.dropoffDate):"")}),
+      h(Row,{label:"Pickup",v:e.pickupLocation+(e.pickupDate?" — "+fmtD(e.pickupDate)+(e.timeStart?" "+e.timeStart:""):"")}),
+      h(Row,{label:"Drop-off",v:e.dropoffLocation+(e.dropoffDate?" — "+fmtD(e.dropoffDate)+(e.timeEnd?" "+e.timeEnd:""):"")}),
+      e.duration&&h(Row,{label:"Duration",v:fmtDurDisp(e.duration)}),
       h(Row,{label:"Cost",v:e.cost?fmt$(e.cost):null}),
-      h(Row,{label:"Confirmation",v:e.confirmation}),
+      h(Row,{label:"Confirmation #",v:e.confirmation}),
       h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
       e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
       h(Row,{label:"Vendor Phone",v:e.vendorPhone}),
@@ -947,6 +985,9 @@ function DetailCard(props){
     ),
     act&&h(Section,{title:"Activity Details"},
       h(Row,{label:"Location",v:e.location}),
+      (e.timeStart||e.timeEnd)&&h(Row,{label:"Time",v:(e.timeStart||"—")+(e.timeEnd?" → "+e.timeEnd:"")}),
+      e.duration&&h(Row,{label:"Duration",v:fmtDurDisp(e.duration)}),
+      h(Row,{label:"Confirmation #",v:e.confirmation}),
       h(Row,{label:"Cost",v:e.cost?fmt$(e.cost):null}),
       h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
       e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
@@ -1155,6 +1196,79 @@ function GanttView(props){
         );
       })
     )
+  );
+}
+
+// ── Day View ─────────────────────────────────────────────────────
+function DayView(props){
+  var entries=props.entries,onEdit=props.onEdit;
+  var today=new Date().toISOString().slice(0,10);
+  var dS=useState(today);var selDate=dS[0],setSelDate=dS[1];
+  function coversDate(e,d){
+    var type=e.type;
+    if(type==="flight")return(e.depDate||"")=== d;
+    if(type==="activity")return(e.date||"")=== d;
+    var start=e.checkIn||e.pickupDate||"";
+    var end=e.checkOut||e.dropoffDate||start;
+    if(!start)return false;
+    return d>=start&&d<=end;
+  }
+  function timeOf(e){return e.depTime||e.timeStart||"";}
+  var dayEntries=entries.filter(function(e){return coversDate(e,selDate);}).slice().sort(function(a,b){
+    var ta=timeOf(a)||"99:99",tb=timeOf(b)||"99:99";
+    return ta.localeCompare(tb);
+  });
+  function shift(n){var d=new Date(selDate+"T12:00:00");d.setDate(d.getDate()+n);setSelDate(d.toISOString().slice(0,10));}
+  var isToday=selDate===today;
+  var dateLabel=new Date(selDate+"T12:00:00").toLocaleDateString("en-US",{weekday:"long",month:"long",day:"numeric",year:"numeric"});
+  return h("div",null,
+    h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:20,flexWrap:"wrap"}},
+      h("button",{onClick:function(){shift(-1);},style:{padding:"6px 13px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:16}},"←"),
+      h("input",{type:"date",value:selDate,onChange:function(e){setSelDate(e.target.value);},style:{background:"var(--input-bg)",border:"1px solid var(--border)",borderRadius:7,padding:"6px 12px",color:"var(--text)",fontSize:14,cursor:"pointer"}}),
+      h("button",{onClick:function(){shift(1);},style:{padding:"6px 13px",borderRadius:7,border:"1px solid var(--border)",background:"transparent",color:"var(--text2)",cursor:"pointer",fontSize:16}},"→"),
+      !isToday&&h("button",{onClick:function(){setSelDate(today);},style:{padding:"6px 13px",borderRadius:7,border:"none",background:"var(--primary)",color:"#fff",cursor:"pointer",fontSize:13,fontWeight:600}},"Today"),
+      h("span",{style:{fontSize:13,fontWeight:600,color:"var(--text)",marginLeft:4}},dateLabel)
+    ),
+    dayEntries.length===0
+      ?h("div",{style:{textAlign:"center",padding:"60px 0",color:"var(--text4)"}},
+          h("div",{style:{fontSize:48,marginBottom:12}},"📅"),
+          h("p",{style:{fontSize:15,marginBottom:8}},"Nothing scheduled"),
+          h("p",{style:{fontSize:13}},"No flights, stays, cars or activities on this day.")
+        )
+      :h("div",{style:{display:"flex",flexDirection:"column",gap:10}},
+          dayEntries.map(function(e){
+            var name=e.name||e.airline||e.company||"";
+            var typeColor=COLORS[e.type]||COLORS.activity;
+            var time=timeOf(e);
+            var endTime=(e.type==="flight"?e.arrTime:e.timeEnd)||"";
+            var loc=e.address||(e.type==="flight"?(e.from&&e.to?e.from+" → "+e.to:""):"")||e.pickupLocation||e.location||"";
+            var cost=e.type==="accommodation"?e.totalCost:e.cost;
+            var dur=e.duration?fmtDurDisp(e.duration):"";
+            return h("div",{key:e.id,onClick:function(){onEdit(e);},
+              style:{background:"var(--surface)",border:"1px solid var(--border)",borderLeft:"4px solid "+typeColor,borderRadius:10,padding:"14px 16px",cursor:"pointer",display:"flex",gap:14,alignItems:"flex-start"},
+              onMouseEnter:function(ev){ev.currentTarget.style.background="var(--surface2)";},
+              onMouseLeave:function(ev){ev.currentTarget.style.background="var(--surface)";}},
+              h("div",{style:{fontSize:28,flexShrink:0,marginTop:2}},typeIcon(e.type)),
+              h("div",{style:{flex:1,minWidth:0}},
+                h("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:4,flexWrap:"wrap"}},
+                  h("span",{style:{fontSize:11,fontWeight:700,textTransform:"uppercase",letterSpacing:.8,color:typeColor}},typeLabel(e.type)),
+                  cost&&h("span",{style:{fontSize:12,color:"var(--text3)"}},fmt$(cost))
+                ),
+                h("div",{style:{fontSize:15,fontWeight:700,color:"var(--text)",marginBottom:4}},name),
+                (time||endTime)&&h("div",{style:{fontSize:13,color:"var(--primary)",fontWeight:600,marginBottom:3}},
+                  time||(endTime?"until "+endTime:""),
+                  endTime&&time?" → "+endTime:"",
+                  dur&&h("span",{style:{color:"var(--text3)",fontWeight:400,marginLeft:6}},"("+dur+")")
+                ),
+                loc&&h("div",{style:{fontSize:12,color:"var(--text3)",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},loc),
+                e.type==="accommodation"&&e.checkIn&&h("div",{style:{fontSize:12,color:"var(--text3)",marginTop:2}},
+                  fmtD(e.checkIn)+(e.checkOut?" → "+fmtD(e.checkOut):"")+" • "+((function(){var n=Math.round((new Date(e.checkOut)-new Date(e.checkIn))/86400000);return n>0?n+"n":""})())
+                ),
+                e.confirmation&&h("div",{style:{fontSize:11,color:"var(--text4)",marginTop:2}},"# "+e.confirmation)
+              )
+            );
+          })
+        )
   );
 }
 
@@ -1859,7 +1973,7 @@ function App(){
         h("div",{style:{display:"flex",gap:3,background:"var(--tab-track)",borderRadius:8,padding:3,flexWrap:"wrap"}},h(TB,{k:"all",label:"All"}),h(TB,{k:"accommodations",label:"Stays"}),h(TB,{k:"flights",label:"Flights"}),h(TB,{k:"cars",label:"Cars"}),h(TB,{k:"activities",label:"Activities"}),h(TB,{k:"expenses",label:"Expenses"})),
         h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}},
           h("div",{style:{display:"flex",gap:2,background:"var(--tab-track)",borderRadius:7,padding:2}},
-            [["table","Table"],["calendar","Calendar"],["gantt","Timeline"]].map(function(item){return h("button",{key:item[0],onClick:function(){setView(item[0]);},style:{padding:"5px 12px",borderRadius:5,border:"none",cursor:"pointer",fontSize:12.5,fontWeight:view===item[0]?600:400,background:view===item[0]?"#fff":"transparent",color:view===item[0]?"#0B2545":"var(--text3)",boxShadow:view===item[0]?"0 1px 2px rgba(0,0,0,.1)":"none",transition:"all .1s",whiteSpace:"nowrap"}},item[1]);})
+            [["table","Table"],["calendar","Calendar"],["gantt","Timeline"],["day","Day"]].map(function(item){return h("button",{key:item[0],onClick:function(){setView(item[0]);},style:{padding:"5px 12px",borderRadius:5,border:"none",cursor:"pointer",fontSize:12.5,fontWeight:view===item[0]?600:400,background:view===item[0]?"#fff":"transparent",color:view===item[0]?"#0B2545":"var(--text3)",boxShadow:view===item[0]?"0 1px 2px rgba(0,0,0,.1)":"none",transition:"all .1s",whiteSpace:"nowrap"}},item[1]);})
           ),
           h("button",{onClick:function(){setPdfPreview(true);},style:{padding:"6px 13px",borderRadius:7,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:500,fontSize:13}},"PDF"),
           h("button",{onClick:function(){setImp("backup");},style:{padding:"6px 13px",borderRadius:7,border:"1px solid var(--border)",cursor:"pointer",background:"transparent",color:"var(--text2)",fontWeight:500,fontSize:13}},"Backup"),
@@ -1880,7 +1994,8 @@ function App(){
       tab!=="expenses"&&view==="table"&&!detailEntry&&h(TableView,{tab:tab,acc:acc,flt:flt,car:car,act:act,search:search,onEdit:function(item){setModal({isNew:false,item:item,det:[]});},onDelete:del,onDetail:function(entry){setDetailEntry(entry);}}),
       tab!=="expenses"&&view==="table"&&detailEntry&&h(DetailCard,{entry:detailEntry,onBack:function(){setDetailEntry(null);},onEdit:function(item){setDetailEntry(null);setModal({isNew:false,item:item,det:[]});},onDelete:function(id){del(id);setDetailEntry(null);}}),
       tab!=="expenses"&&view==="calendar"&&h(CalendarView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}}),
-      tab!=="expenses"&&view==="gantt"&&h(GanttView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}})
+      tab!=="expenses"&&view==="gantt"&&h(GanttView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}}),
+      tab!=="expenses"&&view==="day"&&h(DayView,{entries:allE,onEdit:function(item){setModal({isNew:false,item:item,det:[]});}})
     ),
     pdfPreview&&h(PDFPreviewModal,{html:buildPrintHTML(tab,acc,flt,car,act,activeTrip&&activeTrip.name),onClose:function(){setPdfPreview(false);}}),
     tripMgr&&h(TripManagerModal,{trips:trips,activeTripId:activeTripId,onClose:function(){setTripMgr(false);},onCreate:createTrip,onRename:renameTrip,onDelete:deleteTrip,onSwitch:function(id){setActiveTripId(id);setTripMgr(false);setSearch("");}}),
