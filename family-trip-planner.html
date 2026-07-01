@@ -1917,7 +1917,7 @@ function App(){
   };
   function BudgetCard(bp){
     var isTotal=bp.label==="Total";
-    var cardBg=isTotal?"var(--text)":"var(--surface)";
+    var cardBg=isTotal?"#221811":"var(--surface)";
     var topBorder="3px solid "+(bp.color||"var(--primary)");
     var iconBg=isTotal?"rgba(255,255,255,0.12)":bp.color;
     var iconSvg=CAT_SVG[bp.iconKey]||CAT_SVG.total;
