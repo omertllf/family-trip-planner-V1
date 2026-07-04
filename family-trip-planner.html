@@ -146,6 +146,15 @@ function newCar(){return{id:Date.now(),type:"car",company:"",carType:"SUV",picku
 function newAct(){return{id:Date.now(),type:"activity",name:"",category:"Nature",date:"",timeStart:"",timeEnd:"",duration:"",location:"",cost:"",amountDue:"",paymentStatus:"paid",bookingPlatform:"",confirmation:"",vendorPhone:"",vendorEmail:"",url:"",notes:""};}
 function newExp(){return{id:Date.now(),date:"",category:"Other",description:"",addedBy:"",amount:"",currency:"USD",notes:""};}
 function newTrip(name){return{id:"trip_"+Date.now(),name:name||"New Trip",acc:[],flt:[],car:[],act:[],expenses:[]};}
+// Normalize a user-entered URL so it's an absolute, clickable link.
+// Without a scheme, browsers treat "example.com" as a relative path.
+function normUrl(u){
+  if(!u)return"";
+  var s=(""+u).trim();
+  if(!s)return"";
+  if(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(s)||/^(mailto:|tel:)/.test(s))return s;
+  return"https://"+s.replace(/^\/+/,"");
+}
 
 function storeGet(k){
   try{var v=localStorage.getItem(k);return v?JSON.parse(v):null;}catch(e){return null;}
@@ -908,7 +917,7 @@ function DetailCard(props){
     return h("div",{style:{display:"flex",gap:12,padding:"8px 0",borderBottom:"1px solid var(--border)"}},
       h("div",{style:{width:140,flexShrink:0,fontSize:12,color:"var(--text3)",fontWeight:600,paddingTop:1}},p.label),
       h("div",{style:{flex:1,fontSize:13,color:"var(--text)",wordBreak:"break-word"}},
-        p.url?h("a",{href:p.url,target:"_blank",rel:"noreferrer",style:{color:"var(--primary)"}},"🔗 Open link"):val
+        p.url?h("a",{href:normUrl(val),target:"_blank",rel:"noreferrer",style:{color:"var(--primary)"}},"🔗 Open link"):val
       )
     );
   }
@@ -1021,15 +1030,15 @@ function TableView(props){
   function getSD(e){return e.checkIn||e.depDate||e.pickupDate||e.date||"";}
   function getN(e){return(e.name||e.airline||e.company||"").toLowerCase();}
   function toRow(e){
-    if(e.type==="accommodation")return{id:e.id,raw:e,name:e.name||"",typeLbl:"Stay",tK:"accommodation",date:e.checkIn,endDate:e.checkOut,nts:nights(e.checkIn,e.checkOut)||null,cN:safeNum(e.totalCost),cost:fmt$(e.totalCost),address:e.address||"",city:cityOf(e.address),url:e.url||""};
-    if(e.type==="flight")return{id:e.id,raw:e,name:(e.airline||"")+" "+(e.flightNo||""),typeLbl:"Flight",tK:"flight",date:e.depDate,endDate:e.arrDate,nts:null,cN:safeNum(e.cost),cost:fmt$(e.cost),address:e.from||"",city:e.to||"",url:e.url||""};
-    if(e.type==="car")return{id:e.id,raw:e,name:e.company||"",typeLbl:"Car",tK:"car",date:e.pickupDate,endDate:e.dropoffDate,nts:null,cN:safeNum(e.cost),cost:fmt$(e.cost),address:e.pickupLocation||"",city:cityOf(e.pickupLocation),url:e.url||""};
-    return{id:e.id,raw:e,name:e.name||"",typeLbl:"Activity",tK:"activity",date:e.date,endDate:"",nts:null,cN:safeNum(e.cost),cost:fmt$(e.cost),address:e.location||"",city:cityOf(e.location),url:e.url||""};
+    if(e.type==="accommodation")return{id:e.id,raw:e,name:e.name||"",typeLbl:"Stay",tK:"accommodation",date:e.checkIn,time:e.timeStart||"",endDate:e.checkOut,nts:nights(e.checkIn,e.checkOut)||null,cN:safeNum(e.totalCost),cost:fmt$(e.totalCost),address:e.address||"",city:cityOf(e.address),url:e.url||""};
+    if(e.type==="flight")return{id:e.id,raw:e,name:(e.airline||"")+" "+(e.flightNo||""),typeLbl:"Flight",tK:"flight",date:e.depDate,time:e.depTime||"",endDate:e.arrDate,nts:null,cN:safeNum(e.cost),cost:fmt$(e.cost),address:e.from||"",city:e.to||"",url:e.url||""};
+    if(e.type==="car")return{id:e.id,raw:e,name:e.company||"",typeLbl:"Car",tK:"car",date:e.pickupDate,time:e.timeStart||"",endDate:e.dropoffDate,nts:null,cN:safeNum(e.cost),cost:fmt$(e.cost),address:e.pickupLocation||"",city:cityOf(e.pickupLocation),url:e.url||""};
+    return{id:e.id,raw:e,name:e.name||"",typeLbl:"Activity",tK:"activity",date:e.date,time:e.timeStart||"",endDate:"",nts:null,cN:safeNum(e.cost),cost:fmt$(e.cost),address:e.location||"",city:cityOf(e.location),url:e.url||""};
   }
   function sortR(rows){
     var dir=sd==="asc"?1:-1;
     return rows.slice().sort(function(a,b){
-      if(sk==="date")return dir*(a.date||"").localeCompare(b.date||"");
+      if(sk==="date"){var ad=(a.date||"")+"T"+(a.time||"99:99"),bd=(b.date||"")+"T"+(b.time||"99:99");return dir*ad.localeCompare(bd);}
       if(sk==="endDate")return dir*(a.endDate||"").localeCompare(b.endDate||"");
       if(sk==="cost")return dir*(a.cN-b.cN);
       if(sk==="name")return dir*(a.name||"").localeCompare(b.name||"");
@@ -1086,7 +1095,7 @@ function TableView(props){
       case"city":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--text)",whiteSpace:"nowrap"}},row.city||"-");
       case"pay":{var _ps=row.raw.paymentStatus;var _pc=_ps==="paid"?{bg:"var(--success-bg)",c:"var(--success)"}:_ps==="partially_paid"?{bg:"var(--warning-bg)",c:"var(--warning-text)"}:{bg:"var(--danger-bg)",c:"var(--danger)"};var _pl=_ps==="paid"?"Paid":_ps==="partially_paid"?"Partial":"Unpaid";return h("td",{key:col.key,style:{padding:"9px 12px"}},row.raw.paymentStatus?h("span",{style:{display:"inline-flex",alignItems:"center",gap:4,background:_pc.bg,color:_pc.c,borderRadius:20,padding:"3px 8px",fontSize:11,fontWeight:600}},h("span",{style:{width:4,height:4,borderRadius:"50%",background:_pc.c,flexShrink:0}}),_pl):h("span",{style:{color:"var(--text4)"}},"-"));}
       case"due":return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--text)"}},row.raw.amountDue?fmt$(row.raw.amountDue):h("span",{style:{color:"var(--text4)"}},"-"));
-      case"url":return h("td",{key:col.key,style:{padding:"9px 12px"}},row.url?h("a",{href:row.url,target:"_blank",rel:"noreferrer",style:{color:"var(--primary)",textDecoration:"none"}},"🔗"):"-");
+      case"url":return h("td",{key:col.key,style:{padding:"9px 12px"}},row.url?h("a",{href:normUrl(row.url),target:"_blank",rel:"noreferrer",style:{color:"var(--primary)",textDecoration:"none"}},"🔗"):"-");
       case"actions":return h(AB,{key:col.key,id:row.id,raw:row.raw});
       default:return h("td",{key:col.key,style:{padding:"9px 12px",color:"var(--text4)"}},"-");
     }
@@ -1126,7 +1135,7 @@ function TableView(props){
             else if(col.f==="nts")cell=rv>0?h("span",{style:{color:"var(--primary)"}},rv+"n"):h("span",{style:{color:"var(--text4)"}},"-");
             else if(col.f==="bool")cell=rv?h("span",{style:{color:"var(--success)"}},"✓"):h("span",{style:{color:"var(--text4)"}},"✗");
             else if(col.f==="pay"){var pc=rv==="paid"?{bg:"var(--success-bg)",c:"var(--success)"}:rv==="partially_paid"?{bg:"var(--warning-bg)",c:"var(--warning-text)"}:{bg:"var(--danger-bg)",c:"var(--danger)"};var pl=rv==="paid"?"Paid":rv==="partially_paid"?"Partial":"Unpaid";cell=h("span",{style:{display:"inline-flex",alignItems:"center",gap:4,background:pc.bg,color:pc.c,borderRadius:20,padding:"3px 8px",fontSize:11,fontWeight:600}},h("span",{style:{width:4,height:4,borderRadius:"50%",background:pc.c,flexShrink:0}}),pl);}
-            else if(col.f==="link")cell=rv?h("a",{href:rv,target:"_blank",rel:"noreferrer",style:{color:"var(--primary)",textDecoration:"none"}},"🔗"):h("span",{style:{color:"var(--text4)"}},"-");
+            else if(col.f==="link")cell=rv?h("a",{href:normUrl(rv),target:"_blank",rel:"noreferrer",style:{color:"var(--primary)",textDecoration:"none"}},"🔗"):h("span",{style:{color:"var(--text4)"}},"-");
             else if(col.f==="date")cell=h("span",null,fmtD(rv));
             else if(col.f==="addr")cell=h(XC,{val:rv||""});
             else cell=h("span",{style:{display:"block",maxWidth:180,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},rv||"-");
@@ -1896,7 +1905,7 @@ function App(){
     for(var i=0;i<sacc.length-1;i++){var gd=(new Date(sacc[i+1].checkIn)-new Date(sacc[i].checkOut))/86400000;if(gd>0)gaps.push(gd+" night gap after \""+(sacc[i].name||"Stay "+(i+1))+"\" (out: "+fmtD(sacc[i].checkOut)+")");}
   }
 
-  function TB(p){return h("button",{onClick:function(){setTab(p.k);},style:{padding:"6px 14px",borderRadius:9,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:tab===p.k?700:600,background:tab===p.k?"var(--primary)":"transparent",color:tab===p.k?"#fff":"var(--text3)",boxShadow:tab===p.k?"0 1px 3px rgba(0,0,0,.15)":"none",transition:"all .1s",whiteSpace:"nowrap"}},p.label);}
+  function TB(p){return h("button",{onClick:function(){setDetailEntry(null);setTab(p.k);},style:{padding:"6px 14px",borderRadius:9,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:tab===p.k?700:600,background:tab===p.k?"var(--primary)":"transparent",color:tab===p.k?"#fff":"var(--text3)",boxShadow:tab===p.k?"0 1px 3px rgba(0,0,0,.15)":"none",transition:"all .1s",whiteSpace:"nowrap"}},p.label);}
 
   // Auth + household loading
   if(authLoading||householdLoading)return h("div",{style:{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"var(--bg)",color:"var(--text2)",fontSize:16}},"Loading...");
@@ -1980,7 +1989,7 @@ function App(){
         h("div",{style:{display:"flex",gap:2,background:"var(--tab-track)",borderRadius:12,padding:4,flexWrap:"wrap"}},h(TB,{k:"all",label:"All"}),h(TB,{k:"accommodations",label:"Stays"}),h(TB,{k:"flights",label:"Flights"}),h(TB,{k:"cars",label:"Cars"}),h(TB,{k:"activities",label:"Activities"}),h(TB,{k:"expenses",label:"Expenses"})),
         h("div",{style:{display:"flex",gap:6,flexWrap:"wrap",alignItems:"center"}},
           h("div",{style:{display:"flex",gap:2,background:"var(--tab-track)",borderRadius:12,padding:4}},
-            [["table","Table"],["calendar","Calendar"],["gantt","Timeline"],["day","Day"]].map(function(item){return h("button",{key:item[0],onClick:function(){setView(item[0]);},style:{padding:"6px 14px",borderRadius:9,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:view===item[0]?700:600,background:view===item[0]?"#fff":"transparent",color:view===item[0]?"var(--text)":"var(--text3)",boxShadow:view===item[0]?"0 1px 3px rgba(0,0,0,.1)":"none",transition:"all .1s",whiteSpace:"nowrap"}},item[1]);})
+            [["table","Table"],["calendar","Calendar"],["gantt","Timeline"],["day","Day"]].map(function(item){return h("button",{key:item[0],onClick:function(){setDetailEntry(null);setView(item[0]);},style:{padding:"6px 14px",borderRadius:9,border:"none",cursor:"pointer",fontFamily:"inherit",fontSize:13,fontWeight:view===item[0]?700:600,background:view===item[0]?"#fff":"transparent",color:view===item[0]?"var(--text)":"var(--text3)",boxShadow:view===item[0]?"0 1px 3px rgba(0,0,0,.1)":"none",transition:"all .1s",whiteSpace:"nowrap"}},item[1]);})
           ),
           h("button",{onClick:function(){setPdfPreview(true);},style:{padding:"7px 14px",borderRadius:10,border:"1.5px solid var(--border-input)",cursor:"pointer",background:"var(--surface)",color:"var(--text2)",fontFamily:"inherit",fontWeight:600,fontSize:13}},"PDF"),
           h("button",{onClick:function(){setImp("backup");},style:{padding:"7px 14px",borderRadius:10,border:"1.5px solid var(--border-input)",cursor:"pointer",background:"var(--surface)",color:"var(--text2)",fontFamily:"inherit",fontWeight:600,fontSize:13}},"Backup"),
