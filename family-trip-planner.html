@@ -914,11 +914,14 @@ function DetailCard(props){
   function Row(p){
     if(!p.v&&p.v!==0&&p.v!==false)return null;
     var val=p.v===true?"Yes":p.v===false?"No":p.v;
+    var content;
+    if(p.url)content=h("a",{href:normUrl(val),target:"_blank",rel:"noreferrer",style:{color:"var(--primary)"}},"🔗 Open link");
+    else if(p.tel)content=h("a",{href:"tel:"+String(val).replace(/[^0-9+]/g,""),style:{color:"var(--primary)"}},val);
+    else if(p.mail)content=h("a",{href:"mailto:"+String(val).trim(),style:{color:"var(--primary)"}},val);
+    else content=val;
     return h("div",{style:{display:"flex",gap:12,padding:"8px 0",borderBottom:"1px solid var(--border)"}},
       h("div",{style:{width:140,flexShrink:0,fontSize:12,color:"var(--text3)",fontWeight:600,paddingTop:1}},p.label),
-      h("div",{style:{flex:1,fontSize:13,color:"var(--text)",wordBreak:"break-word"}},
-        p.url?h("a",{href:normUrl(val),target:"_blank",rel:"noreferrer",style:{color:"var(--primary)"}},"🔗 Open link"):val
-      )
+      h("div",{style:{flex:1,fontSize:13,color:"var(--text)",wordBreak:"break-word"}},content)
     );
   }
   function Section(p){
@@ -965,8 +968,8 @@ function DetailCard(props){
       h(Row,{label:"Booking URL",v:e.url,url:true}),
       h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
       e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
-      h(Row,{label:"Vendor Phone",v:e.vendorPhone}),
-      h(Row,{label:"Vendor Email",v:e.vendorEmail}),
+      h(Row,{label:"Vendor Phone",v:e.vendorPhone,tel:true}),
+      h(Row,{label:"Vendor Email",v:e.vendorEmail,mail:true}),
       h("div",{style:{display:"flex",gap:16,paddingTop:8}},
         e.parking&&h("span",{style:{fontSize:13,color:"var(--success)"}},"🅿️ Parking"),
         e.kitchen&&h("span",{style:{fontSize:13,color:"var(--success)"}},"🍳 Kitchen"),
@@ -983,8 +986,8 @@ function DetailCard(props){
       h(Row,{label:"Confirmation #",v:e.confirmation}),
       h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
       e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
-      h(Row,{label:"Vendor Phone",v:e.vendorPhone}),
-      h(Row,{label:"Vendor Email",v:e.vendorEmail}),
+      h(Row,{label:"Vendor Phone",v:e.vendorPhone,tel:true}),
+      h(Row,{label:"Vendor Email",v:e.vendorEmail,mail:true}),
       h(Row,{label:"Booking URL",v:e.url,url:true})
     ),
     car&&h(Section,{title:"Car Rental Details"},
@@ -995,8 +998,8 @@ function DetailCard(props){
       h(Row,{label:"Confirmation #",v:e.confirmation}),
       h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
       e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
-      h(Row,{label:"Vendor Phone",v:e.vendorPhone}),
-      h(Row,{label:"Vendor Email",v:e.vendorEmail}),
+      h(Row,{label:"Vendor Phone",v:e.vendorPhone,tel:true}),
+      h(Row,{label:"Vendor Email",v:e.vendorEmail,mail:true}),
       h(Row,{label:"Booking URL",v:e.url,url:true})
     ),
     act&&h(Section,{title:"Activity Details"},
@@ -1007,8 +1010,8 @@ function DetailCard(props){
       h(Row,{label:"Cost",v:e.cost?fmt$(e.cost):null}),
       h(Row,{label:"Payment",v:e.paymentStatus?e.paymentStatus.replace(/_/g," "):null}),
       e.amountDue&&h(Row,{label:"Amount Due",v:fmt$(e.amountDue)}),
-      h(Row,{label:"Vendor Phone",v:e.vendorPhone}),
-      h(Row,{label:"Vendor Email",v:e.vendorEmail}),
+      h(Row,{label:"Vendor Phone",v:e.vendorPhone,tel:true}),
+      h(Row,{label:"Vendor Email",v:e.vendorEmail,mail:true}),
       h(Row,{label:"URL",v:e.url,url:true})
     ),
     e.notes&&h(Section,{title:"Notes"},
