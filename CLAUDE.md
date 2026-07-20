@@ -47,6 +47,7 @@ Expense {
   addedBy: string      ← optional free text (who spent it)
   amount: number (stored in the currency field's currency)
   currency: "USD"|"EUR"|"ILS"
+  paymentMethod: "Cash"|"CC"  ← mandatory
   notes: string
 }
 // expToUSD() converts expense amounts to USD for totals/display
@@ -135,8 +136,9 @@ CSS variables via `:root` (dark) and `body.light-mode` (light):
 - Header shows "💳 In-Trip Expenses" box; clicking it navigates to expenses tab
 - "💳 Expenses" tab in the nav bar renders `ExpenseSummaryView`
 - "＋ Add" button opens type picker (which includes "💸 Expense") or adds expense directly when on expenses tab
-- `Expense.category` is **mandatory**; `description` and `addedBy` are optional
-- `ExpenseSummaryView` has **By Category / By Person** toggle; pie chart and bar chart update accordingly
+- `Expense.category` and `Expense.paymentMethod` (`"Cash"|"CC"`) are **mandatory**; `description` and `addedBy` are optional
+- `ExpenseSummaryView` has **By Category / By Person / By Payment Method** toggle; pie chart and bar chart update accordingly
+- Header "💳 In-Trip Expenses" box shows both the accumulated Total and the Cash sub-total (`expCashTotal` in `App`); Cash + CC always reconcile to Total since every expense carries exactly one `paymentMethod`
 
 ---
 
